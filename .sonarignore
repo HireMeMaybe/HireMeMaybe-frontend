@@ -1,0 +1,48 @@
+# SonarQube ignore file
+# Exclude files and directories from SonarQube analysis
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+.next/
+build/
+dist/
+out/
+
+# Coverage reports
+coverage/
+
+# Environment files
+.env*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Static assets
+public/
+*.ico
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Configuration files that don't need analysis
+next.config.*
+postcss.config.*
+tailwind.config.*
+*.config.js
+*.config.ts
+*.config.mjs
