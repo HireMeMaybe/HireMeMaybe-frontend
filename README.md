@@ -52,28 +52,28 @@ This project includes SonarQube configuration for code quality analysis.
    - Create a new token (e.g., "scanner-token") and copy it
 5. Run analysis with your token:
    ```bash
-   npm run sonar:local -- -Dsonar.login=YOUR_TOKEN_HERE
+   npm run sonar:local -- -Dsonar.token=YOUR_TOKEN_HERE
    ```
 6. Stop SonarQube when done:
    ```bash
    npm run sonar:stop
    ```
 
-#### Option 2: SonarCloud (Free for Open Source)
+#### Option 2: SonarCloud (Free for Open Source) ✅ **WORKING**
 
 1. Sign up at https://sonarcloud.io with your GitHub account
 2. Create a new project and get your organization key
-3. Update `sonar-project.cloud.properties` with your organization
-4. Generate a token in SonarCloud
-5. Run analysis:
+3. Generate a token in SonarCloud
+4. Run analysis:
    ```bash
-   npm run sonar:cloud -- -Dsonar.login=YOUR_TOKEN
+   npm run sonar:cloud
    ```
+   _Note: Configuration is already set up for the `hirememaybe` organization_
 
 #### Option 3: Remote SonarQube server
 
 ```bash
-npm run sonar -- -Dsonar.host.url=YOUR_SONAR_URL -Dsonar.login=YOUR_TOKEN
+npm run sonar -- -Dsonar.host.url=YOUR_SONAR_URL -Dsonar.token=YOUR_TOKEN
 ```
 
 ### Troubleshooting
@@ -81,6 +81,8 @@ npm run sonar -- -Dsonar.host.url=YOUR_SONAR_URL -Dsonar.login=YOUR_TOKEN
 - **"Failed to fetch server version"**: Make sure SonarQube server is running
 - **Docker not found**: Install Docker Desktop and make sure it's running
 - **Connection refused**: Check if the SonarQube URL is correct and accessible
+- **"You must define sonar.organization"**: Use the working `npm run sonar:cloud` command
+- **Quality Gate FAILED**: This is normal for projects without tests - check SonarCloud dashboard for details
 
 ### Configuration Files
 
@@ -89,18 +91,25 @@ npm run sonar -- -Dsonar.host.url=YOUR_SONAR_URL -Dsonar.login=YOUR_TOKEN
 - `.sonarignore` - Files and directories to exclude from analysis
 - `docker-compose.sonar.yml` - Docker configuration for local SonarQube
 - `.github/workflows/sonarqube.yml` - Automated CI/CD analysis (requires secrets setup)
-- `.github/workflows/sonarqube.yml` - Automated CI/CD analysis (requires secrets setup)
 
-### Setting up GitHub Actions (Optional)
+### Setting up GitHub Actions for Automated Analysis
 
-To enable automated SonarQube analysis on GitHub:
+**Automatic SonarCloud analysis** runs on:
 
-1. Add the following secrets to your GitHub repository:
+- Pushes to `main` or `develop` branches
+- Pull requests
 
-   - `SONAR_TOKEN` - Your SonarQube authentication token
-   - `SONAR_HOST_URL` - Your SonarQube server URL
+**Required GitHub Secrets:**
 
-2. The workflow will automatically run on pushes to main/develop branches and pull requests
+1. Go to your GitHub repository → Settings → Secrets and variables → Actions
+2. Add these repository secrets:
+   - `SONAR_TOKEN` - Your SonarCloud authentication token
+   - `SONAR_HOST_URL` - Set to `https://sonarcloud.io` (for SonarCloud)
+
+**View Results:**
+
+- SonarCloud Dashboard: https://sonarcloud.io/dashboard?id=hirememaybe-frontend
+- GitHub Actions tab: See workflow execution logs
 
 ## Learn More
 
