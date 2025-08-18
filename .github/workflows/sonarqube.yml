@@ -1,23 +1,23 @@
-name: SonarQube Analysis
+name: SonarCloud Analysis
 
 on:
   push:
     branches:
-      - main
-      - develop
+      - prod
+      - dev
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  sonarqube:
-    name: SonarQube Analysis
+  sonarcloud:
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Shallow clones should be disabled for better analysis
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -34,10 +34,12 @@ jobs:
           # npm run test:coverage
         continue-on-error: true
 
-      - name: SonarQube Scan
-        uses: sonarqube-quality-gate-action@master
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=hirememaybe-frontend
+            -Dsonar.organization=hirememaybe
+            -Dsonar.host.url=https://sonarcloud.io

@@ -1,0 +1,58 @@
+name: Deploy to Vercel & Notify Discord
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch: # allow manual run
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Install dependencies
+      - name: Install deps
+        run: npm ci
+
+      # Pull env + link to project
+      - name: Pull Vercel env
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Build locally in CI (recommended by Vercel)
+      - name: Build
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Deploy the prebuilt output; capture the deployment URL
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(npx vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} | tail -n1)
+          echo "url=$url" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Notify Discord (always runs, even on failure; URL may be blank if build failed)
+      - name: Notify Discord
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          URL="${{ steps.deploy.outputs.url }}"
+          REPO="${{ github.repository }}"
+          BRANCH="${{ github.ref_name }}"
+          MSG="**Vercel deploy: ${STATUS}**\nRepo: ${REPO}\nBranch: ${BRANCH}\nURL: ${URL}"
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\":\"${MSG}\"}" \
+               "${{ secrets.DISCORD_WEBHOOK_URL }}"
