@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Upload } from "lucide-react"
-import { Button } from "src/components/ui/button"
-import { Input } from "src/components/ui/input"
-import { Textarea } from "src/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "src/components/ui/select"
-import { Label } from "src/components/ui/label"
+import { useState } from "react";
+import { Upload } from "lucide-react";
+import { Button } from "src/components/shadcn/button";
+import { Input } from "src/components/shadcn/input";
+import { Textarea } from "src/components/shadcn/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "src/components/shadcn/select";
+import { Label } from "src/components/shadcn/label";
 
 export function CompanyRegisterForm() {
   const [formData, setFormData] = useState({
@@ -18,37 +18,74 @@ export function CompanyRegisterForm() {
     overview: "",
     industry: "",
     companySize: "",
-  })
+    logo: null as File | null,
+    banner: null as File | null,
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Form submitted:", formData)
-  }
+  const handleFileUpload = (field: "logo" | "banner", file: File | null) => {
+    setFormData((prev) => ({ ...prev, [field]: file }));
+    console.log(`${field} uploaded:`, file);
+  };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submitted:", formData);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Company Logo Upload */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium text-foreground">Company Logo</Label>
-        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer">
-          <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">Upload Image</p>
-          <p className="text-xs text-muted-foreground mt-1">JPG, JPEG, PNG PDF files up to 10MB</p>
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">Company Logo</Label>
+        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer text-gray-text relative">
+          <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2 text-gray-text" />
+          <p className="text-sm text-muted-foreground text-gray-text">Upload Image</p>
+          <p className="text-xs text-muted-foreground mt-1 text-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png,.pdf"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null;
+              handleFileUpload("logo", file);
+            }}
+          />
         </div>
+        {/* Display uploaded file name */}
+        {formData.logo && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Uploaded : <span className="font-medium">{formData.logo.name}</span>
+          </p>
+        )}
       </div>
 
       {/* Company Banner Upload */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label className="text-sm font-medium text-foreground">Company Banner</Label>
-        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer">
-          <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">Upload Image</p>
-          <p className="text-xs text-muted-foreground mt-1">JPG, JPEG, PNG PDF files up to 10MB</p>
+        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer text-gray-text relative">
+          <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2 text-gray-text" />
+          <p className="text-sm text-muted-foreground text-gray-text">Upload Image</p>
+          <p className="text-xs text-muted-foreground mt-1 text-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png,.pdf"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null;
+              handleFileUpload("banner", file);
+            }}
+          />
         </div>
+        {/* Display uploaded file name */}
+        {formData.banner && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Uploaded : <span className="font-medium">{formData.banner.name}</span>
+          </p>
+        )}
       </div>
 
       {/* Company Name */}
@@ -111,10 +148,10 @@ export function CompanyRegisterForm() {
         <div className="space-y-2">
           <Label className="text-sm font-medium text-foreground">Industry</Label>
           <Select value={formData.industry} onValueChange={(value) => handleInputChange("industry", value)}>
-            <SelectTrigger className="bg-muted border-border">
+            <SelectTrigger className="bg-muted border-border w-full">
               <SelectValue placeholder="Select industry" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-dark-gray border-border">
               <SelectItem value="technology">Technology</SelectItem>
               <SelectItem value="healthcare">Healthcare</SelectItem>
               <SelectItem value="finance">Finance</SelectItem>
@@ -128,10 +165,10 @@ export function CompanyRegisterForm() {
         <div className="space-y-2">
           <Label className="text-sm font-medium text-foreground">Company Size</Label>
           <Select value={formData.companySize} onValueChange={(value) => handleInputChange("companySize", value)}>
-            <SelectTrigger className="bg-muted border-border">
+            <SelectTrigger className="bg-muted border-border w-full">
               <SelectValue placeholder="Select size" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-dark-gray border-border">
               <SelectItem value="1-10">1-10 employees</SelectItem>
               <SelectItem value="11-50">11-50 employees</SelectItem>
               <SelectItem value="51-200">51-200 employees</SelectItem>
@@ -144,9 +181,9 @@ export function CompanyRegisterForm() {
       </div>
 
       {/* Submit Button */}
-      <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3">
+      <Button type="submit" className="w-full bg-primary-green hover:bg-green-600 text-white font-bold py-3">
         Submit
       </Button>
     </form>
-  )
+  );
 }

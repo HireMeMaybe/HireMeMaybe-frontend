@@ -1,8 +1,8 @@
 "use client";
 
 import { CompanyRegisterForm } from "src/app/company-register/company-register-form";
-import Navbar from "src/components/ui/navbar";
-import Footer from "src/components/ui/footer";
+import Navbar from "src/components/navbar";
+import Footer from "src/components/footer";
 
 export default function App() {
   return (
