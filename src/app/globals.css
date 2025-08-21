@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #171214;
 }
 
 @theme inline {
@@ -16,6 +16,8 @@
   --color-pale-green: #D2DFD8;
   --color-dark-gray: #595256;
   --color-default-gray: #D9D9D9;
+  --color-component: #382933;
+  --color-gray-text: #8C8C8C;
 }
 
 @media (prefers-color-scheme: dark) {
