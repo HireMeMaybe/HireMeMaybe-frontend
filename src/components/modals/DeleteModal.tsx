@@ -13,7 +13,7 @@ interface DeleteModalProps {
   readonly onConfirm?: () => void;
 }
 
-export function DeleteModal({ 
+export default function DeleteModal({ 
   isOpen, 
   onClose, 
   title = "Delete Job Post?",

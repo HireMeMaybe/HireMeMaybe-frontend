@@ -14,7 +14,7 @@ interface WarningModalProps {
   readonly onLeave?: () => void;
 }
 
-export function WarningModal({ 
+export default function WarningModal({ 
   isOpen, 
   onClose, 
   title = "Unsaved Changes",

@@ -1,8 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, Button } from '@/components/ui/';
 
 interface ApproveModalProps {
   readonly isOpen: boolean;
@@ -14,7 +13,7 @@ interface ApproveModalProps {
   readonly onReject?: () => void;
 }
 
-export function ApproveModal({ 
+export default function ApproveModal({ 
   isOpen, 
   onClose, 
   title = "Approve Company?",

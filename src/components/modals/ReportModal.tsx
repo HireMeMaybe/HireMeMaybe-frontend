@@ -12,7 +12,7 @@ interface ReportModalProps {
   readonly onSubmit?: (data: { type: string; reason: string; details: string }) => void;
 }
 
-export function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
+export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
   const [formData, setFormData] = useState({
     type: '',
     reason: '',

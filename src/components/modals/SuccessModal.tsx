@@ -13,7 +13,7 @@ interface SuccessModalProps {
   readonly onConfirm?: () => void;
 }
 
-export function SuccessModal({ 
+export default function SuccessModal({ 
   isOpen, 
   onClose, 
   title = "Action Successful",

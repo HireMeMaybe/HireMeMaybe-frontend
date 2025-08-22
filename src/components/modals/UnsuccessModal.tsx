@@ -13,7 +13,7 @@ interface ErrorModalProps {
   readonly onRetry?: () => void;
 }
 
-export function ErrorModal({ 
+export default function ErrorModal({ 
   isOpen, 
   onClose, 
   title = "Action Unsuccessful",

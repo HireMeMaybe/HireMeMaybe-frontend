@@ -13,7 +13,7 @@ interface ConfirmationModalProps {
   readonly onConfirm?: () => void;
 }
 
-export function ConfirmationModal({ 
+export default function ConfirmationModal({ 
   isOpen, 
   onClose, 
   title = "Submit Application?",
