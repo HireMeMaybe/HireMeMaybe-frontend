@@ -5,12 +5,12 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from 'src/compo
 import { Button } from 'src/components/ui/button';
 
 interface ErrorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  message?: string;
-  onCancel?: () => void;
-  onRetry?: () => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly title?: string;
+  readonly message?: string;
+  readonly onCancel?: () => void;
+  readonly onRetry?: () => void;
 }
 
 export function ErrorModal({ 

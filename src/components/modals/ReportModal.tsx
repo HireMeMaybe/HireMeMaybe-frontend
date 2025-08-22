@@ -4,13 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from 'src/components/ui/button';
 import { Textarea } from 'src/components/ui/textarea';
 import { Label } from 'src/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'src/components/ui/select';
 import { useState } from 'react';
 
 interface ReportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit?: (data: { type: string; reason: string; details: string }) => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly onSubmit?: (data: { type: string; reason: string; details: string }) => void;
 }
 
 export function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
@@ -25,10 +24,6 @@ export function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
     onSubmit?.(formData);
     onClose();
     setFormData({ type: '', reason: '', details: '' }); // Reset form
-  };
-
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -47,44 +42,15 @@ export function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
         <div className="border-t border-zinc-600"></div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* What are you reporting */}
-          <div className="space-y-2">
-            <Label className="text-white text-sm">What are you reporting?</Label>
-            <Select onValueChange={(value: string) => handleSelectChange('type', value)} required>
-              <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
-                <SelectValue placeholder="Job Post" />
-              </SelectTrigger>
-              <SelectContent className="bg-darker-gray border-gray-600">
-                <SelectItem value="job-post">Job Post</SelectItem>
-                <SelectItem value="company">Company</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    
           
-          {/* Reason for reporting */}
+          {/* Report details */}
           <div className="space-y-2">
             <Label className="text-white text-sm">Reason for reporting</Label>
-            <Select onValueChange={(value: string) => handleSelectChange('reason', value)} required>
-              <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
-                <SelectValue placeholder="Fake Job Posting" />
-              </SelectTrigger>
-              <SelectContent className="bg-darker-gray border-gray-600">
-                <SelectItem value="fake-posting">Fake Job Posting</SelectItem>
-                <SelectItem value="spam">Spam</SelectItem>
-                <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
-                <SelectItem value="discrimination">Discrimination</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Additional details */}
-          <div className="space-y-2">
-            <Label className="text-white text-sm">Additional details (optional)</Label>
             <Textarea
               value={formData.details}
               onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
-              placeholder="Please provide more details about your report..."
+              placeholder="Please provide details about your report..."
               className="bg-darker-gray border-gray-600 text-white placeholder-gray-400 resize-none min-h-[100px]"
               rows={4}
             />

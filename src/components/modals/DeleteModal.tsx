@@ -1,16 +1,16 @@
 'use client';
 
-import { Trash2, Trash } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from 'src/components/ui/dialog';
 import { Button } from 'src/components/ui/button';
 
 interface DeleteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  message?: string;
-  description?: string;
-  onConfirm?: () => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly title?: string;
+  readonly message?: string;
+  readonly description?: string;
+  readonly onConfirm?: () => void;
 }
 
 export function DeleteModal({ 

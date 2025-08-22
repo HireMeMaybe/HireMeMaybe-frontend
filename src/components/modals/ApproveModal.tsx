@@ -5,13 +5,13 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from 'src/compo
 import { Button } from 'src/components/ui/button';
 
 interface ApproveModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  message?: string;
-  description?: string;
-  onApprove?: () => void;
-  onReject?: () => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly title?: string;
+  readonly message?: string;
+  readonly description?: string;
+  readonly onApprove?: () => void;
+  readonly onReject?: () => void;
 }
 
 export function ApproveModal({ 

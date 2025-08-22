@@ -5,13 +5,13 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from 'src/compo
 import { Button } from 'src/components/ui/button';
 
 interface WarningModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  message?: string;
-  description?: string;
-  onSave?: () => void;
-  onLeave?: () => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly title?: string;
+  readonly message?: string;
+  readonly description?: string;
+  readonly onSave?: () => void;
+  readonly onLeave?: () => void;
 }
 
 export function WarningModal({ 

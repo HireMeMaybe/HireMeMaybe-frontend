@@ -5,12 +5,12 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from 'src/compo
 import { Button } from 'src/components/ui/button';
 
 interface ConfirmationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  message?: string;
-  description?: string;
-  onConfirm?: () => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly title?: string;
+  readonly message?: string;
+  readonly description?: string;
+  readonly onConfirm?: () => void;
 }
 
 export function ConfirmationModal({ 
