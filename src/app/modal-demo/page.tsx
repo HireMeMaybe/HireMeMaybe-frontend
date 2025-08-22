@@ -1,10 +1,9 @@
-// src/app/modal-demo/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { Button } from 'src/components/ui/button';
-import Navbar from 'src/components/navbar';
-import Footer from 'src/components/footer';
+import Navbar from "src/components/NavBar";
+import Footer from "src/components/Footer";
 import { SuccessModal } from 'src/components/modals/SuccessModal';
 import { ErrorModal } from 'src/components/modals/UnsuccessModal';
 import { ConfirmationModal } from 'src/components/modals/ConfirmModal';
