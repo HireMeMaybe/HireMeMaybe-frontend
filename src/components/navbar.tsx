@@ -1,6 +1,6 @@
 import { Search, User } from 'lucide-react';
-import { Input } from 'src/components/shadcn/input';
-import { Button } from 'src/components/shadcn/button';
+import { Input } from 'src/components/ui/input';
+import { Button } from 'src/components/ui/button';
 
 export default function Navbar() {
   return (

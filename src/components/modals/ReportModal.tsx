@@ -1,0 +1,114 @@
+"use client";
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from 'src/components/ui/dialog';
+import { Button } from 'src/components/ui/button';
+import { Textarea } from 'src/components/ui/textarea';
+import { Label } from 'src/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'src/components/ui/select';
+import { useState } from 'react';
+
+interface ReportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit?: (data: { type: string; reason: string; details: string }) => void;
+}
+
+export function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
+  const [formData, setFormData] = useState({
+    type: '',
+    reason: '',
+    details: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit?.(formData);
+    onClose();
+    setFormData({ type: '', reason: '', details: '' }); // Reset form
+  };
+
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md bg-background border-gray-700 text-white">
+        <DialogHeader className="text-left space-y-2">
+          <DialogTitle className="text-xl font-semibold text-white">
+            Report Job Post / Company
+          </DialogTitle>
+          <DialogDescription className="text-gray-400 text-sm">
+            Help us maintain a safe platform
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Separator */}
+        <div className="border-t border-zinc-600"></div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* What are you reporting */}
+          <div className="space-y-2">
+            <Label className="text-white text-sm">What are you reporting?</Label>
+            <Select onValueChange={(value: string) => handleSelectChange('type', value)} required>
+              <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
+                <SelectValue placeholder="Job Post" />
+              </SelectTrigger>
+              <SelectContent className="bg-darker-gray border-gray-600">
+                <SelectItem value="job-post">Job Post</SelectItem>
+                <SelectItem value="company">Company</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Reason for reporting */}
+          <div className="space-y-2">
+            <Label className="text-white text-sm">Reason for reporting</Label>
+            <Select onValueChange={(value: string) => handleSelectChange('reason', value)} required>
+              <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
+                <SelectValue placeholder="Fake Job Posting" />
+              </SelectTrigger>
+              <SelectContent className="bg-darker-gray border-gray-600">
+                <SelectItem value="fake-posting">Fake Job Posting</SelectItem>
+                <SelectItem value="spam">Spam</SelectItem>
+                <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
+                <SelectItem value="discrimination">Discrimination</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Additional details */}
+          <div className="space-y-2">
+            <Label className="text-white text-sm">Additional details (optional)</Label>
+            <Textarea
+              value={formData.details}
+              onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
+              placeholder="Please provide more details about your report..."
+              className="bg-darker-gray border-gray-600 text-white placeholder-gray-400 resize-none min-h-[100px]"
+              rows={4}
+            />
+          </div>
+          
+          {/* Buttons */}
+          <div className="flex gap-3 pt-4">
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={onClose} 
+              className="flex-1 border-none bg-gray-cancel text-white hover:bg-gray-800"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              className="flex-1 bg-red-reject hover:bg-red-700 text-white"
+            >
+              Submit Report
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

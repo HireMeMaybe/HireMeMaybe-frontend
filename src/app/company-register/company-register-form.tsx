@@ -4,11 +4,11 @@ import type React from "react";
 
 import { useState } from "react";
 import { Upload } from "lucide-react";
-import { Button } from "src/components/shadcn/button";
-import { Input } from "src/components/shadcn/input";
-import { Textarea } from "src/components/shadcn/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "src/components/shadcn/select";
-import { Label } from "src/components/shadcn/label";
+import { Button } from "src/components/ui/button";
+import { Input } from "src/components/ui/input";
+import { Textarea } from "src/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "src/components/ui/select";
+import { Label } from "src/components/ui/label";
 
 export function CompanyRegisterForm() {
   const [formData, setFormData] = useState({
