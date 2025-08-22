@@ -1,8 +1,8 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from 'src/components/ui/dialog';
-import { Button } from 'src/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface SuccessModalProps {
   readonly isOpen: boolean;

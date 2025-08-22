@@ -1,8 +1,8 @@
 'use client';
 
 import { FileQuestionMark, HelpCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from 'src/components/ui/dialog';
-import { Button } from 'src/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface ConfirmationModalProps {
   readonly isOpen: boolean;

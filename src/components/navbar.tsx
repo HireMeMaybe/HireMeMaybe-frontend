@@ -1,6 +1,6 @@
 import { Search, User } from 'lucide-react';
-import { Input } from 'src/components/ui/input';
-import { Button } from 'src/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function Navbar() {
   return (
