@@ -416,9 +416,9 @@ export function CompanyRegisterForm() {
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
-        title="Submit Application?"
+        title="Submit Register?"
         message="Please confirm your choice"
-        description="Are you ready to submit your application?"
+        description="Are you ready to submit your register?"
         onConfirm={handleConfirm}
       />
     </div>
