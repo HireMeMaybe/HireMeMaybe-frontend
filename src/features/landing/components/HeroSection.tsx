@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { MayBeIcon } from '@/components/icons';
@@ -17,6 +18,10 @@ export default function HeroSection() {
           <div className="mt-10">
             <Button
               variant="outline"
+              onClick={() => {
+                const el = document.getElementById('login-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
               className="cursor-pointer rounded-lg border-[var(--color-primary-green)] px-8 py-6 text-lg text-[var(--color-primary-green)] hover:bg-[var(--color-primary-green)] hover:text-white"
             >
               Join

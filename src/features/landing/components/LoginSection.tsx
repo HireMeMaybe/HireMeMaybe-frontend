@@ -80,7 +80,10 @@ export default function LoginSection() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   return (
-    <section className="bg-[var(--background)] pt-0 pb-28 text-[var(--foreground)]">
+    <section
+      id="login-section"
+      className="bg-[var(--background)] pt-0 pb-20 text-[var(--foreground)]"
+    >
       <div className="container mx-auto text-center">
         <h2 className="text-3xl font-bold md:text-4xl">Ready to join?</h2>
         <p className="mt-3 text-lg text-white/80">Select your role below</p>
