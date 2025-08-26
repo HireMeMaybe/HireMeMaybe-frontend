@@ -72,16 +72,16 @@ export default function WarningModal({
           {/* Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <Button 
-              onClick={handleSave}
-              className="bg-yellow-warning hover:bg-yellow-600 text-white px-6 py-2 rounded-md"
-            >
-              Save & Stay
-            </Button>
-            <Button 
               onClick={handleLeave}
               className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md"
             >
               Leave Anyway
+            </Button>
+            <Button 
+              onClick={handleSave}
+              className="bg-yellow-warning hover:bg-yellow-600 text-white px-6 py-2 rounded-md"
+            >
+              Save & Stay
             </Button>
           </div>
         </div>
