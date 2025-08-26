@@ -1,10 +1,10 @@
 import React from 'react';
 
-type GoogleLoginProps = {
+type GoogleLoginProps = Readonly<{
   onClick?: () => void;
   label?: string;
   className?: string;
-};
+}>;
 
 export default function GoogleLogin({
   onClick,

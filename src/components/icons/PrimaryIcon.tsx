@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type IconProps = React.SVGProps<SVGSVGElement>;
+export type IconProps = Readonly<React.SVGProps<SVGSVGElement>>;
 
 export default function PrimaryIcon(props: IconProps) {
   return (
