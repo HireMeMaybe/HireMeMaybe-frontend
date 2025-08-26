@@ -1,0 +1,11 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  // Prefer the project's prettier installation if present
+  "prettier.resolveGlobalModules": false,
+  "prettier.enableDebugLogs": false,
+  // If you use ESLint to autofix on save, run ESLint fixes after Prettier (optional)
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}
