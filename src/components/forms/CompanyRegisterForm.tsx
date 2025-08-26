@@ -9,10 +9,12 @@ import { Button, Input, Textarea, Select, SelectContent, SelectItem, SelectTrigg
 import { companyRegisterSchema, type CompanyRegisterFormData } from "@/lib/validations/company";
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from "@/types/company";
 import { registerCompany } from "@/app/company-register/actions";
+import ConfirmationModal from "@/components/modals/ConfirmModal"; // Import ConfirmModal
 
 export function CompanyRegisterForm() {
   const [isPending, startTransition] = useTransition();
   const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // State to control ConfirmModal visibility
 
   const {
     register,
@@ -101,23 +103,28 @@ export function CompanyRegisterForm() {
     });
   };
 
+  const handleConfirm = () => {
+    setIsConfirmModalOpen(false);
+    handleSubmit(onSubmit)();
+  };
+
   return (
     <div className="space-y-8">
       {submitMessage && (
         <div
-          className={`p-4 rounded-xl shadow-sm border-l-4 transition-all duration-300 ${
+          className={`p-4 rounded-xl shadow-sm transition-all duration-300 ${
             submitMessage.type === "success"
-              ? "bg-green-50 text-green-800 border border-green-200 border-l-green-500"
-              : "bg-red-50 text-red-800 border border-red-200 border-l-red-500"
+              ? "bg-primary-green text-white"
+              : "bg-red-reject text-white"
           }`}
         >
           <div className="flex items-center space-x-2">
             {submitMessage.type === "success" ? (
-              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             ) : (
-              <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
             )}
@@ -330,7 +337,7 @@ export function CompanyRegisterForm() {
               <SelectTrigger className="bg-muted border-border w-full h-12 rounded-lg focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200">
                 <SelectValue placeholder="Select industry" />
               </SelectTrigger>
-              <SelectContent className="bg-dark-gray border-border rounded-lg shadow-lg">
+              <SelectContent className="bg-gray-cancel border-border rounded-lg shadow-lg">
                 {INDUSTRY_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value} className="hover:bg-muted/50 cursor-pointer">
                     {option.label}
@@ -363,7 +370,7 @@ export function CompanyRegisterForm() {
               <SelectTrigger className="bg-muted border-border w-full h-12 rounded-lg focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200">
                 <SelectValue placeholder="Select size" />
               </SelectTrigger>
-              <SelectContent className="bg-dark-gray border-border rounded-lg shadow-lg">
+              <SelectContent className="bg-gray-cancel border-border rounded-lg shadow-lg">
                 {COMPANY_SIZE_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value} className="hover:bg-muted/50 cursor-pointer">
                     {option.label}
@@ -384,9 +391,10 @@ export function CompanyRegisterForm() {
 
         {/* Submit Button */}
         <div className="pt-4">
-          <Button 
-            type="submit" 
+          <Button
+            type="button"
             className="w-full bg-primary-green text-white font-bold py-4 h-12 rounded-xl text-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+            onClick={() => setIsConfirmModalOpen(true)}
             disabled={isPending}
           >
             {isPending ? (
@@ -403,6 +411,16 @@ export function CompanyRegisterForm() {
           </Button>
         </div>
       </form>
+
+      {/* Confirm Modal */}
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        title="Submit Application?"
+        message="Please confirm your choice"
+        description="Are you ready to submit your application?"
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }

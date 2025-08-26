@@ -18,7 +18,7 @@ export const companyRegisterSchema = z.object({
   phone: z
     .string()
     .min(1, "Phone number is required")
-    .regex(/^\+?[1-9]\d{0,15}$/, "Please enter a valid phone number"), // Simplified regex
+    .regex(/^(\+?[1-9]\d{0,2}[-\s]?)?(0\d{1,2})[-\s]?(\d{3})[-\s]?(\d{4})$/,"Please enter a valid phone number"),
   
   overview: z
     .string()
