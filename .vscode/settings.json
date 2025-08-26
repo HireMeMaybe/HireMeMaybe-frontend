@@ -4,8 +4,9 @@
   // Prefer the project's prettier installation if present
   "prettier.resolveGlobalModules": false,
   "prettier.enableDebugLogs": false,
+  "prettier.prettierPath": "./node_modules/prettier",
   // If you use ESLint to autofix on save, run ESLint fixes after Prettier (optional)
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   }
 }
