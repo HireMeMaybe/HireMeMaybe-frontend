@@ -125,8 +125,8 @@ export function CompanyRegisterForm() {
           <Label className="text-sm font-medium">Company Logo</Label>
           <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer text-gray-text relative">
             <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2 text-gray-text" />
-            <p className="text-sm text-muted-foreground text-gray-text">Upload Image</p>
-            <p className="text-xs text-muted-foreground mt-1 text-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
+            <p className="text-sm text-muted-foreground text-lighter-gray-text">Upload Image</p>
+            <p className="text-xs text-muted-foreground mt-1 text-lighter-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.pdf"
@@ -152,8 +152,8 @@ export function CompanyRegisterForm() {
           <Label className="text-sm font-medium text-foreground">Company Banner</Label>
           <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer text-gray-text relative">
             <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2 text-gray-text" />
-            <p className="text-sm text-muted-foreground text-gray-text">Upload Image</p>
-            <p className="text-xs text-muted-foreground mt-1 text-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
+            <p className="text-sm text-muted-foreground text-lighter-gray-text">Upload Image</p>
+            <p className="text-xs text-muted-foreground mt-1 text-lighter-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.pdf"
@@ -170,7 +170,7 @@ export function CompanyRegisterForm() {
             </p>
           )}
           {errors.banner && (
-            <p className="text-sm text-red-600 mt-1">{errors.banner.message}</p>
+            <p className="text-sm text-red-reject mt-1">{errors.banner.message}</p>
           )}
         </div>
 
@@ -185,7 +185,7 @@ export function CompanyRegisterForm() {
             className="bg-muted border-border"
           />
           {errors.companyName && (
-            <p className="text-sm text-red-600 mt-1">{errors.companyName.message}</p>
+            <p className="text-sm text-red-reject mt-1">{errors.companyName.message}</p>
           )}
         </div>
 
@@ -202,7 +202,7 @@ export function CompanyRegisterForm() {
               className="bg-muted border-border"
             />
             {errors.email && (
-              <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+              <p className="text-sm text-red-reject mt-1">{errors.email.message}</p>
             )}
           </div>
           <div className="space-y-2">
@@ -216,7 +216,7 @@ export function CompanyRegisterForm() {
               className="bg-muted border-border"
             />
             {errors.phone && (
-              <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
+              <p className="text-sm text-red-reject mt-1">{errors.phone.message}</p>
             )}
           </div>
         </div>
@@ -233,7 +233,7 @@ export function CompanyRegisterForm() {
             placeholder="Tell us about your company..."
           />
           {errors.overview && (
-            <p className="text-sm text-red-600 mt-1">{errors.overview.message}</p>
+            <p className="text-sm text-red-reject mt-1">{errors.overview.message}</p>
           )}
         </div>
 
@@ -259,7 +259,7 @@ export function CompanyRegisterForm() {
               </SelectContent>
             </Select>
             {errors.industry && (
-              <p className="text-sm text-red-600 mt-1">{errors.industry.message}</p>
+              <p className="text-sm text-red-reject mt-1">{errors.industry.message}</p>
             )}
           </div>
           <div className="space-y-2">
@@ -282,7 +282,7 @@ export function CompanyRegisterForm() {
               </SelectContent>
             </Select>
             {errors.companySize && (
-              <p className="text-sm text-red-600 mt-1">{errors.companySize.message}</p>
+              <p className="text-sm text-red-reject mt-1">{errors.companySize.message}</p>
             )}
           </div>
         </div>

@@ -12,7 +12,7 @@ export default function App() {
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-semibold text-foreground mb-8">Company Register</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-8">Company Register</h1>
           <CompanyRegisterForm />
         </div>
       </main>
