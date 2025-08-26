@@ -13,9 +13,13 @@ export const companyRegisterSchema = z.object({
   email: z
     .string()
     .min(1, "Email is required")
-    .refine((val) => !!val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
-      message: "Please enter a valid email address",
-    }),
+    .refine((val) =>
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val),
+      {
+        message: "Please enter a valid email address",
+      }
+    ),
+
   
   phone: z
     .string()
