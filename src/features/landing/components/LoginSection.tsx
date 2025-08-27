@@ -1,34 +1,58 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Building, GraduationCap, Eye, Check } from 'lucide-react';
 import GoogleLogin from '@/features/landing/components/GoogleLogin';
 
-type RoleCardProps = {
+type RoleCardProps = Readonly<{
   title: string;
   description: string;
   checks: string[];
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   onSelect?: () => void;
   isActive?: boolean;
-};
+}>;
 
 function RoleCard({ title, description, checks, Icon, onSelect, isActive }: RoleCardProps) {
+  const pointerActivated = useRef(false);
+
   return (
     <Card
-      onClick={() => {
-        if (!isActive) onSelect?.();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
+      // Support pointer (mouse & touch), with a guard to avoid double-invocation
+      onPointerUp={(() => {
+        const handler: React.PointerEventHandler<HTMLButtonElement | HTMLDivElement> = () => {
+          if (!isActive) {
+            pointerActivated.current = true;
+            onSelect?.();
+          }
+        };
+        return handler;
+      })()}
+      onClick={(() => {
+        const handler: React.MouseEventHandler<HTMLButtonElement | HTMLDivElement> = () => {
+          // If pointer already handled the activation, swallow the click.
+          if (pointerActivated.current) {
+            pointerActivated.current = false;
+            return;
+          }
           if (!isActive) onSelect?.();
-        }
-      }}
+        };
+        return handler;
+      })()}
+      onKeyDown={(() => {
+        const handler: React.KeyboardEventHandler<HTMLButtonElement | HTMLDivElement> = (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (!isActive) onSelect?.();
+          }
+        };
+        return handler;
+      })()}
       tabIndex={0}
       role="button"
       aria-pressed={isActive}
+      aria-label={`${title} - ${description}`}
       className="relative mx-4 h-96 w-72 cursor-pointer overflow-hidden border-[var(--color-primary-green)] bg-transparent transition-transform duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(2,188,119,0.12)] hover:ring-1 hover:ring-[var(--color-primary-green)]"
     >
       <CardHeader className="items-center">

@@ -2,12 +2,9 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-type IntrinsicCard = 'div' | 'button';
-
-function Card({ as, className, ...props }: { as?: IntrinsicCard; className?: string } & any) {
-  const Tag: any = as || 'div';
+function Card({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <Tag
+    <div
       data-slot="card"
       className={cn(
         'bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm',
