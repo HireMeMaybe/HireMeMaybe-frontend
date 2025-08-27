@@ -1,6 +1,6 @@
 "use client";
 
-import { CompanyRegisterForm } from "@/components/forms/CompanyRegisterForm";
+import { CompanyRegisterForm } from "@/features/company-register";
 
 export default function App() {
   return (
