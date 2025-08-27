@@ -8,7 +8,7 @@ import { Upload } from "lucide-react";
 import { Button, Input, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label } from "@/components/ui/";
 import { companyRegisterSchema, type CompanyRegisterFormData } from "@/lib/validations/company";
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from "@/types/company";
-import { registerCompany } from "@/app/company-register/actions";
+import { registerCompany } from "@/features/company-register/server/actions.server";
 import ConfirmationModal from "@/components/modals/ConfirmModal"; // Import ConfirmModal
 
 export function CompanyRegisterForm() {
