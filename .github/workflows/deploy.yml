@@ -51,7 +51,7 @@ jobs:
           URL="${{ steps.deploy.outputs.url }}"
           REPO="${{ github.repository }}"
           BRANCH="${{ github.ref_name }}"
-          MSG="**Vercel deploy: ${STATUS}**\nRepo: ${REPO}\nBranch: ${BRANCH}\nURL: ${URL}"
+          MSG="**Vercel deploy: ${STATUS}**\nRepo: ${REPO}\nBranch: ${BRANCH}\nURL: https://canyouhireme.vercel.app/"
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\":\"${MSG}\"}" \
