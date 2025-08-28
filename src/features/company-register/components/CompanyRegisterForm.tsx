@@ -203,7 +203,7 @@ export function CompanyRegisterForm() {
               </div>
               <div className="mt-3 text-center">
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-semibold">{watchedLogo?.name}</span>
+                  <span className="font-semibold">Uploaded: {watchedLogo?.name}</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Click the X to remove or click anywhere to upload a new file</p>
               </div>
