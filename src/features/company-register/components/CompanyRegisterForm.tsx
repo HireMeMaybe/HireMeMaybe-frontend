@@ -440,7 +440,7 @@ export function CompanyRegisterForm() {
                   <SelectItem 
                     key={option.value} 
                     value={option.value} 
-                    className="hover:bg-primary-green/10 focus:bg-primary-green/10 cursor-pointer px-3 py-2 transition-colors duration-150 data-[highlighted]:bg-primary-green/10"
+                    className="hover:bg-primary-green/10 focus:bg-primary-green/10 cursor-pointer px-3 py-2 transition-colors duration-150 data-[highlighted]:bg-dark-gray"
                   >
                     {option.label}
                   </SelectItem>
@@ -477,7 +477,7 @@ export function CompanyRegisterForm() {
                   <SelectItem 
                     key={option.value} 
                     value={option.value} 
-                    className="hover:bg-primary-green/10 focus:bg-primary-green/10 cursor-pointer px-3 py-2 transition-colors duration-150 data-[highlighted]:bg-primary-green/10"
+                    className="hover:bg-primary-green/10 focus:bg-primary-green/10 cursor-pointer px-3 py-2 transition-colors duration-150 data-[highlighted]:bg-dark-gray"
                   >
                     {option.label}
                   </SelectItem>
