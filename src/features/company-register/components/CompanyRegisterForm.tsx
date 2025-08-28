@@ -4,7 +4,7 @@ import type React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { Button, Input, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Label } from "@/components/ui/";
 import { companyRegisterSchema, type CompanyRegisterFormData } from "@/lib/validations/company";
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from "@/types/company";
@@ -15,6 +15,10 @@ export function CompanyRegisterForm() {
   const [isPending, startTransition] = useTransition();
   const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // State to control ConfirmModal visibility
+  
+  // State for image previews
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
 
   const {
     register,
@@ -41,10 +45,44 @@ export function CompanyRegisterForm() {
 
   const handleFileUpload = (field: "logo" | "banner", file: File | null) => {
     if (file) {
+      // Check if file is an image for preview
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          if (field === "logo") {
+            setLogoPreview(result);
+          } else {
+            setBannerPreview(result);
+          }
+        };
+        reader.readAsDataURL(file);
+      } else if (field === "logo") {
+        setLogoPreview(null);
+      } else {
+        setBannerPreview(null);
+      }
+
+      
       setValue(field, file);
       clearErrors(field);
     } else {
       setValue(field, undefined);
+      // Clear preview when file is removed
+      if (field === "logo") {
+        setLogoPreview(null);
+      } else {
+        setBannerPreview(null);
+      }
+    }
+  };
+
+  const removeFile = (field: "logo" | "banner") => {
+    setValue(field, undefined);
+    if (field === "logo") {
+      setLogoPreview(null);
+    } else {
+      setBannerPreview(null);
     }
   };
 
@@ -142,32 +180,62 @@ export function CompanyRegisterForm() {
             </svg>
             <span>Company Logo</span>
           </Label>
-          <div className="group border-2 border-dashed border-border rounded-xl p-10 text-center bg-muted/50 hover:bg-muted/70 hover:border-muted-foreground/30 transition-all duration-300 cursor-pointer text-gray-text relative overflow-hidden">
-            <div className="relative z-10">
-              <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
-              <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
-              <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
+          
+          {/* Preview or Upload Area */}
+          {logoPreview ? (
+            <div className="relative group border-2 border-border rounded-xl p-4 bg-muted/30">
+              <div className="relative">
+                <img 
+                  src={logoPreview} 
+                  alt="Logo preview" 
+                  className="w-full h-48 object-contain rounded-lg bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile("logo");
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 z-30"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="mt-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold">{watchedLogo?.name}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Click the X to remove or click anywhere to upload a new file</p>
+              </div>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  handleFileUpload("logo", file);
+                }}
+              />
             </div>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              className="absolute inset-0 opacity-0 cursor-pointer z-20"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                handleFileUpload("logo", file);
-              }}
-            />
-          </div>
-          {watchedLogo && (
-            <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg border border-border/50">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <p className="text-sm text-muted-foreground">
-                Uploaded: <span className="font-semibold">{watchedLogo.name}</span>
-              </p>
+          ) : (
+            <div className="group border-2 border-dashed border-border rounded-xl p-10 text-center bg-muted/50 hover:bg-muted/70 hover:border-muted-foreground/30 transition-all duration-300 cursor-pointer text-gray-text relative overflow-hidden">
+              <div className="relative z-10">
+                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
+                <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
+                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG, PDF files up to 10MB</p>
+              </div>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  handleFileUpload("logo", file);
+                }}
+              />
             </div>
           )}
+          
           {errors.logo && (
             <p className="text-sm text-red-600 mt-2 flex items-center space-x-1">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -186,32 +254,62 @@ export function CompanyRegisterForm() {
             </svg>
             <span>Company Banner</span>
           </Label>
-          <div className="group border-2 border-dashed border-border rounded-xl p-10 text-center bg-muted/50 hover:bg-muted/70 hover:border-muted-foreground/30 transition-all duration-300 cursor-pointer text-gray-text relative overflow-hidden">
-            <div className="relative z-10">
-              <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
-              <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
-              <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG PDF files up to 10MB</p>
+          
+          {/* Preview or Upload Area */}
+          {bannerPreview ? (
+            <div className="relative group border-2 border-border rounded-xl p-4 bg-muted/30">
+              <div className="relative">
+                <img 
+                  src={bannerPreview} 
+                  alt="Banner preview" 
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile("banner");
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 z-30"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="mt-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold">{watchedBanner?.name}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Click the X to remove or click anywhere to upload a new file</p>
+              </div>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  handleFileUpload("banner", file);
+                }}
+              />
             </div>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              className="absolute inset-0 opacity-0 cursor-pointer z-20"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                handleFileUpload("banner", file);
-              }}
-            />
-          </div>
-          {watchedBanner && (
-            <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg border border-border/50">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <p className="text-sm text-muted-foreground">
-                Uploaded: <span className="font-semibold">{watchedBanner.name}</span>
-              </p>
+          ) : (
+            <div className="group border-2 border-dashed border-border rounded-xl p-10 text-center bg-muted/50 hover:bg-muted/70 hover:border-muted-foreground/30 transition-all duration-300 cursor-pointer text-gray-text relative overflow-hidden">
+              <div className="relative z-10">
+                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
+                <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
+                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG, PDF files up to 10MB</p>
+              </div>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  handleFileUpload("banner", file);
+                }}
+              />
             </div>
           )}
+          
           {errors.banner && (
             <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -287,9 +385,9 @@ export function CompanyRegisterForm() {
               <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <span>{errors.phone.message}</span>
-              </p>
+              </svg>
+              <span>{errors.phone.message}</span>
+            </p>
             )}
           </div>
         </div>
@@ -339,7 +437,11 @@ export function CompanyRegisterForm() {
               </SelectTrigger>
               <SelectContent className="bg-gray-cancel border-border rounded-lg shadow-lg">
                 {INDUSTRY_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="hover:bg-muted/50 cursor-pointer">
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value} 
+                    className="hover:bg-primary-green/10 focus:bg-primary-green/10 cursor-pointer px-3 py-2 transition-colors duration-150 data-[highlighted]:bg-dark-gray"
+                  >
                     {option.label}
                   </SelectItem>
                 ))}
@@ -372,7 +474,11 @@ export function CompanyRegisterForm() {
               </SelectTrigger>
               <SelectContent className="bg-gray-cancel border-border rounded-lg shadow-lg">
                 {COMPANY_SIZE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="hover:bg-muted/50 cursor-pointer">
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value} 
+                    className="hover:bg-primary-green/10 focus:bg-primary-green/10 cursor-pointer px-3 py-2 transition-colors duration-150 data-[highlighted]:bg-dark-gray"
+                  >
                     {option.label}
                   </SelectItem>
                 ))}
@@ -382,9 +488,9 @@ export function CompanyRegisterForm() {
               <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <span>{errors.companySize.message}</span>
-              </p>
+              </svg>
+              <span>{errors.companySize.message}</span>
+            </p>
             )}
           </div>
         </div>
