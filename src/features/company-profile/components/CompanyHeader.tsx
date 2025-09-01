@@ -14,7 +14,7 @@ export default function CompanyHeader({ company, viewType }: CompanyHeaderProps)
     <div className="relative">
       {/* Banner */}
       <div 
-        className="h-64 bg-primary-green bg-cover bg-center"
+        className="h-85 bg-contain bg-center"
         style={{
           backgroundImage: company.bannerUrl ? `url(${company.bannerUrl})` : undefined
         }}
