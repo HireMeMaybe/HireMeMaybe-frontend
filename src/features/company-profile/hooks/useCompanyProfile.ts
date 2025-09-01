@@ -13,7 +13,7 @@ const mockCompany: Company = {
   location: 'New York, NY',
   email: 'contact@techinnovators.com',
   phone: '+1 (555) 123-4567',
-  logoUrl: '/api/placeholder/company-logo',
+  logoUrl: 'https://media.discordapp.net/attachments/1155455806628704307/1411997184089653262/image.png?ex=68b6b05a&is=68b55eda&hm=b5b122796ff94c0a188dbc8d687722da9f3409f34f77377152ae4a3eb0f0a0e0&=&format=webp&quality=lossless',
   bannerUrl: '/api/placeholder/company-banner',
   about: 'Tech Innovators Inc. is a leading software development company specializing in innovative solutions for businesses across various industries. Our mission is to empower organizations with cutting-edge technology that drives growth and efficiency. We foster a collaborative and inclusive work environment where creativity and innovation thrive. Our core values include integrity, excellence, and a commitment to continuous learning and development.',
   website: 'https://techinnovators.com'

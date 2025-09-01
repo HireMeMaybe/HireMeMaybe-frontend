@@ -1,8 +1,7 @@
-// src/features/company-profile/components/JobCard.tsx
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { MapPin, Users, Edit, Eye } from 'lucide-react';
+import { Users, Edit, Eye } from 'lucide-react';
 import type { JobOpening } from '@/types/company';
 
 interface JobCardProps {
@@ -21,87 +20,72 @@ export default function JobCard({
   onViewApplications 
 }: JobCardProps) {
   return (
-    <div className="bg-background border border-zinc-700 rounded-xl p-6 hover:border-primary-green/50 transition-all duration-200">
-      <div className="flex gap-4">
-        {/* Job Image */}
-        <div className="flex-shrink-0">
-          <div className="w-16 h-16 bg-component rounded-lg overflow-hidden">
-            {job.imageUrl ? (
-              <img 
-                src={job.imageUrl} 
-                alt={job.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-400 flex items-center justify-center">
-                <div className="w-8 h-8 bg-white/20 rounded-full"></div>
-              </div>
-            )}
-          </div>
+    <div className="border border-[#333333] rounded-xl p-4 bg-[#1A1A1A] flex items-start justify-between">
+      {/* Left Side - Job Info */}
+      <div className="flex-1">
+        <div className="mb-1">
+          <span className="text-lighter-gray-text text-sm">{job.department}</span>
         </div>
-        
-        {/* Job Details */}
-        <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-1">
-                {job.title}
-              </h3>
-              <p className="text-gray-text text-sm mb-2">
-                {job.department}
-              </p>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              {viewType === 'company' ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onEdit?.(job.id)}
-                    className="border-zinc-600 text-white hover:bg-zinc-700 px-3 py-1"
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => onViewApplications?.(job.id)}
-                    className="bg-primary-green hover:bg-green-700 text-white px-3 py-1"
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    View Applications
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => onApply?.(job.id)}
-                  className="bg-primary-green hover:bg-green-700 text-white px-6 py-1"
-                >
-                  Apply
-                </Button>
-              )}
-            </div>
+        <h3 className="text-white font-semibold text-lg mb-1">
+          {job.title}
+        </h3>
+        <p className="text-lighter-gray-text text-sm mb-3">
+          {job.location} | {job.type}
+        </p>
+
+        {/* Application Count - Company View Only */}
+        {viewType === 'company' && job.applicationCount && (
+          <div className="flex items-center gap-1 text-white text-sm mb-4">
+            <Users className="w-4 h-4" />
+            <span>{job.applicationCount} Applications</span>
           </div>
-          
-          {/* Job Meta */}
-          <div className="flex items-center gap-4 text-sm text-gray-text">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              <span>{job.location}</span>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {viewType === 'company' ? (
+            <>
+              <Button
+                onClick={() => onEdit?.(job.id)}
+                className="bg-[#595256] hover:bg-[#333333] text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </Button>
+              <Button
+                onClick={() => onViewApplications?.(job.id)}
+                className="bg-[#02BC77] hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
+              >
+                <Eye className="w-4 h-4" />
+                View Applications
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={() => onApply?.(job.id)}
+              className="bg-[#02BC77] hover:bg-green-700 text-white px-6 py-2 rounded-md text-sm"
+            >
+              Apply
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Right Side - Job Image */}
+      <div className="flex-shrink-0 ml-6">
+        <div className="w-60 h-40 rounded-lg overflow-hidden">
+          {job.id === '1' ? (
+            <div className="w-full h-full bg-gradient-to-br from-amber-100 via-amber-200 to-amber-300 flex items-center justify-center relative">
+              <div className="absolute inset-2 border-2 border-amber-400/30 rounded-lg"></div>
+              <div className="absolute inset-4 border border-amber-400/20 rounded-md"></div>
             </div>
-            <div className="flex items-center gap-1">
-              <span>{job.type}</span>
-            </div>
-            {viewType === 'company' && job.applicationCount && (
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <span>{job.applicationCount} Applications</span>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center relative">
+              <div className="w-8 h-8 bg-amber-300 rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 bg-amber-500 rounded-full"></div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
