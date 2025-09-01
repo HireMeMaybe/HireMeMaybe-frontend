@@ -1,4 +1,3 @@
-// src/features/company-profile/components/CompanyProfile.tsx
 "use client";
 
 import { useCompanyProfile } from '../hooks/useCompanyProfile';

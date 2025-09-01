@@ -20,7 +20,7 @@ export default function JobCard({
   onViewApplications 
 }: JobCardProps) {
   return (
-    <div className="border border-[#333333] rounded-xl p-4 bg-[#1A1A1A] flex items-start justify-between">
+    <div className="border border-gray-cancel rounded-xl p-4 bg-very-dark-gray flex items-start justify-between">
       {/* Left Side - Job Info */}
       <div className="flex-1">
         <div className="mb-1">
@@ -36,7 +36,7 @@ export default function JobCard({
         {/* Application Count - Company View Only */}
         {viewType === 'company' && job.applicationCount && (
           <div className="flex items-center gap-1 text-white text-sm mb-4">
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4 text-primary-green" />
             <span>{job.applicationCount} Applications</span>
           </div>
         )}
@@ -47,7 +47,7 @@ export default function JobCard({
             <>
               <Button
                 onClick={() => onEdit?.(job.id)}
-                className="bg-[#595256] hover:bg-[#333333] text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
+                className="bg-[#595256] hover:bg-gray-cancel text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
               >
                 <Edit className="w-4 h-4" />
                 Edit

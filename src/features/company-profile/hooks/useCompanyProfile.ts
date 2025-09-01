@@ -1,4 +1,3 @@
-// src/features/company-profile/hooks/useCompanyProfile.ts
 "use client";
 
 import { useState, useEffect } from 'react';

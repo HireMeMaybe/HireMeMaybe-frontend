@@ -1,4 +1,3 @@
-// src/features/company-profile/index.ts
 export { default as CompanyProfile } from './components/CompanyProfile';
 export { default as CompanyHeader } from './components/CompanyHeader';
 export { default as CompanyAbout } from './components/CompanyAbout';

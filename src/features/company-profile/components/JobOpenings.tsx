@@ -1,11 +1,8 @@
-// src/features/company-profile/components/JobOpenings.tsx
 "use client";
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import JobCard from './JobCard';
-import { ConfirmModal } from '@/components/modals';
 import type { JobOpening } from '@/types/company';
 
 interface JobOpeningsProps {
@@ -19,12 +16,9 @@ export default function JobOpenings({
   viewType, 
   onPostNewJob 
 }: JobOpeningsProps) {
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-
   const handleApply = (jobId: string) => {
-    setSelectedJobId(jobId);
-    setIsConfirmModalOpen(true);
+    console.log('Applied to job:', jobId);
+    // Implement actual application logic
   };
 
   const handleEdit = (jobId: string) => {
@@ -36,15 +30,6 @@ export default function JobOpenings({
     console.log('View applications for job:', jobId);
     // Implement view applications functionality
   };
-
-  const handleConfirmApplication = () => {
-    if (selectedJobId) {
-      console.log('Applied to job:', selectedJobId);
-      // Implement actual application logic
-    }
-  };
-
-  const selectedJob = jobOpenings.find(job => job.id === selectedJobId);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -79,22 +64,6 @@ export default function JobOpenings({
           </div>
         )}
       </div>
-
-      {/* Application Confirmation Modal */}
-      <ConfirmModal
-        isOpen={isConfirmModalOpen}
-        onClose={() => {
-          setIsConfirmModalOpen(false);
-          setSelectedJobId(null);
-        }}
-        title="Submit Application?"
-        message="Please confirm your choice"
-        description={selectedJob ? 
-          `Are you ready to submit your application to\n${selectedJob.title} at Tech Innovators Inc?` : 
-          "Are you ready to submit your application?"
-        }
-        onConfirm={handleConfirmApplication}
-      />
     </div>
   );
 }

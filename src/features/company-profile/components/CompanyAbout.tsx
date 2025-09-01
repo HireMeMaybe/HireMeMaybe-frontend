@@ -1,4 +1,3 @@
-// src/features/company-profile/components/CompanyAbout.tsx
 "use client";
 
 import type { Company } from '@/types/company';

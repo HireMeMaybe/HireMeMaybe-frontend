@@ -1,4 +1,3 @@
-// src/types/company.ts
 export interface CompanyRegistrationResult {
   success: boolean;
   message: string;

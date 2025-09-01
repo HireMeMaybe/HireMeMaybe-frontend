@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { Mail, Phone, Building } from 'lucide-react';
+import { Mail, Phone, Building, Edit } from 'lucide-react';
 import type { Company } from '@/types/company';
 
 interface CompanyHeaderProps {
@@ -22,7 +22,7 @@ export default function CompanyHeader({ company, viewType }: CompanyHeaderProps)
       
       {/* Company Info Card */}
       <div className="relative -mt-24 mx-auto max-w-6xl px-6">
-        <div className="bg-[#1A1A1A] border border-zinc-700 rounded-xl p-8 shadow-xl">
+        <div className="bg-very-dark-gray border border-zinc-700 rounded-xl p-8 shadow-xl">
           <div className="flex flex-col md:flex-row items-start gap-6">
             {/* Company Logo */}
             <div className="flex-shrink-0">
@@ -31,7 +31,7 @@ export default function CompanyHeader({ company, viewType }: CompanyHeaderProps)
                   <img 
                     src={company.logoUrl} 
                     alt={`${company.name} logo`}
-                    className="w-full h-full object-cover" // Ensures the image fills the container
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <Building className="w-12 h-12 text-primary-green" />
@@ -67,8 +67,9 @@ export default function CompanyHeader({ company, viewType }: CompanyHeaderProps)
                 <div className="flex-shrink-0">
                   {viewType === 'company' && (
                     <Button 
-                      className="bg-primary-green hover:bg-green-700 text-white px-6 py-2 rounded-md"
+                      className="bg-[#595256] hover:bg-gray-cancel text-white px-6 py-2 rounded-md"
                     >
+                      <Edit className="w-4 h-4" />
                       Edit Profile
                     </Button>
                   )}
