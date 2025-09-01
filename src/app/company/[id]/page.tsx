@@ -2,24 +2,17 @@
 import { CompanyProfile } from "@/features/company-profile";
 
 interface CompanyProfilePageProps {
-  readonly params: {
-    id: string;
-  };
-  readonly searchParams: {
-    view?: 'student' | 'company';
-  };
+  readonly params: Promise<{ id: string }>;
+  readonly searchParams: Promise<{ view?: "student" | "company" }>;
 }
 
-export default function CompanyProfilePage({ 
-  params, 
-  searchParams 
-}: CompanyProfilePageProps) {
-  const { id } = params;
-  const view = searchParams.view || 'student';
+export default async function CompanyProfilePage({ params, searchParams }: CompanyProfilePageProps) {
+  const { id } = await params;
+  const { view } = await searchParams;
 
   return (
     <div className="min-h-screen bg-background">
-      <CompanyProfile companyId={id} viewType={view} />
+      <CompanyProfile companyId={id} viewType={view || "student"} />
     </div>
   );
 }
