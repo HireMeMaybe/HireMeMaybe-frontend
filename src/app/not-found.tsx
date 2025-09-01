@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import NavBar from '@/components/NavBar';
-import Footer from '@/components/Footer';
 
 export default function NotFound() {
   return (
@@ -33,7 +31,6 @@ export default function NotFound() {
             >
               Go to Homepage
             </Link>
-            
           </div>
         </div>
       </div>
