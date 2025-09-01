@@ -9,9 +9,9 @@ import { ConfirmModal } from '@/components/modals';
 import type { JobOpening } from '@/types/company';
 
 interface JobOpeningsProps {
-  jobOpenings: JobOpening[];
-  viewType: 'student' | 'company';
-  onPostNewJob?: () => void;
+  readonly jobOpenings: JobOpening[];
+  readonly viewType: 'student' | 'company';
+  readonly onPostNewJob?: () => void;
 }
 
 export default function JobOpenings({ 

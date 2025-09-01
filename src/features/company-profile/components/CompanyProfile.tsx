@@ -8,7 +8,7 @@ import JobOpenings from './JobOpenings';
 import { Button } from '@/components/ui/button';
 import type { CompanyProfileProps } from '@/types/company';
 
-export default function CompanyProfile({ companyId, viewType }: CompanyProfileProps) {
+export default function CompanyProfile({ companyId, viewType }: Readonly<CompanyProfileProps>) {
   const { company, jobOpenings, isLoading, error } = useCompanyProfile(companyId);
 
   const handlePostNewJob = () => {

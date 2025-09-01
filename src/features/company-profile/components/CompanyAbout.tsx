@@ -4,7 +4,7 @@
 import type { Company } from '@/types/company';
 
 interface CompanyAboutProps {
-  company: Company;
+  readonly company: Company;
 }
 
 export default function CompanyAbout({ company }: CompanyAboutProps) {

@@ -5,11 +5,11 @@ import { Users, Edit, Eye } from 'lucide-react';
 import type { JobOpening } from '@/types/company';
 
 interface JobCardProps {
-  job: JobOpening;
-  viewType: 'student' | 'company';
-  onApply?: (jobId: string) => void;
-  onEdit?: (jobId: string) => void;
-  onViewApplications?: (jobId: string) => void;
+  readonly job: JobOpening;
+  readonly viewType: 'student' | 'company';
+  readonly onApply?: (jobId: string) => void;
+  readonly onEdit?: (jobId: string) => void;
+  readonly onViewApplications?: (jobId: string) => void;
 }
 
 export default function JobCard({ 

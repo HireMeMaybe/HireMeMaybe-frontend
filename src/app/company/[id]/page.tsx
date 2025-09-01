@@ -2,10 +2,10 @@
 import { CompanyProfile } from "@/features/company-profile";
 
 interface CompanyProfilePageProps {
-  params: {
+  readonly params: {
     id: string;
   };
-  searchParams: {
+  readonly searchParams: {
     view?: 'student' | 'company';
   };
 }

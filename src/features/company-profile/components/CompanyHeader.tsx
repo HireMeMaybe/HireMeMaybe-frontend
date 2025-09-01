@@ -5,8 +5,8 @@ import { Mail, Phone, Building } from 'lucide-react';
 import type { Company } from '@/types/company';
 
 interface CompanyHeaderProps {
-  company: Company;
-  viewType: 'student' | 'company';
+  readonly company: Company;
+  readonly viewType: 'student' | 'company';
 }
 
 export default function CompanyHeader({ company, viewType }: CompanyHeaderProps) {
