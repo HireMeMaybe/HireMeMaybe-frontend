@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { DashboardStats } from "@/types/admin";
 
 export function useAdminData() {
-  const [stats, setStats] = useState<DashboardStats>({
+  const [stats] = useState<DashboardStats>({
     pendingVerifications: 12,
     openReports: 5,
     verifiedCompanies: 248,
