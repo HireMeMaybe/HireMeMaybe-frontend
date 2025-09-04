@@ -1,4 +1,3 @@
-// src/app/admin/dashboard/page.tsx
 "use client";
 
 import { AdminSidebar, DashboardStats } from "@/features/admin/";

@@ -1,13 +1,12 @@
-// src/features/admin/components/DashboardStats.tsx
 "use client";
 
 import { Card } from "@/components/ui/card";
 
 interface StatCardProps {
-  number: string;
-  label: string;
-  subtitle: string;
-  color: "orange" | "red" | "green" | "blue";
+  readonly number: string;
+  readonly label: string;
+  readonly subtitle: string;
+  readonly color: "orange" | "red" | "green" | "blue";
 }
 
 function StatCard({ number, label, subtitle, color }: StatCardProps) {
