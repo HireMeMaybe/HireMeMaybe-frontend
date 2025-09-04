@@ -26,7 +26,7 @@ function StatCard({ number, label, subtitle, color }: StatCardProps) {
   };
 
   return (
-    <Card className={`bg-component border-zinc-700 border-t-4 ${colorClasses[color]} p-6 h-32`}>
+    <Card className={`bg-very-dark-gray border-zinc-700 border-t-4 ${colorClasses[color]} p-6 h-32`}>
       <div className="flex flex-col justify-between h-full">
         <div>
           <h3 className={`text-4xl font-bold ${textColors[color]} mb-1`}>

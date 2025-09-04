@@ -41,7 +41,7 @@ export function AdminSidebar() {
   const [activeItem, setActiveItem] = useState("Dashboard");
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-background border-r border-zinc-800 z-40 pt-14">
+    <div className="fixed left-0 top-0 h-full w-64 bg-very-dark-gray border-r border-zinc-800 z-40 pt-14">
       {/* Header */}
       <div className="flex items-center justify-center">
         <MayBeIcon width={128} height={128} />
