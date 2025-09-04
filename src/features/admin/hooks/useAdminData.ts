@@ -1,4 +1,3 @@
-// src/features/admin/hooks/useAdminData.ts
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,7 +21,7 @@ export function useAdminData() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // In a real app, you would fetch from your API:
+      // In a real app:
       // const response = await fetch('/api/admin/stats');
       // const data = await response.json();
       // setStats(data);
