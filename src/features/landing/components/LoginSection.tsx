@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Building, GraduationCap, Eye, Check } from 'lucide-react';
 import GoogleLogin from '@/features/landing/components/GoogleLogin';
+import { createCPSKGoogleAuth } from '@/lib/auth/google-auth';
 
 type RoleCardProps = Readonly<{
   title: string;
@@ -16,6 +17,29 @@ type RoleCardProps = Readonly<{
 
 function RoleCard({ title, description, checks, Icon, onSelect, isActive }: RoleCardProps) {
   const pointerActivated = useRef(false);
+
+  const handleGoogleLogin = async (title: string) => {
+    if (title === 'CPSK') {
+      try {
+        const googleAuth = createCPSKGoogleAuth();
+        const result = await googleAuth.authenticate();
+
+        if (result.success && result.data) {
+          // Store user data in sessionStorage for the registration form
+          sessionStorage.setItem('google_auth_data', JSON.stringify(result.data));
+          // Redirect to CPSK registration form
+          window.location.href = '/cpsk-register';
+        } else {
+          alert(`Google authentication failed: ${result.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error during Google authentication:', error);
+        alert('Error starting Google authentication. Please try again.');
+      }
+    } else {
+      console.log('google login for', title);
+    }
+  };
 
   return (
     <Card
@@ -85,7 +109,7 @@ function RoleCard({ title, description, checks, Icon, onSelect, isActive }: Role
           onClick={() => onSelect?.()}
         >
           <div onClick={(e) => e.stopPropagation()} className="px-6">
-            <GoogleLogin onClick={() => console.log('google login for', title)} />
+            <GoogleLogin onClick={() => handleGoogleLogin(title)} />
           </div>
         </div>
       )}
@@ -123,12 +147,12 @@ export default function LoginSection() {
           />
 
           <RoleCard
-            title="Student"
+            title="CPSK"
             description="Discover internships and job opportunities"
             checks={['Build your profile', 'Apply to positions', 'Search & filter jobs']}
             Icon={GraduationCap}
-            onSelect={() => setActive((s) => (s === 'Student' ? null : 'Student'))}
-            isActive={active === 'Student'}
+            onSelect={() => setActive((s) => (s === 'CPSK' ? null : 'CPSK'))}
+            isActive={active === 'CPSK'}
           />
 
           <RoleCard
