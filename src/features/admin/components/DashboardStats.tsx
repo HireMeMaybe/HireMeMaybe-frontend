@@ -15,14 +15,14 @@ function StatCard({ number, label, subtitle, color }: StatCardProps) {
     orange: "border-t-yellow-warning",
     red: "border-t-red-reject", 
     green: "border-t-primary-green",
-    blue: "border-t-primary-green"
+    blue: "border-t-sky-blue"
   };
 
   const textColors = {
     orange: "text-yellow-warning",
     red: "text-red-reject",
     green: "text-primary-green", 
-    blue: "text-primary-green"
+    blue: "text-sky-blue"
   };
 
   return (
@@ -70,7 +70,7 @@ export function DashboardStats() {
       
       <StatCard
         number="479"
-        label="Active Students"
+        label="Active CPSK"
         subtitle="CPSK members"
         color="blue"
       />

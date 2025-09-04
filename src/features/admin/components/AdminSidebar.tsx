@@ -31,8 +31,8 @@ const menuItems = [
   },
   {
     icon: Users,
-    label: "Manage Students",
-    href: "/admin/manage-students",
+    label: "Manage CPSK",
+    href: "/admin/manage-cpsk",
     isActive: false,
   },
 ];
