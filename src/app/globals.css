@@ -24,6 +24,7 @@
   --color-lighter-gray-text: #B8BCBA;
   --color-gray-cancel: #333333;
   --color-darker-gray: #2A2A2A;
+  --color-very-dark-gray: #1A1A1A;
 }
 
 @media (prefers-color-scheme: dark) {
