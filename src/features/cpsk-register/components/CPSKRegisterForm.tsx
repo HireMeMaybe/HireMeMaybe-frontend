@@ -4,10 +4,23 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useTransition, useEffect } from 'react';
-import { Input, Label, Button, FileUpload, RadioGroup, RadioGroupItem } from '@/components/ui/';
-import SuccessModal from '@/components/modals/SuccessModal';
-import ConfirmationModal from '@/components/modals/ConfirmModal';
-import { cpskSchema } from '@/lib/validations/cpsk';
+import {
+  Input,
+  Label,
+  Button,
+  FileUpload,
+  RadioGroup,
+  RadioGroupItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  ErrorMessage,
+} from '@/components/ui';
+import { SuccessModal, ConfirmModal } from '@/components/modals';
+import { cpskSchema, MAX_RESUME_SIZE } from '@/lib/validations/cpsk';
+import { appendIfPresent, handleApiErrors } from '@/lib/utils/form-helpers';
 
 export default function CPSKRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
@@ -72,7 +85,47 @@ export default function CPSKRegisterForm(): React.JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skills]);
 
-  const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10 MB
+  // Check for Google auth data and pre-populate form
+  useEffect(() => {
+    const googleAuthData = sessionStorage.getItem('google_auth_data');
+    if (googleAuthData) {
+      try {
+        const authData = JSON.parse(googleAuthData);
+        console.log('Pre-populating form with Google auth data:', authData);
+
+        // Pre-populate form fields based on Google auth response
+        if (authData.user) {
+          if (authData.user.first_name) {
+            setValue('first_name', authData.user.first_name);
+          }
+          if (authData.user.last_name) {
+            setValue('last_name', authData.user.last_name);
+          }
+          if (authData.user.User?.email) {
+            setValue('email', authData.user.User.email);
+          }
+          if (authData.user.User?.tel) {
+            setValue('phone', authData.user.User.tel);
+          }
+          if (authData.user.program) {
+            setValue('program', authData.user.program);
+          }
+          if (authData.user.year) {
+            setValue('year', authData.user.year.toString());
+          }
+          if (authData.user.soft_skill && Array.isArray(authData.user.soft_skill)) {
+            setSkills(authData.user.soft_skill);
+          }
+        }
+
+        // Clear the stored data after use
+        sessionStorage.removeItem('google_auth_data');
+      } catch (error) {
+        console.error('Error parsing Google auth data:', error);
+        sessionStorage.removeItem('google_auth_data');
+      }
+    }
+  }, [setValue]);
 
   const handleResumeChange = (file?: File | null) => {
     if (!file) {
@@ -124,26 +177,15 @@ export default function CPSKRegisterForm(): React.JSX.Element {
       try {
         const formData = new FormData();
 
-        // Helper to conditionally append non-empty values
-        const appendIfPresent = (key: string, value: string | File | string[] | undefined) => {
-          if (value !== undefined && value !== null && value !== '') {
-            if (Array.isArray(value)) {
-              value.forEach((item) => formData.append(key, item));
-            } else {
-              formData.append(key, value as string | File);
-            }
-          }
-        };
-
-        // Append all fields
-        appendIfPresent('first_name', data.first_name);
-        appendIfPresent('last_name', data.last_name);
-        appendIfPresent('email', data.email);
-        appendIfPresent('phone', data.phone);
-        appendIfPresent('program', data.program);
-        appendIfPresent('year', data.year);
-        appendIfPresent('soft_skill', data.soft_skill);
-        appendIfPresent('resume', data.resume);
+        // Use the normalized helper to append fields
+        appendIfPresent(formData, 'first_name', data.first_name);
+        appendIfPresent(formData, 'last_name', data.last_name);
+        appendIfPresent(formData, 'email', data.email);
+        appendIfPresent(formData, 'phone', data.phone);
+        appendIfPresent(formData, 'program', data.program);
+        appendIfPresent(formData, 'year', data.year);
+        appendIfPresent(formData, 'soft_skill', data.soft_skill);
+        appendIfPresent(formData, 'resume', data.resume);
 
         const res = await fetch('/api/cpsk-register', { method: 'POST', body: formData });
         const json = await res.json();
@@ -158,8 +200,10 @@ export default function CPSKRegisterForm(): React.JSX.Element {
         } else {
           setStatus({ ok: false, message: json.message || 'Submission failed' });
           if (json.errors && Array.isArray(json.errors)) {
-            json.errors.forEach((err: any) => {
-              if (err.field) setError(err.field as any, { message: err.message });
+            json.errors.forEach((err: { field: string; message: string }) => {
+              if (err.field) {
+                setError(err.field as keyof FormInput, { message: err.message });
+              }
             });
           }
         }
@@ -189,18 +233,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
             {...register('first_name')}
             className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
           />
-          {errors.first_name && (
-            <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{errors.first_name.message}</span>
-            </p>
-          )}
+          <ErrorMessage message={errors.first_name?.message} />
         </div>
 
         <div className="space-y-3">
@@ -211,18 +244,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
             {...register('last_name')}
             className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
           />
-          {errors.last_name && (
-            <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{errors.last_name.message}</span>
-            </p>
-          )}
+          <ErrorMessage message={errors.last_name?.message} />
         </div>
 
         <div className="space-y-3">
@@ -239,18 +261,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
             {...register('email')}
             className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
           />
-          {errors.email && (
-            <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{errors.email.message}</span>
-            </p>
-          )}
+          <ErrorMessage message={errors.email?.message} />
         </div>
 
         <div className="space-y-3">
@@ -266,18 +277,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
             {...register('phone')}
             className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
           />
-          {errors.phone && (
-            <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{errors.phone.message}</span>
-            </p>
-          )}
+          <ErrorMessage message={errors.phone?.message} />
         </div>
       </div>
 
@@ -309,18 +309,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
                   </RadioGroup>
                 )}
               />
-              {errors.program && (
-                <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>{errors.program.message}</span>
-                </p>
-              )}
+              <ErrorMessage message={errors.program?.message} />
             </div>
 
             <div className="space-y-3">
@@ -360,18 +349,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
                   </RadioGroup>
                 )}
               />
-              {errors.year && (
-                <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>{errors.year.message}</span>
-                </p>
-              )}
+              <ErrorMessage message={errors.year?.message} />
             </div>
           </div>
         </div>
@@ -394,18 +372,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
             description="PDF up to 10 MB"
             onFileChange={(file) => handleResumeChange(file || undefined)}
           />
-          {errors.resume && (
-            <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{errors.resume.message}</span>
-            </p>
-          )}
+          <ErrorMessage message={errors.resume?.message} />
           {watchedResume && (watchedResume as File).name && (
             <p className="text-muted mt-2 text-sm">Uploaded: {(watchedResume as File).name}</p>
           )}
@@ -449,18 +416,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
             />
           </div>
 
-          {errors.soft_skill && (
-            <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>{(errors.soft_skill as any).message}</span>
-            </p>
-          )}
+          <ErrorMessage message={errors.soft_skill?.message as string} />
         </div>
       </div>
 
@@ -475,7 +431,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
         </Button>
       </div>
 
-      <ConfirmationModal
+      <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         title="Submit Register?"

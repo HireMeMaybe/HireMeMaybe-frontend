@@ -32,3 +32,4 @@ export { SelectTrigger } from './select';
 export { SelectValue } from './select';
 export { Textarea } from './textarea';
 export { RadioGroup, RadioGroupItem } from './radio-group';
+export { ErrorMessage } from './error-message';

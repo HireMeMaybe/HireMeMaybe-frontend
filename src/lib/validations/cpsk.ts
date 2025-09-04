@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const MAX_RESUME_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_RESUME_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_RESUME_TYPES = ['application/pdf'];
 
 const PHONE_REGEX = /^([+]?\d{1,3}[-\s]?)?\d{7,14}$/; // permissive international phone
@@ -46,7 +46,7 @@ export const cpskSchema = z.object({
 
   resume: z
     .instanceof(File)
-    .refine((file) => file.size <= MAX_RESUME_SIZE, 'Resume must be less than 5MB')
+    .refine((file) => file.size <= MAX_RESUME_SIZE, 'Resume must be less than 10MB')
     .refine((file) => ACCEPTED_RESUME_TYPES.includes(file.type), 'Only PDF files are allowed')
     .optional(),
 });
