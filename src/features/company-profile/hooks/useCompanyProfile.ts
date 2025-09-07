@@ -7,8 +7,8 @@ import type { Company, JobOpening } from '@/types/company';
 const mockCompany: Company = {
   id: 'tech-innovators',
   name: 'Tech Innovators Inc.',
-  industry: 'Software Development',
-  employeeCount: '500-1000 employees',
+  industry: 'Technology',
+  employeeCount: '501-1000 employees',
   location: 'New York, NY',
   email: 'contact@techinnovators.com',
   phone: '094-123-4567',

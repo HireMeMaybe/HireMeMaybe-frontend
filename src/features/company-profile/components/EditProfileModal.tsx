@@ -130,6 +130,7 @@ export default function EditProfileModal({
     }
   };
 
+
   const onSubmit = async (data: CompanyRegisterFormData) => {
     startTransition(async () => {
       try {
@@ -142,12 +143,8 @@ export default function EditProfileModal({
           employeeCount: data.companySize,
         };
 
+        // Pass the files to the save handler
         await onSave?.(updatedCompany, logoFile || undefined, bannerFile || undefined);
-        
-        setSubmitMessage({
-          type: "success",
-          text: "Profile updated successfully",
-        });
 
         // Auto-close after success
         setTimeout(() => {
@@ -269,14 +266,6 @@ export default function EditProfileModal({
                       <Upload className="w-4 h-4 mr-2" />
                       Upload photo
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={() => removeFile('logo')}
-                      variant="outline"
-                      className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
-                    >
-                      Remove photo
-                    </Button>
                   </div>
                   <input
                     ref={logoInputRef}
@@ -340,14 +329,6 @@ export default function EditProfileModal({
                       <Upload className="w-4 h-4 mr-2" />
                       Upload banner
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={() => removeFile('banner')}
-                      variant="outline"
-                      className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
-                    >
-                      Remove banner
-                    </Button>
                   </div>
                   <input
                     ref={bannerInputRef}
@@ -378,7 +359,7 @@ export default function EditProfileModal({
                 <Input
                   id="companyName"
                   {...register("companyName")}
-                  className="bg-component border-zinc-600 text-white placeholder-gray-400"
+                  className="bg-very-dark-gray border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter company name"
                 />
                 {errors.companyName && (
@@ -400,7 +381,7 @@ export default function EditProfileModal({
                   id="email"
                   type="email"
                   {...register("email")}
-                  className="bg-component border-zinc-600 text-white placeholder-gray-400"
+                  className="bg-very-dark-gray border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter email address"
                 />
                 {errors.email && (
@@ -421,7 +402,7 @@ export default function EditProfileModal({
                 <Input
                   id="phone"
                   {...register("phone")}
-                  className="bg-component border-zinc-600 text-white placeholder-gray-400"
+                  className="bg-very-dark-gray border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter phone number"
                 />
                 {errors.phone && (
@@ -443,10 +424,10 @@ export default function EditProfileModal({
                     clearErrors("industry");
                   }}
                 >
-                  <SelectTrigger className="bg-component border-zinc-600 text-white">
+                  <SelectTrigger className="bg-very-dark-gray border-zinc-600 text-white">
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
-                  <SelectContent className="bg-component border-zinc-600">
+                  <SelectContent className="bg-very-dark-gray border-zinc-600">
                     {INDUSTRY_OPTIONS.map((option) => (
                       <SelectItem 
                         key={option.value} 
@@ -477,10 +458,10 @@ export default function EditProfileModal({
                     clearErrors("companySize");
                   }}
                 >
-                  <SelectTrigger className="bg-component border-zinc-600 text-white">
+                  <SelectTrigger className="bg-very-dark-gray border-zinc-600 text-white">
                     <SelectValue placeholder="Select company size" />
                   </SelectTrigger>
-                  <SelectContent className="bg-component border-zinc-600">
+                  <SelectContent className="bg-very-dark-gray border-zinc-600">
                     {COMPANY_SIZE_OPTIONS.map((option) => (
                       <SelectItem 
                         key={option.value} 
@@ -510,7 +491,7 @@ export default function EditProfileModal({
                 <Textarea
                   id="overview"
                   {...register("overview")}
-                  className="bg-component border-zinc-600 text-white placeholder-gray-400 min-h-24 resize-none"
+                  className="bg-very-dark-gray border-zinc-600 text-white placeholder-gray-400 min-h-24 resize-none"
                   placeholder="Tell us about your company..."
                   rows={4}
                 />

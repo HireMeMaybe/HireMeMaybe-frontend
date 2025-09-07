@@ -92,6 +92,10 @@ export default function CompanyProfile({ companyId, viewType }: Readonly<Company
         // Clear any existing errors
         clearErrors();
         
+        // Force a re-render by updating the initial company data
+        // This ensures the header component reflects the new images
+        Object.assign(initialCompany!, updatedCompany);
+        
       } catch (error) {
         console.error('Error updating company:', error);
         setError('companyName', {

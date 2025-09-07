@@ -48,7 +48,6 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
       try {
         const formData = new FormData();
         
-
         formData.append("companyName", updatedData.name || company.name);
         formData.append("email", updatedData.email || company.email);
         formData.append("phone", updatedData.phone || company.phone);
@@ -67,16 +66,50 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        // Create updated company object
+        let newLogoUrl = company.logoUrl;
+        let newBannerUrl = company.bannerUrl;
+        
+        // Update image URLs only if new files are provided
+        if (logoFile) {
+          // Clean up old URL if it exists and is a blob URL
+          if (company.logoUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(company.logoUrl);
+          }
+          newLogoUrl = URL.createObjectURL(logoFile);
+        }
+        
+        if (bannerFile) {
+          // Clean up old URL if it exists and is a blob URL
+          if (company.bannerUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(company.bannerUrl);
+          }
+          newBannerUrl = URL.createObjectURL(bannerFile);
+        }
+        
+        let formattedEmployeeCount = company.employeeCount;
+
+        if (updatedData.employeeCount) {
+          formattedEmployeeCount = updatedData.employeeCount.includes('employees')
+            ? updatedData.employeeCount
+            : `${updatedData.employeeCount} employees`;
+        }
+
         const updatedCompany: Company = {
           ...company,
-          ...updatedData,
-          logoUrl: logoFile ? URL.createObjectURL(logoFile) : company.logoUrl,
-          bannerUrl: bannerFile ? URL.createObjectURL(bannerFile) : company.bannerUrl,
+          name: updatedData.name || company.name,
+          email: updatedData.email || company.email,
+          phone: updatedData.phone || company.phone,
+          about: updatedData.about || company.about,
+          industry: updatedData.industry 
+            ? updatedData.industry.charAt(0).toUpperCase() + updatedData.industry.slice(1).toLowerCase()
+            : company.industry,
+          employeeCount: formattedEmployeeCount,
+          logoUrl: newLogoUrl,
+          bannerUrl: newBannerUrl,
         };
-        
+
         onCompanyUpdate?.(updatedCompany);
-        
-        // Show success modal
         setShowSuccessModal(true);
         
       } catch (error) {
