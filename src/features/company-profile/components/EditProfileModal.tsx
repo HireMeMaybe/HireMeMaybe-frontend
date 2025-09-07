@@ -46,7 +46,6 @@ export default function EditProfileModal({
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors, isDirty },
     setError,
     clearErrors,
@@ -182,7 +181,6 @@ export default function EditProfileModal({
 
   const handleSaveAndStay = () => {
     setShowWarning(false);
-    handleSubmit(onSubmit)();
   };
 
   return (

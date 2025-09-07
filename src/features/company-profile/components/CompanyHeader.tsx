@@ -22,11 +22,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const {
-    setValue,
-    handleSubmit,
-    formState: { isSubmitting },
     setError,
-    clearErrors,
   } = useForm<CompanyRegisterFormData>({
     resolver: zodResolver(companyRegisterSchema),
     defaultValues: {
@@ -50,10 +46,9 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
   ) => {
     startTransition(async () => {
       try {
-        // Create FormData for server action (similar to CompanyRegisterForm)
         const formData = new FormData();
         
-        // Append all text fields
+
         formData.append("companyName", updatedData.name || company.name);
         formData.append("email", updatedData.email || company.email);
         formData.append("phone", updatedData.phone || company.phone);
