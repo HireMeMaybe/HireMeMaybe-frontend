@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useRef, useTransition, useState, useEffect } from 'react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, X, Camera, User } from 'lucide-react';
 import { WarningModal } from '@/components/modals';
+import { companyRegisterSchema, type CompanyRegisterFormData } from "@/lib/validations/company";
 import type { Company } from '@/types/company';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
 
@@ -19,30 +22,15 @@ interface EditProfileModalProps {
   readonly onSave?: (updatedCompany: Partial<Company>, logoFile?: File, bannerFile?: File) => Promise<void>;
 }
 
-interface FormData {
-  name: string;
-  about: string;
-  email: string;
-  phone: string;
-  industry: string;
-  employeeCount: string;
-}
-
 export default function EditProfileModal({ 
   isOpen, 
   onClose, 
   company,
   onSave 
 }: EditProfileModalProps) {
-  // Form state
-  const [formData, setFormData] = useState<FormData>({
-    name: company.name,
-    about: company.about,
-    email: company.email,
-    phone: company.phone,
-    industry: company.industry,
-    employeeCount: company.employeeCount,
-  });
+  const [isPending, startTransition] = useTransition();
+  const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showWarning, setShowWarning] = useState(false);
 
   // File states
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -50,69 +38,68 @@ export default function EditProfileModal({
   const [logoPreview, setLogoPreview] = useState<string>(company.logoUrl || '');
   const [bannerPreview, setBannerPreview] = useState<string>(company.bannerUrl || '');
 
-  // UI states
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showWarning, setShowWarning] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
   // File input refs
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset form when company data changes
-  useEffect(() => {
-    setFormData({
-      name: company.name,
-      about: company.about,
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isDirty },
+    setError,
+    clearErrors,
+    reset,
+  } = useForm<CompanyRegisterFormData>({
+    resolver: zodResolver(companyRegisterSchema),
+    defaultValues: {
+      companyName: company.name,
       email: company.email,
       phone: company.phone,
+      overview: company.about,
       industry: company.industry,
-      employeeCount: company.employeeCount,
+      companySize: company.employeeCount,
+    },
+  });
+
+  // Check if there are any changes
+  const hasChanges = isDirty || logoFile !== null || bannerFile !== null;
+
+  // Reset form when company data changes
+  useEffect(() => {
+    reset({
+      companyName: company.name,
+      email: company.email,
+      phone: company.phone,
+      overview: company.about,
+      industry: company.industry,
+      companySize: company.employeeCount,
     });
     setLogoPreview(company.logoUrl || '');
     setBannerPreview(company.bannerUrl || '');
     setLogoFile(null);
     setBannerFile(null);
-  }, [company]);
-
-  // Check for changes
-  useEffect(() => {
-    const hasFormChanges = (
-      formData.name !== company.name ||
-      formData.about !== company.about ||
-      formData.email !== company.email ||
-      formData.phone !== company.phone ||
-      formData.industry !== company.industry ||
-      formData.employeeCount !== company.employeeCount
-    );
-    const hasFileChanges = logoFile !== null || bannerFile !== null;
-    setHasChanges(hasFormChanges || hasFileChanges);
-  }, [formData, logoFile, bannerFile, company]);
-
-  // Handle form input changes
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+  }, [company, reset]);
 
   // Handle file uploads
   const handleFileChange = (type: 'logo' | 'banner', file: File) => {
     if (file.size > 10 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, [type]: 'File size must be less than 10MB' }));
+      setError(type === 'logo' ? 'logo' : 'banner', {
+        message: 'File size must be less than 10MB'
+      });
       return;
     }
 
     if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-      setErrors(prev => ({ ...prev, [type]: 'Only JPG, JPEG, and PNG files are allowed' }));
+      setError(type === 'logo' ? 'logo' : 'banner', {
+        message: 'Only JPG, JPEG, and PNG files are allowed'
+      });
       return;
     }
 
     // Clear previous error
-    setErrors(prev => ({ ...prev, [type]: '' }));
+    clearErrors(type === 'logo' ? 'logo' : 'banner');
 
     // Set file and create preview
     const reader = new FileReader();
@@ -135,67 +122,52 @@ export default function EditProfileModal({
       setLogoFile(null);
       setLogoPreview(company.logoUrl || '');
       if (logoInputRef.current) logoInputRef.current.value = '';
+      clearErrors('logo');
     } else {
       setBannerFile(null);
       setBannerPreview(company.bannerUrl || '');
       if (bannerInputRef.current) bannerInputRef.current.value = '';
+      clearErrors('banner');
     }
   };
 
-  // Validate form
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+  const onSubmit = async (data: CompanyRegisterFormData) => {
+    startTransition(async () => {
+      try {
+        const updatedCompany: Partial<Company> = {
+          name: data.companyName,
+          about: data.overview,
+          email: data.email,
+          phone: data.phone,
+          industry: data.industry,
+          employeeCount: data.companySize,
+        };
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Company name is required';
-    }
+        await onSave?.(updatedCompany, logoFile || undefined, bannerFile || undefined);
+        
+        setSubmitMessage({
+          type: "success",
+          text: "Profile updated successfully",
+        });
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    }
-
-    if (!formData.about.trim()) {
-      newErrors.about = 'About us is required';
-    } else if (formData.about.trim().length < 10) {
-      newErrors.about = 'About us must be at least 10 characters';
-    }
-
-    if (!formData.industry) {
-      newErrors.industry = 'Please select an industry';
-    }
-
-    if (!formData.employeeCount) {
-      newErrors.employeeCount = 'Please select company size';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Handle save
-  const handleSave = async () => {
-    if (!validateForm()) return;
-
-    try {
-      setIsSubmitting(true);
-      await onSave?.(formData, logoFile || undefined, bannerFile || undefined);
-      onClose();
-    } catch (error) {
-      console.error('Error saving profile:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+        // Auto-close after success
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        setSubmitMessage({
+          type: "error",
+          text: "Failed to update profile. Please try again.",
+        });
+      }
+    });
   };
 
   // Handle close with warning check
   const handleClose = () => {
-    if (hasChanges && !isSubmitting) {
+    if (hasChanges && !isPending) {
       setShowWarning(true);
     } else {
       onClose();
@@ -208,9 +180,9 @@ export default function EditProfileModal({
     onClose();
   };
 
-  const handleSaveAndStay = async () => {
+  const handleSaveAndStay = () => {
     setShowWarning(false);
-    await handleSave();
+    handleSubmit(onSubmit)();
   };
 
   return (
@@ -227,6 +199,30 @@ export default function EditProfileModal({
           </DialogDescription>
           
           <div className="space-y-6 p-6">
+            {/* Submit Message */}
+            {submitMessage && (
+              <div
+                className={`p-4 rounded-xl shadow-sm transition-all duration-300 ${
+                  submitMessage.type === "success"
+                    ? "bg-primary-green text-white"
+                    : "bg-red-reject text-white"
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  {submitMessage.type === "success" ? (
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="font-medium">{submitMessage.text}</span>
+                </div>
+              </div>
+            )}
+
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-semibold text-white">Edit your profile</h2>
@@ -239,7 +235,7 @@ export default function EditProfileModal({
               </Button>
             </div>
 
-            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Profile Picture */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-white">Profile Picture</Label>
@@ -298,7 +294,14 @@ export default function EditProfileModal({
                 <p className="text-xs text-gray-400">
                   At least 512 x 512 px PNG or JPG file
                 </p>
-                {errors.logo && <p className="text-xs text-red-400">{errors.logo}</p>}
+                {errors.logo && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.logo.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* Banner */}
@@ -359,22 +362,35 @@ export default function EditProfileModal({
                     }}
                   />
                 </div>
-                {errors.banner && <p className="text-xs text-red-400">{errors.banner}</p>}
+                {errors.banner && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.banner.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* Company Name */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-white">
-                  Full name
+                <Label htmlFor="companyName" className="text-sm font-medium text-white">
+                  Company Name
                 </Label>
                 <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  id="companyName"
+                  {...register("companyName")}
                   className="bg-component border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter company name"
                 />
-                {errors.name && <p className="text-xs text-red-400">{errors.name}</p>}
+                {errors.companyName && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.companyName.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* Email */}
@@ -385,12 +401,18 @@ export default function EditProfileModal({
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  {...register("email")}
                   className="bg-component border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter email address"
                 />
-                {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.email.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* Phone */}
@@ -400,20 +422,28 @@ export default function EditProfileModal({
                 </Label>
                 <Input
                   id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  {...register("phone")}
                   className="bg-component border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter phone number"
                 />
-                {errors.phone && <p className="text-xs text-red-400">{errors.phone}</p>}
+                {errors.phone && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.phone.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* Industry */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-white">Industry</Label>
                 <Select 
-                  value={formData.industry} 
-                  onValueChange={(value) => handleInputChange('industry', value)}
+                  onValueChange={(value) => {
+                    setValue("industry", value);
+                    clearErrors("industry");
+                  }}
                 >
                   <SelectTrigger className="bg-component border-zinc-600 text-white">
                     <SelectValue placeholder="Select industry" />
@@ -430,15 +460,24 @@ export default function EditProfileModal({
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.industry && <p className="text-xs text-red-400">{errors.industry}</p>}
+                {errors.industry && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.industry.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* Company Size */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-white">Company Size</Label>
                 <Select 
-                  value={formData.employeeCount} 
-                  onValueChange={(value) => handleInputChange('employeeCount', value)}
+                  onValueChange={(value) => {
+                    setValue("companySize", value);
+                    clearErrors("companySize");
+                  }}
                 >
                   <SelectTrigger className="bg-component border-zinc-600 text-white">
                     <SelectValue placeholder="Select company size" />
@@ -455,23 +494,36 @@ export default function EditProfileModal({
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.employeeCount && <p className="text-xs text-red-400">{errors.employeeCount}</p>}
+                {errors.companySize && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.companySize.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* About Us */}
               <div className="space-y-2">
-                <Label htmlFor="about" className="text-sm font-medium text-white">
+                <Label htmlFor="overview" className="text-sm font-medium text-white">
                   About us
                 </Label>
                 <Textarea
-                  id="about"
-                  value={formData.about}
-                  onChange={(e) => handleInputChange('about', e.target.value)}
+                  id="overview"
+                  {...register("overview")}
                   className="bg-component border-zinc-600 text-white placeholder-gray-400 min-h-24 resize-none"
                   placeholder="Tell us about your company..."
                   rows={4}
                 />
-                {errors.about && <p className="text-xs text-red-400">{errors.about}</p>}
+                {errors.overview && (
+                  <p className="text-sm text-red-reject mt-2 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>{errors.overview.message}</span>
+                  </p>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -481,16 +533,26 @@ export default function EditProfileModal({
                   onClick={handleClose}
                   variant="outline"
                   className="border-zinc-600 text-zinc-300 hover:bg-zinc-700 px-6"
-                  disabled={isSubmitting}
+                  disabled={isPending}
                 >
                   Close
                 </Button>
                 <Button
                   type="submit"
                   className="bg-primary-green hover:bg-green-700 text-white px-6"
-                  disabled={isSubmitting}
+                  disabled={isPending}
                 >
-                  {isSubmitting ? 'Saving...' : 'Save changes'}
+                  {isPending ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Saving...</span>
+                    </div>
+                  ) : (
+                    'Save changes'
+                  )}
                 </Button>
               </div>
             </form>

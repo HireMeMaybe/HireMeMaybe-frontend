@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition, useState } from "react";
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, Building, Edit } from 'lucide-react';
 import EditProfileModal from '@/features/company-profile/components/EditProfileModal';
 import { SuccessModal } from '@/components/modals';
+import { companyRegisterSchema, type CompanyRegisterFormData } from "@/lib/validations/company";
 import type { Company } from '@/types/company';
 
 interface CompanyHeaderProps {
@@ -14,9 +17,27 @@ interface CompanyHeaderProps {
 }
 
 export default function CompanyHeader({ company, viewType, onCompanyUpdate }: CompanyHeaderProps) {
+  const [isPending, startTransition] = useTransition();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+
+  const {
+    setValue,
+    handleSubmit,
+    formState: { isSubmitting },
+    setError,
+    clearErrors,
+  } = useForm<CompanyRegisterFormData>({
+    resolver: zodResolver(companyRegisterSchema),
+    defaultValues: {
+      companyName: company.name,
+      email: company.email,
+      phone: company.phone,
+      overview: company.about,
+      industry: company.industry,
+      companySize: company.employeeCount,
+    },
+  });
 
   const handleEditProfile = () => {
     setShowEditModal(true);
@@ -27,38 +48,50 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
     logoFile?: File, 
     bannerFile?: File
   ) => {
-    try {
-      setIsUpdating(true);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real implementation, you would:
-      // 1. Upload files to storage service
-      // 2. Update company data via API
-      // 3. Handle response and errors
-      
-      const updatedCompany: Company = {
-        ...company,
-        ...updatedData,
-        // If files were uploaded, you'd set the URLs from the upload response
-        logoUrl: logoFile ? URL.createObjectURL(logoFile) : company.logoUrl,
-        bannerUrl: bannerFile ? URL.createObjectURL(bannerFile) : company.bannerUrl,
-      };
-      
-      // Update parent component with new data
-      onCompanyUpdate?.(updatedCompany);
-      
-      // Show success modal
-      setShowSuccessModal(true);
-      
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      // In a real app, you'd show an error message
-      throw error;
-    } finally {
-      setIsUpdating(false);
-    }
+    startTransition(async () => {
+      try {
+        // Create FormData for server action (similar to CompanyRegisterForm)
+        const formData = new FormData();
+        
+        // Append all text fields
+        formData.append("companyName", updatedData.name || company.name);
+        formData.append("email", updatedData.email || company.email);
+        formData.append("phone", updatedData.phone || company.phone);
+        formData.append("overview", updatedData.about || company.about);
+        formData.append("industry", updatedData.industry || company.industry);
+        formData.append("companySize", updatedData.employeeCount || company.employeeCount);
+        
+        // Append files if they exist
+        if (logoFile) {
+          formData.append("logo", logoFile);
+        }
+        if (bannerFile) {
+          formData.append("banner", bannerFile);
+        }
+
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const updatedCompany: Company = {
+          ...company,
+          ...updatedData,
+          logoUrl: logoFile ? URL.createObjectURL(logoFile) : company.logoUrl,
+          bannerUrl: bannerFile ? URL.createObjectURL(bannerFile) : company.bannerUrl,
+        };
+        
+        onCompanyUpdate?.(updatedCompany);
+        
+        // Show success modal
+        setShowSuccessModal(true);
+        
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        setError('companyName', {
+          message: 'Failed to update profile. Please try again.',
+        });
+        throw error;
+      }
+    });
   };
 
   return (
@@ -121,7 +154,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                       <Button 
                         onClick={handleEditProfile}
                         className="bg-[#595256] hover:bg-gray-cancel text-white px-6 py-2 rounded-md"
-                        disabled={isUpdating}
+                        disabled={isPending}
                       >
                         <Edit className="w-4 h-4" />
                         Edit Profile
