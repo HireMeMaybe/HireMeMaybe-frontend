@@ -65,7 +65,6 @@ export default function EditProfileModal({
   // Check if there are any changes
   const hasChanges = isDirty || logoFile !== null || bannerFile !== null;
 
-  // Reset form when company data changes
   useEffect(() => {
     reset({
       companyName: company.name,
@@ -79,7 +78,15 @@ export default function EditProfileModal({
     setBannerPreview(company.bannerUrl || '');
     setLogoFile(null);
     setBannerFile(null);
-  }, [company, reset]);
+    
+    // Clear file inputs
+    if (logoInputRef.current) logoInputRef.current.value = '';
+    if (bannerInputRef.current) bannerInputRef.current.value = '';
+    
+    // Clear errors and messages
+    clearErrors();
+    setSubmitMessage(null);
+  }, [isOpen, company, reset, clearErrors]);
 
   // Handle file uploads
   const handleFileChange = (type: 'logo' | 'banner', file: File) => {
