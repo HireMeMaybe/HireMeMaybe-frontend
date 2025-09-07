@@ -1,18 +1,31 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { useCompanyProfile } from '../hooks/useCompanyProfile';
 import CompanyHeader from './CompanyHeader';
 import CompanyAbout from './CompanyAbout';
 import JobOpenings from './JobOpenings';
 import { Button } from '@/components/ui/button';
-import type { CompanyProfileProps } from '@/types/company';
+import type { CompanyProfileProps, Company } from '@/types/company';
 
 export default function CompanyProfile({ companyId, viewType }: Readonly<CompanyProfileProps>) {
-  const { company, jobOpenings, isLoading, error } = useCompanyProfile(companyId);
+  const { company: initialCompany, jobOpenings, isLoading, error } = useCompanyProfile(companyId);
+  const [company, setCompany] = useState<Company | null>(initialCompany);
+
+  // Update local company state when initial data loads
+  useEffect(() => {
+    if (initialCompany) {
+      setCompany(initialCompany);
+    }
+  }, [initialCompany]); // Changed from useState to useEffect
 
   const handlePostNewJob = () => {
     console.log('Post new job clicked');
     // Implement navigation to job posting form
+  };
+
+  const handleCompanyUpdate = (updatedCompany: Company) => {
+    setCompany(updatedCompany);
   };
 
   if (isLoading) {
@@ -47,7 +60,11 @@ export default function CompanyProfile({ companyId, viewType }: Readonly<Company
 
   return (
     <div className="min-h-screen bg-background">
-      <CompanyHeader company={company} viewType={viewType} />
+      <CompanyHeader 
+        company={company} 
+        viewType={viewType} 
+        onCompanyUpdate={handleCompanyUpdate}
+      />
       <CompanyAbout company={company} />
       <JobOpenings 
         jobOpenings={jobOpenings} 
