@@ -3,23 +3,28 @@
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+type Job = {
+  readonly id: number;
+  readonly title: string;
+  readonly company: string;
+  readonly location: string;
+  readonly logoPath: string;
+  readonly tags?: string[];
+  readonly description?: string;
+};
+
 type JobCardProps = {
-  job: {
-    id: number;
-    title: string;
-    company: string;
-    location: string;
-    logoPath: string;
-  };
-  selected: boolean;
-  onSelect: () => void;
+  readonly job: Job;
+  readonly selected: boolean;
+  readonly onSelect: () => void;
 };
 
 export default function JobCard({ job, selected, onSelect }: JobCardProps) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onSelect}
-      className={`flex items-center gap-4 p-4 cursor-pointer border-b border-gray-700 hover:bg-gray-800 transition-colors ${
+      className={`w-full text-left flex items-center gap-4 p-4 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
         selected ? "border-l-4 border-primary-green bg-gray-900" : ""
       }`}
     >
@@ -38,40 +43,38 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
         <p className="text-sm text-gray-400">{job.company}</p>
         <p className="text-sm text-gray-400">{job.location}</p>
       </div>
-    </div>
+    </button>
   );
 }
 
-export function JobDetails({ job }: { job: any }) {
+export function JobDetails({ job }: { readonly job: Job }) {
   return (
     <div className="border border-gray-700 p-6">
       <div className="flex items-center gap-4 mb-4">
         <div className="w-14 h-14 bg-gray-600 rounded flex items-center justify-center">
-            <img
+          <img
             src={job.logoPath}
             alt={job.company}
             className="w-12 h-12 object-contain"
-            />
+          />
         </div>
 
         {/* Job Info */}
         <div className="flex-1">
-            <h3 className="font-semibold text-white">{job.title}</h3>
-            <p className="text-sm text-gray-400">{job.company}</p>
-            <p className="text-sm text-gray-400">{job.location}</p>
+          <h3 className="font-semibold text-white">{job.title}</h3>
+          <p className="text-sm text-gray-400">{job.company}</p>
+          <p className="text-sm text-gray-400">{job.location}</p>
         </div>
 
         <ExternalLink className="w-5 h-5 text-gray-text hover:text-primary-green" />
       </div>
 
       <div className="flex items-center space-x-4 mb-6">
-        {job.tags?.map((tag: string, idx: number) => (
+        {job.tags?.map((tag) => (
           <span
-            key={idx}
+            key={tag}
             className={`px-3 py-1 text-xs rounded-full ${
-              idx === 0
-                ? "bg-primary-green text-white"
-                : "text-gray-text"
+              job.tags?.[0] === tag ? "bg-primary-green text-white" : "text-gray-text"
             }`}
           >
             {tag}
