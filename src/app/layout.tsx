@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navbar from '@/components/NavBar';
 import Footer from '@/components/Footer';
+import NextAuthProvider from '@/components/NextAuthProvider';
 import './globals.css';
 
 const inter = Inter({
@@ -14,9 +15,9 @@ export const metadata: Metadata = {
   description:
     'An employment system designed to serve students in the Software and Knowledge Engineering (SKE) and Computer Engineering (CPE) programs.',
   icons: {
-    icon: '/favicon.svg',       
-    shortcut: '/favicon.ico',   
-  }
+    icon: '/favicon.svg',
+    shortcut: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -27,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
-        <Navbar />
-        {children}
-        <Footer />
+        <NextAuthProvider>
+          <Navbar />
+          {children}
+          <Footer />
+        </NextAuthProvider>
       </body>
     </html>
   );

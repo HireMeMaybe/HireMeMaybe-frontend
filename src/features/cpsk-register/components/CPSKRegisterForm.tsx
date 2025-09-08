@@ -4,6 +4,7 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useTransition, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   Input,
   Label,
@@ -26,6 +27,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | { ok: boolean; message: string }>(null);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const { data: session } = useSession();
 
   type FormInput = {
     first_name: string;
@@ -85,47 +87,51 @@ export default function CPSKRegisterForm(): React.JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skills]);
 
-  // Check for Google auth data and pre-populate form
+  // Check for NextAuth session data and pre-populate form
   useEffect(() => {
-    const googleAuthData = sessionStorage.getItem('google_auth_data');
-    if (googleAuthData) {
+    if (session?.backendUser) {
       try {
-        const authData = JSON.parse(googleAuthData);
-        console.log('Pre-populating form with Google auth data:', authData);
+        const authData = session.backendUser;
+        console.log('Pre-populating form with NextAuth session data:', authData);
 
-        // Pre-populate form fields based on Google auth response
-        if (authData.user) {
-          if (authData.user.first_name) {
-            setValue('first_name', authData.user.first_name);
-          }
-          if (authData.user.last_name) {
-            setValue('last_name', authData.user.last_name);
-          }
-          if (authData.user.User?.email) {
-            setValue('email', authData.user.User.email);
-          }
-          if (authData.user.User?.tel) {
-            setValue('phone', authData.user.User.tel);
-          }
-          if (authData.user.program) {
-            setValue('program', authData.user.program);
-          }
-          if (authData.user.year) {
-            setValue('year', authData.user.year.toString());
-          }
-          if (authData.user.soft_skill && Array.isArray(authData.user.soft_skill)) {
-            setSkills(authData.user.soft_skill);
-          }
+        // Pre-populate form fields based on backend user data
+        if (authData.first_name) {
+          setValue('first_name', authData.first_name);
         }
-
-        // Clear the stored data after use
-        sessionStorage.removeItem('google_auth_data');
+        if (authData.last_name) {
+          setValue('last_name', authData.last_name);
+        }
+        if (authData.User?.email || session.user?.email) {
+          setValue('email', authData.User?.email || session.user?.email || '');
+        }
+        if (authData.User?.tel) {
+          setValue('phone', authData.User.tel);
+        }
+        if (authData.program) {
+          setValue('program', authData.program);
+        }
+        if (authData.year) {
+          setValue('year', authData.year.toString());
+        }
+        if (authData.soft_skill && Array.isArray(authData.soft_skill)) {
+          setSkills(authData.soft_skill);
+        }
       } catch (error) {
-        console.error('Error parsing Google auth data:', error);
-        sessionStorage.removeItem('google_auth_data');
+        console.error('Error processing NextAuth session data:', error);
+      }
+    } else if (session?.user) {
+      // Fallback to basic NextAuth user data if no backend user data
+      console.log('Pre-populating form with basic NextAuth user data:', session.user);
+      if (session.user.name) {
+        const nameParts = session.user.name.split(' ');
+        setValue('first_name', nameParts[0] || '');
+        setValue('last_name', nameParts.slice(1).join(' ') || '');
+      }
+      if (session.user.email) {
+        setValue('email', session.user.email);
       }
     }
-  }, [setValue]);
+  }, [setValue, session]);
 
   const handleResumeChange = (file?: File | null) => {
     if (!file) {

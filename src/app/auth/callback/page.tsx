@@ -1,111 +1,111 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
-export default function AuthCallback() {
+export default function AuthCallbackPage() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const router = useRouter();
+  const [status, setStatus] = useState<'loading' | 'error' | 'done'>('loading');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    const error = searchParams.get('error');
+    async function run() {
+      const code = searchParams.get('code');
+      const error = searchParams.get('error');
 
-    if (error) {
-      setStatus('error');
-      setMessage(`Authentication failed: ${error}`);
-      // Send error to parent window
-      if (window.opener) {
-        window.opener.postMessage(
-          {
-            type: 'GOOGLE_AUTH_ERROR',
-            error: error,
-          },
-          window.location.origin
-        );
-        window.close();
+      if (error) {
+        setStatus('error');
+        setMessage(`Authentication failed: ${error}`);
+        return;
       }
-      return;
+
+      if (!code) {
+        setStatus('error');
+        setMessage('No authorization code found in callback URL');
+        return;
+      }
+
+      try {
+        // Forward the code to our server route which forwards to the backend
+        const res = await fetch('/api/auth/forward-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+
+        const payload = await res.json();
+        if (!res.ok || !payload?.success) {
+          setStatus('error');
+          setMessage('Backend exchange failed');
+          console.error('Forward-code response:', payload);
+          return;
+        }
+
+        const data = payload.data;
+        // data should contain access_token and user
+        const token = data.access_token || data.accessToken || data.token;
+        const backendUser = data.user || null;
+
+        if (!token) {
+          setStatus('error');
+          setMessage('Backend did not return access token');
+          return;
+        }
+
+        // Sign into NextAuth using credentials provider; this creates a NextAuth session
+        const result = await signIn('credentials', {
+          redirect: false,
+          token,
+          user: JSON.stringify(backendUser),
+        });
+
+        if (result?.error) {
+          setStatus('error');
+          setMessage('Failed to sign in with backend token');
+          console.error('Credentials signIn error:', result);
+          return;
+        }
+
+        setStatus('done');
+        // Redirect to registration if needed or home
+        if (!backendUser?.program) {
+          router.push('/cpsk-register');
+        } else {
+          router.push('/');
+        }
+      } catch (err) {
+        console.error('Error in auth callback handler:', err);
+        setStatus('error');
+        setMessage('Unexpected error');
+      }
     }
 
-    if (code) {
-      setStatus('success');
-      setMessage('Authorization code received successfully!');
-      console.log('Authorization code:', code);
+    run();
+  }, [searchParams, router]);
 
-      // Send authorization code to parent window
-      if (window.opener) {
-        window.opener.postMessage(
-          {
-            type: 'GOOGLE_AUTH_SUCCESS',
-            code: code,
-          },
-          window.location.origin
-        );
-        window.close();
-      } else {
-        // Fallback for direct navigation (not popup)
-        sessionStorage.setItem('google_authorization_code', code);
-        setTimeout(() => {
-          window.location.href = '/cpsk-register';
-        }, 2000);
-      }
-    } else {
-      setStatus('error');
-      setMessage('No authorization code received');
-      if (window.opener) {
-        window.opener.postMessage(
-          {
-            type: 'GOOGLE_AUTH_ERROR',
-            error: 'No authorization code received',
-          },
-          window.location.origin
-        );
-        window.close();
-      }
-    }
-  }, [searchParams]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="rounded-lg bg-white p-8 shadow-md">
-        {status === 'loading' && (
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Processing authentication...</p>
-          </div>
-        )}
-
-        {status === 'success' && (
-          <div className="text-center">
-            <div className="mb-4 text-4xl text-green-600">✓</div>
-            <h1 className="mb-2 text-xl font-semibold text-gray-900">Authentication Successful</h1>
-            <p className="text-gray-600">{message}</p>
-            <p className="mt-2 text-sm text-gray-500">This window will close automatically...</p>
-          </div>
-        )}
-
-        {status === 'error' && (
-          <div className="text-center">
-            <div className="mb-4 text-4xl text-red-600">✗</div>
-            <h1 className="mb-2 text-xl font-semibold text-gray-900">Authentication Failed</h1>
-            <p className="text-gray-600">{message}</p>
-            <button
-              onClick={() => {
-                if (window.opener) {
-                  window.close();
-                } else {
-                  window.location.href = '/';
-                }
-              }}
-              className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              {window.opener ? 'Close' : 'Return to Home'}
-            </button>
-          </div>
-        )}
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold">Authenticating...</h2>
+          <p className="mt-2 text-gray-600">Please wait while we finish signing you in.</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold">Authentication Error</h2>
+          <p className="mt-2 text-red-600">{message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <div />;
 }
