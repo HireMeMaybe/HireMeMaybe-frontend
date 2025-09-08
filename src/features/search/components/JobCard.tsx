@@ -3,23 +3,41 @@
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface JobCardProps {
-  job: any;
+type JobCardProps = {
+  job: {
+    id: number;
+    title: string;
+    company: string;
+    location: string;
+    logoPath: string;
+  };
   selected: boolean;
   onSelect: () => void;
-}
+};
 
 export default function JobCard({ job, selected, onSelect }: JobCardProps) {
   return (
     <div
       onClick={onSelect}
-      className={`p-4 border-b border-gray-700 cursor-pointer hover:bg-gray-800 ${
+      className={`flex items-center gap-4 p-4 cursor-pointer border-b border-gray-700 hover:bg-gray-800 transition-colors ${
         selected ? "border-l-4 border-primary-green bg-gray-900" : ""
       }`}
     >
-      <h3 className="font-semibold text-white">{job.title}</h3>
-      <p className="text-sm text-gray-text">{job.company}</p>
-      <p className="text-xs text-gray-text">{job.location}</p>
+      {/* Company Logo */}
+      <div className="w-14 h-14 bg-gray-600 rounded flex items-center justify-center">
+        <img
+          src={job.logoPath}
+          alt={job.company}
+          className="w-12 h-12 object-contain"
+        />
+      </div>
+
+      {/* Job Info */}
+      <div className="flex-1">
+        <h3 className="font-semibold text-white">{job.title}</h3>
+        <p className="text-sm text-gray-400">{job.company}</p>
+        <p className="text-sm text-gray-400">{job.location}</p>
+      </div>
     </div>
   );
 }
@@ -27,20 +45,38 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
 export function JobDetails({ job }: { job: any }) {
   return (
     <div className="border border-gray-700 p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-semibold text-white">{job.title}</h2>
-          <p className="text-sm text-gray-text">{job.company}</p>
-          <p className="text-sm text-gray-text">{job.location}</p>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-14 h-14 bg-gray-600 rounded flex items-center justify-center">
+            <img
+            src={job.logoPath}
+            alt={job.company}
+            className="w-12 h-12 object-contain"
+            />
         </div>
+
+        {/* Job Info */}
+        <div className="flex-1">
+            <h3 className="font-semibold text-white">{job.title}</h3>
+            <p className="text-sm text-gray-400">{job.company}</p>
+            <p className="text-sm text-gray-400">{job.location}</p>
+        </div>
+
         <ExternalLink className="w-5 h-5 text-gray-text hover:text-primary-green" />
       </div>
 
       <div className="flex items-center space-x-4 mb-6">
-        <span className="px-3 py-1 bg-primary-green text-white text-xs rounded-full">
-          {job.tags[0]}
-        </span>
-        <span className="text-xs text-gray-text">{job.tags[1]}</span>
+        {job.tags?.map((tag: string, idx: number) => (
+          <span
+            key={idx}
+            className={`px-3 py-1 text-xs rounded-full ${
+              idx === 0
+                ? "bg-primary-green text-white"
+                : "text-gray-text"
+            }`}
+          >
+            {tag}
+          </span>
+        ))}
       </div>
 
       <Button className="bg-primary-green hover:bg-green-600 text-white text-sm px-6 py-2 mb-6">

@@ -23,26 +23,25 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top Search + Filters */}
-      <div className="border-b border-gray-700">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col gap-4">
+        <div className="container mx-auto px-4 mt-12 mb-4">
+            <div className="flex flex-col gap-4">
             {/* Search Bar */}
             <div className="relative max-w-xl mx-auto w-full">
-              <Input
+                <Input
                 type="text"
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-12 pl-12 pr-4 text-base bg-component border-none rounded-full text-white placeholder-gray-text"
-              />
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-text" />
+                />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-text" />
             </div>
 
             {/* Filter Row */}
             <SearchFilters />
-          </div>
+            </div>
         </div>
-      </div>
+      
 
       {/* Job List + Details */}
       <div className="container mx-auto px-4 py-8">
@@ -66,11 +65,13 @@ export default function SearchPage() {
         </div>
 
         {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        <div className="flex justify-center mt-6">
+            <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            />
+        </div>
       </div>
     </div>
   );

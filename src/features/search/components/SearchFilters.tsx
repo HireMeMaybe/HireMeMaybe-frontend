@@ -24,7 +24,7 @@ export default function SearchFilters() {
     <div className="flex flex-wrap justify-center gap-2">
       {filters.map((filter) => (
         <Select key={filter}>
-          <SelectTrigger className="bg-component border-none text-white text-sm px-4">
+          <SelectTrigger className="bg-component rounded-full border-none text-white text-sm px-4">
             <SelectValue placeholder={filter} />
           </SelectTrigger>
           <SelectContent className="bg-component border-gray-600">
