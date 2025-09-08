@@ -32,7 +32,7 @@ export default function SearchPage() {
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-12 pl-12 pr-4 text-base bg-component border-none rounded-full text-white placeholder-gray-text"
+                className="w-full h-12 pl-12 pr-4 text-base bg-darker-gray border-none rounded-full text-white placeholder-gray-text"
                 />
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-text" />
             </div>

@@ -24,14 +24,14 @@ export default function SearchFilters() {
     <div className="flex flex-wrap justify-center gap-2">
       {filters.map((filter) => (
         <Select key={filter}>
-          <SelectTrigger className="bg-component rounded-full border-none text-white text-sm px-4">
+          <SelectTrigger className="bg-darker-gray rounded-full border-none text-white text-sm px-4">
             <SelectValue placeholder={filter} />
           </SelectTrigger>
-          <SelectContent className="bg-component border-gray-600">
-            <SelectItem value="option1" className="text-white">
+          <SelectContent className="bg-darker-gray border-gray-600">
+            <SelectItem value="option1" className="text-white hover:bg-gray-700">
               Option 1
             </SelectItem>
-            <SelectItem value="option2" className="text-white">
+            <SelectItem value="option2" className="text-white hover:bg-gray-700">
               Option 2
             </SelectItem>
           </SelectContent>
