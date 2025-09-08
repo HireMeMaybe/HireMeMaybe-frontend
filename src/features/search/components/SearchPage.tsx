@@ -8,10 +8,17 @@ import SearchFilters from "./SearchFilters";
 import JobCard, { JobDetails } from "./JobCard";
 import Pagination from "./Pagination";
 
+const JOBS_PER_PAGE = 8;
+
 export default function SearchPage() {
   const { jobs } = useJobs();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJob, setSelectedJob] = useState(jobs[0]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
+  const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
+  const paginatedJobs = jobs.slice(startIndex, startIndex + JOBS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -42,11 +49,11 @@ export default function SearchPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Job List */}
           <div className="lg:col-span-1 border border-gray-700">
-            {jobs.map((job) => (
+            {paginatedJobs.map((job) => (
               <JobCard
                 key={job.id}
                 job={job}
-                selected={selectedJob.id === job.id}
+                selected={selectedJob?.id === job.id}
                 onSelect={() => setSelectedJob(job)}
               />
             ))}
@@ -54,12 +61,16 @@ export default function SearchPage() {
 
           {/* Job Details */}
           <div className="lg:col-span-2">
-            <JobDetails job={selectedJob} />
+            {selectedJob ? <JobDetails job={selectedJob} /> : null}
           </div>
         </div>
 
         {/* Pagination */}
-        <Pagination />
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );
