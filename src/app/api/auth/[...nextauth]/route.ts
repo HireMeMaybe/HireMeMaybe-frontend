@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth from 'next-auth/next';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 // Small interface to represent the normalized backend user shape we store in the
@@ -13,7 +13,7 @@ interface BackendUser {
   soft_skill?: string[];
   resume_id?: number | null;
   profile_picture?: string | null;
-  raw?: any; // keep original backend payload for debugging / future migration
+  raw?: unknown; // keep original backend payload for debugging / future migration
 }
 
 const handler = NextAuth({
@@ -29,14 +29,25 @@ const handler = NextAuth({
       async authorize(credentials) {
         if (!credentials?.token) return null;
         try {
-          const backendUser = credentials.user ? JSON.parse(credentials.user) : null;
+          const backendUser = credentials.user
+            ? JSON.parse(credentials.user)
+            : (null as unknown as Record<string, unknown> | null);
 
-          // Extract email from common backend shapes
-          const extractEmail = (u: any) => {
+          // Extract email from common backend shapes (defensive, typed)
+          const extractEmail = (u: Record<string, unknown> | null): string | null => {
             if (!u) return null;
-            return (
-              u.email || u.User?.email || u.user?.email || u.emailAddress || u.email_address || null
-            );
+            const maybe =
+              (u['email'] as string | undefined) ||
+              ((u['User'] as Record<string, unknown> | undefined)?.['email'] as
+                | string
+                | undefined) ||
+              ((u['user'] as Record<string, unknown> | undefined)?.['email'] as
+                | string
+                | undefined) ||
+              (u['emailAddress'] as string | undefined) ||
+              (u['email_address'] as string | undefined) ||
+              null;
+            return maybe ?? null;
           };
 
           const email = extractEmail(backendUser)?.toString() ?? null;
@@ -69,15 +80,28 @@ const handler = NextAuth({
     error: '/auth/error',
   },
   callbacks: {
-    async signIn({ account, user, profile }) {
+    async signIn({ account, user }) {
       if (account?.provider === 'google') {
         try {
           // Try to locate the raw authorization code in common places
-          const code =
-            (account as any)?.code ||
-            (account as any)?.params?.code ||
-            (account as any)?.oauthTokenRequest?.params?.code ||
-            null;
+          const getCodeFromAccount = (acct: unknown): string | null => {
+            if (!acct || typeof acct !== 'object') return null;
+            const a = acct as Record<string, unknown>;
+            const tryParams = (obj: unknown) => {
+              if (!obj || typeof obj !== 'object') return null;
+              return (obj as Record<string, unknown>)['code'] as string | undefined | null;
+            };
+            return (
+              (a['code'] as string | undefined) ||
+              tryParams(a['params']) ||
+              tryParams(
+                (a['oauthTokenRequest'] as Record<string, unknown> | undefined)?.['params']
+              ) ||
+              null
+            );
+          };
+
+          const code = getCodeFromAccount(account);
 
           if (!code) {
             console.error('No authorization code found on account object — failing signIn', {
@@ -113,10 +137,13 @@ const handler = NextAuth({
             raw: data.user,
           };
 
-          // Store backend response data for use in jwt callback
-          (user as any).backendToken = data.access_token || data.accessToken || data.token;
-          (user as any).backendUser = normalized;
-          (user as any).isRegistered = !!normalized.program;
+          // Store backend response data for use in jwt callback (guarded assignments)
+          if (user && typeof user === 'object') {
+            const u = user as unknown as Record<string, unknown>;
+            u['backendToken'] = data.access_token || data.accessToken || data.token;
+            u['backendUser'] = normalized;
+            u['isRegistered'] = !!normalized.program;
+          }
 
           return true;
         } catch (error) {
@@ -128,21 +155,24 @@ const handler = NextAuth({
     },
     async jwt({ token, account, user }) {
       // On initial sign-in, store backend data
-      if (user) {
+      if (user && typeof user === 'object') {
+        const u = user as unknown as Record<string, unknown>;
         token.accessToken = account?.access_token;
-        token.backendToken = user.backendToken;
-        token.backendUser = user.backendUser;
-        token.isRegistered = user.isRegistered;
+        token.backendToken = (u['backendToken'] as string | undefined) ?? undefined;
+        token.backendUser = (u['backendUser'] as BackendUser | undefined) ?? undefined;
+        token.isRegistered = (u['isRegistered'] as boolean | undefined) ?? undefined;
       }
       return token;
     },
     async session({ session, token }) {
       // Send properties to the client
-      session.accessToken = token.accessToken;
-      session.backendToken = token.backendToken;
-      session.backendUser = token.backendUser;
-      session.isRegistered = token.isRegistered;
-      return session;
+      const s = session as unknown as Record<string, unknown>;
+      const t = token as unknown as Record<string, unknown>;
+      s['accessToken'] = (t['accessToken'] as string | undefined) ?? undefined;
+      s['backendToken'] = (t['backendToken'] as string | undefined) ?? undefined;
+      s['backendUser'] = (t['backendUser'] as BackendUser | undefined) ?? undefined;
+      s['isRegistered'] = (t['isRegistered'] as boolean | undefined) ?? undefined;
+      return s as unknown as typeof session;
     },
     async redirect({ url, baseUrl }) {
       // Custom redirect logic based on registration status

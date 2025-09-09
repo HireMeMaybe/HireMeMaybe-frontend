@@ -47,25 +47,35 @@ export interface ApiErrorResponse {
   }>;
 }
 
-export function handleApiErrors<T>(
-  response: { ok: boolean; json: any },
+export function handleApiErrors(
+  response: { ok: boolean; json: unknown },
   setError: (field: string, error: { message: string }) => void,
   setStatus: (status: { ok: boolean; message: string }) => void
 ): boolean {
   const { ok, json } = response;
 
+  const safeMessage = (obj: unknown, fallback = 'Operation failed') => {
+    if (!obj || typeof obj !== 'object') return fallback;
+    return ((obj as Record<string, unknown>)['message'] as string | undefined) ?? fallback;
+  };
+
   if (ok) {
-    setStatus({ ok: true, message: json.message || 'Success' });
+    setStatus({ ok: true, message: safeMessage(json, 'Success') });
     return true;
   } else {
-    setStatus({ ok: false, message: json.message || 'Operation failed' });
+    setStatus({ ok: false, message: safeMessage(json, 'Operation failed') });
 
-    if (json.errors && Array.isArray(json.errors)) {
-      json.errors.forEach((err: { field: string; message: string }) => {
-        if (err.field) {
-          setError(err.field, { message: err.message });
-        }
-      });
+    if (json && typeof json === 'object') {
+      const errorsField = (json as Record<string, unknown>)['errors'];
+      if (Array.isArray(errorsField)) {
+        const errs = errorsField as unknown[];
+        errs.forEach((err) => {
+          if (err && typeof err === 'object' && 'field' in (err as Record<string, unknown>)) {
+            const r = err as { field?: string; message?: string };
+            if (r.field) setError(r.field, { message: r.message ?? 'Error' });
+          }
+        });
+      }
     }
 
     return false;

@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Building, GraduationCap, Eye, Check } from 'lucide-react';
 import GoogleLogin from '@/features/landing/components/GoogleLogin';
-import { signIn, useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 
 type RoleCardProps = Readonly<{
   title: string;
@@ -26,7 +26,7 @@ function RoleCard({
   isDisabled,
 }: RoleCardProps) {
   const pointerActivated = useRef(false);
-  const { data: session } = useSession();
+  const { isAuthenticated } = useAuth();
 
   const handleGoogleLogin = async (title: string) => {
     if (title === 'CPSK') {
@@ -146,10 +146,7 @@ function RoleCard({
 
 export default function LoginSection() {
   const [active, setActive] = useState<string | null>(null);
-  const { data: session, status } = useSession();
-
-  // User is authenticated if they have a session
-  const isAuthenticated = status === 'authenticated';
+  const { isAuthenticated } = useAuth();
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {

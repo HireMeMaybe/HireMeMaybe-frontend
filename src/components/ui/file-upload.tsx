@@ -102,7 +102,15 @@ function FileUpload({
             type="file"
             accept={accept}
             className="pointer-events-none absolute inset-0 z-0 opacity-0"
-            onChange={(e) => onFileChange?.(e.target.files?.[0] || null)}
+            onChange={(e) => {
+              const f = e.target.files?.[0] || null;
+              if (f && maxSize && f.size > maxSize) {
+                // reject silently or you can surface an error to UI
+                onFileChange?.(null);
+                return;
+              }
+              onFileChange?.(f);
+            }}
           />
         </div>
       ) : (
@@ -121,7 +129,14 @@ function FileUpload({
             type="file"
             accept={accept}
             className="absolute inset-0 z-20 cursor-pointer opacity-0"
-            onChange={(e) => onFileChange?.(e.target.files?.[0] || null)}
+            onChange={(e) => {
+              const f = e.target.files?.[0] || null;
+              if (f && maxSize && f.size > maxSize) {
+                onFileChange?.(null);
+                return;
+              }
+              onFileChange?.(f);
+            }}
           />
         </div>
       )}

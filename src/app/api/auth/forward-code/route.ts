@@ -33,9 +33,11 @@ export async function POST(request: Request) {
     try {
       data = await res.json();
     } catch (err) {
+      console.warn('Failed to parse backend response as JSON:', err);
       try {
         text = await res.text();
       } catch (e) {
+        console.warn('Failed to read backend response text:', e);
         text = null;
       }
     }

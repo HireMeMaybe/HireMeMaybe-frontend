@@ -12,16 +12,11 @@ import {
   FileUpload,
   RadioGroup,
   RadioGroupItem,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   ErrorMessage,
 } from '@/components/ui';
 import { SuccessModal, ConfirmModal } from '@/components/modals';
 import { cpskSchema, MAX_RESUME_SIZE } from '@/lib/validations/cpsk';
-import { appendIfPresent, handleApiErrors } from '@/lib/utils/form-helpers';
+import { appendIfPresent } from '@/lib/utils/form-helpers';
 
 export default function CPSKRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
@@ -91,7 +86,16 @@ export default function CPSKRegisterForm(): React.JSX.Element {
   useEffect(() => {
     if (session?.backendUser) {
       try {
-        const authData = session.backendUser;
+        type BackendUserLike = {
+          first_name?: string;
+          last_name?: string;
+          User?: { email?: string; tel?: string };
+          program?: string;
+          year?: number | string;
+          soft_skill?: string[];
+        };
+
+        const authData = session.backendUser as BackendUserLike;
         console.log('Pre-populating form with NextAuth session data:', authData);
 
         // Pre-populate form fields based on backend user data
@@ -114,7 +118,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
           setValue('year', authData.year.toString());
         }
         if (authData.soft_skill && Array.isArray(authData.soft_skill)) {
-          setSkills(authData.soft_skill);
+          setSkills(authData.soft_skill as string[]);
         }
       } catch (error) {
         console.error('Error processing NextAuth session data:', error);
@@ -213,7 +217,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
             });
           }
         }
-      } catch (e) {
+      } catch (error) {
         setStatus({ ok: false, message: 'Network error' });
       }
     });

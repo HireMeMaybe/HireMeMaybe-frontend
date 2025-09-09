@@ -39,12 +39,12 @@ function Label({
 
     // React element: clone and process its children
     if (React.isValidElement(node)) {
-      const element = node as React.ReactElement<any>;
-      const childProps: any = element.props || {};
-      const processedChildren = renderWithRedAsterisks(childProps.children);
+      const element = node as React.ReactElement;
+      const childProps = (element.props ?? {}) as Record<string, unknown>;
+      const processedChildren = renderWithRedAsterisks(childProps.children as React.ReactNode);
       return React.cloneElement(
         element,
-        { ...(element.props as Record<string, any>) },
+        { ...(element.props as Record<string, unknown>) },
         processedChildren
       );
     }

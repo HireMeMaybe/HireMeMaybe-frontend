@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Navbar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import NextAuthProvider from '@/components/NextAuthProvider';
+import { AuthProvider } from '@/contexts/AuthContext';
 import './globals.css';
 
 const inter = Inter({
@@ -28,11 +29,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
-        <NextAuthProvider>
-          <Navbar />
-          {children}
-          <Footer />
-        </NextAuthProvider>
+        <AuthProvider>
+          <NextAuthProvider>
+            <Navbar />
+            {children}
+            <Footer />
+          </NextAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );
