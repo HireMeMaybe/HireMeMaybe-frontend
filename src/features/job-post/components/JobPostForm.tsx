@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { Calendar } from "lucide-react";
 import { refinedJobPostSchema } from '@/lib/validations/job-post';
 import type { JobPostFormData } from '@/lib/validations/job-post';
 
@@ -67,8 +68,8 @@ export default function JobPostForm() {
       <h1 className="text-3xl font-bold text-white mb-8">Job Posting</h1>
 
       {/* Job Details Card */}
-      <Card className="bg-component border-zinc-700 p-6">
-        <h2 className="text-xl font-semibold text-white mb-6">Job Details</h2>
+      <Card className="bg-very-dark-gray border-background p-9">
+        <h2 className="text-2xl font-semibold text-white">Job Details</h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Opening Position */}
@@ -79,11 +80,11 @@ export default function JobPostForm() {
             <Input
               id="openingPosition"
               {...register('openingPosition')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
+              className="mt-4 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
               placeholder="e.g. Senior Software Engineer"
             />
             {errors.openingPosition && (
-              <p className="text-red-500 text-sm mt-1">{errors.openingPosition.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.openingPosition.message}</p>
             )}
           </div>
 
@@ -95,11 +96,11 @@ export default function JobPostForm() {
             <Textarea
               id="description"
               {...register('description')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white placeholder-gray-400 min-h-[120px]"
+              className="mt-4 bg-darker-gray border-gray-600 text-white placeholder-gray-400 min-h-[120px]"
               placeholder="Provide a detailed description of the role, responsibilities, and what you're looking for..."
             />
             {errors.description && (
-              <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.description.message}</p>
             )}
           </div>
 
@@ -111,11 +112,11 @@ export default function JobPostForm() {
             <Textarea
               id="requirements"
               {...register('requirements')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white placeholder-gray-400 min-h-[120px]"
+              className="mt-4 bg-darker-gray border-gray-600 text-white placeholder-gray-400 min-h-[120px]"
               placeholder="List the required qualifications, skills, experience, and education..."
             />
             {errors.requirements && (
-              <p className="text-red-500 text-sm mt-1">{errors.requirements.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.requirements.message}</p>
             )}
           </div>
 
@@ -127,11 +128,11 @@ export default function JobPostForm() {
             <Input
               id="workLocation"
               {...register('workLocation')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
+              className="mt-4 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
               placeholder="e.g. Bangkok, Thailand"
             />
             {errors.workLocation && (
-              <p className="text-red-500 text-sm mt-1">{errors.workLocation.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.workLocation.message}</p>
             )}
           </div>
 
@@ -145,7 +146,7 @@ export default function JobPostForm() {
               control={control}
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="mt-1 bg-darker-gray border-gray-600 text-white">
+                  <SelectTrigger className="mt-4 bg-darker-gray border-gray-600 text-white">
                     <SelectValue placeholder="Select Hiring Type" />
                   </SelectTrigger>
                   <SelectContent className="bg-darker-gray border-gray-600">
@@ -159,7 +160,7 @@ export default function JobPostForm() {
               )}
             />
             {errors.hiringType && (
-              <p className="text-red-500 text-sm mt-1">{errors.hiringType.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.hiringType.message}</p>
             )}
           </div>
 
@@ -171,11 +172,11 @@ export default function JobPostForm() {
             <Input
               id="salary"
               {...register('salary')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
+              className="mt-4 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
               placeholder="e.g. 50,000 - 70,000 THB/month"
             />
             {errors.salary && (
-              <p className="text-red-500 text-sm mt-1">{errors.salary.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.salary.message}</p>
             )}
           </div>
 
@@ -189,7 +190,7 @@ export default function JobPostForm() {
               control={control}
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="mt-1 bg-darker-gray border-gray-600 text-white">
+                  <SelectTrigger className="mt-4 bg-darker-gray border-gray-600 text-white">
                     <SelectValue placeholder="Select Experience Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-darker-gray border-gray-600">
@@ -203,7 +204,7 @@ export default function JobPostForm() {
               )}
             />
             {errors.experienceLevel && (
-              <p className="text-red-500 text-sm mt-1">{errors.experienceLevel.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.experienceLevel.message}</p>
             )}
           </div>
 
@@ -215,23 +216,23 @@ export default function JobPostForm() {
             <Input
               id="tags"
               {...register('tags')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
+              className="mt-4 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
               placeholder="Add tags like Frontend, Backend, DevOps..."
             />
             {errors.tags && (
-              <p className="text-red-500 text-sm mt-1">{errors.tags.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.tags.message}</p>
             )}
           </div>
         </div>
       </Card>
 
       {/* Job Timing Card */}
-      <Card className="bg-component border-zinc-700 p-6">
-        <h2 className="text-xl font-semibold text-white mb-6">Job Timing</h2>
+      <Card className="bg-very-dark-gray border-background p-9">
+        <h2 className="text-2xl font-semibold text-white">Job Timing</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Post time */}
-          <div>
+          <div className="relative">
             <Label htmlFor="postTime" className="text-white">
               Post time
             </Label>
@@ -239,16 +240,16 @@ export default function JobPostForm() {
               id="postTime"
               type="datetime-local"
               {...register('postTime')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white"
+              className="mt-4 bg-darker-gray border-gray-600 text-white"
               placeholder="16 Aug 2025 07:00 AM"
             />
             {errors.postTime && (
-              <p className="text-red-500 text-sm mt-1">{errors.postTime.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.postTime.message}</p>
             )}
           </div>
 
           {/* Expiring Time */}
-          <div>
+          <div className="relative">
             <Label htmlFor="expiringTime" className="text-white">
               Expiring Time (Optional)
             </Label>
@@ -256,19 +257,19 @@ export default function JobPostForm() {
               id="expiringTime"
               type="datetime-local"
               {...register('expiringTime')}
-              className="mt-1 bg-darker-gray border-gray-600 text-white"
+              className="mt-4 bg-darker-gray border-gray-600 text-white"
               placeholder="dd/mm/yyyy HH:MM AM"
             />
             {errors.expiringTime && (
-              <p className="text-red-500 text-sm mt-1">{errors.expiringTime.message}</p>
+              <p className="text-red-500 text-sm mt-2">{errors.expiringTime.message}</p>
             )}
           </div>
         </div>
       </Card>
 
       {/* Application Form Card */}
-      <Card className="bg-component border-zinc-700 p-6">
-        <h2 className="text-xl font-semibold text-white mb-6">Application Form (Optional)</h2>
+      <Card className="bg-very-dark-gray border-background p-9">
+        <h2 className="text-2xl font-semibold text-white">Application Form (Optional)</h2>
         
         <div className="space-y-4">
           {/* Include default application form */}
@@ -293,7 +294,7 @@ export default function JobPostForm() {
                 {...register('includeCustomForm')}
                 className="w-4 h-4 text-primary-green bg-darker-gray border-gray-600 rounded focus:ring-primary-green focus:ring-2"
               />
-              <Label htmlFor="includeCustomForm" className="text-white">
+              <Label htmlFor="includeCustomForm" className="text-white ">
                 Include custom application form
               </Label>
             </div>
@@ -304,11 +305,11 @@ export default function JobPostForm() {
                 <Input
                   id="customFormLink"
                   {...register('customFormLink')}
-                  className="bg-darker-gray border-gray-600 text-white placeholder-gray-400"
+                  className="bg-darker-gray border-gray-600 text-white placeholder-gray-400 mt-4"
                   placeholder="Add link to your custom application form"
                 />
                 {errors.customFormLink && (
-                  <p className="text-red-500 text-sm mt-1">{errors.customFormLink.message}</p>
+                  <p className="text-red-500 text-sm mt-2">{errors.customFormLink.message}</p>
                 )}
               </div>
             )}
@@ -321,7 +322,7 @@ export default function JobPostForm() {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="bg-primary-green hover:bg-green-700 text-white px-12 py-3 rounded-lg text-lg font-medium disabled:opacity-50"
+          className="bg-primary-green w-full hover:bg-green-700 text-white px-12 py-3 rounded-lg text-lg font-medium disabled:opacity-50"
         >
           {isSubmitting ? 'Posting Job...' : 'Post Job'}
         </Button>
