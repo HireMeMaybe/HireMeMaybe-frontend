@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { useCompanyProfile } from '../hooks/useCompanyProfile';
 import CompanyHeader from './CompanyHeader';
 import CompanyAbout from './CompanyAbout';
@@ -9,10 +10,10 @@ import type { CompanyProfileProps } from '@/types/company';
 
 export default function CompanyProfile({ companyId, viewType }: Readonly<CompanyProfileProps>) {
   const { company, jobOpenings, isLoading, error } = useCompanyProfile(companyId);
+  const router = useRouter();
 
   const handlePostNewJob = () => {
-    console.log('Post new job clicked');
-    // Implement navigation to job posting form
+    router.push('/job-post');
   };
 
   if (isLoading) {

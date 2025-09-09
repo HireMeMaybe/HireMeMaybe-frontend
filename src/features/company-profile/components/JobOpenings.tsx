@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import JobCard from './JobCard';
 import type { JobOpening } from '@/types/company';
 
@@ -16,6 +17,8 @@ export default function JobOpenings({
   viewType, 
   onPostNewJob 
 }: JobOpeningsProps) {
+  const router = useRouter();
+
   const handleApply = (jobId: string) => {
     console.log('Applied to job:', jobId);
     // Implement actual application logic
@@ -31,13 +34,17 @@ export default function JobOpenings({
     // Implement view applications functionality
   };
 
+  const handlePostNewJob = () => {
+    router.push('/job-post');
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-white">Current Job Openings</h2>
         {viewType === 'company' && (
           <Button
-            onClick={onPostNewJob}
+            onClick={onPostNewJob || handlePostNewJob}
             className="bg-primary-green hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
