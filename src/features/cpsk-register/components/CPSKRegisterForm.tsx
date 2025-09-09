@@ -82,58 +82,42 @@ export default function CPSKRegisterForm(): React.JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skills]);
 
+  // Helper functions to reduce cognitive complexity
+  const populateFromBackendUser = (authData: any) => {
+    if (authData.first_name) setValue('first_name', authData.first_name);
+    if (authData.last_name) setValue('last_name', authData.last_name);
+    if (authData.User?.email || session?.user?.email) {
+      setValue('email', authData.User?.email || session?.user?.email || '');
+    }
+    if (authData.User?.tel) setValue('phone', authData.User.tel);
+    if (authData.program) setValue('program', authData.program);
+    if (authData.year) setValue('year', authData.year.toString());
+    if (authData.soft_skill && Array.isArray(authData.soft_skill)) {
+      setSkills(authData.soft_skill as string[]);
+    }
+  };
+
+  const populateFromBasicUser = (user: any) => {
+    if (user.name) {
+      const nameParts = user.name.split(' ');
+      setValue('first_name', nameParts[0] || '');
+      setValue('last_name', nameParts.slice(1).join(' ') || '');
+    }
+    if (user.email) setValue('email', user.email);
+  };
+
   // Check for NextAuth session data and pre-populate form
   useEffect(() => {
     if (session?.backendUser) {
       try {
-        type BackendUserLike = {
-          first_name?: string;
-          last_name?: string;
-          User?: { email?: string; tel?: string };
-          program?: string;
-          year?: number | string;
-          soft_skill?: string[];
-        };
-
-        const authData = session.backendUser as BackendUserLike;
-        console.log('Pre-populating form with NextAuth session data:', authData);
-
-        // Pre-populate form fields based on backend user data
-        if (authData.first_name) {
-          setValue('first_name', authData.first_name);
-        }
-        if (authData.last_name) {
-          setValue('last_name', authData.last_name);
-        }
-        if (authData.User?.email || session.user?.email) {
-          setValue('email', authData.User?.email || session.user?.email || '');
-        }
-        if (authData.User?.tel) {
-          setValue('phone', authData.User.tel);
-        }
-        if (authData.program) {
-          setValue('program', authData.program);
-        }
-        if (authData.year) {
-          setValue('year', authData.year.toString());
-        }
-        if (authData.soft_skill && Array.isArray(authData.soft_skill)) {
-          setSkills(authData.soft_skill as string[]);
-        }
+        console.log('Pre-populating form with NextAuth session data:', session.backendUser);
+        populateFromBackendUser(session.backendUser);
       } catch (error) {
         console.error('Error processing NextAuth session data:', error);
       }
     } else if (session?.user) {
-      // Fallback to basic NextAuth user data if no backend user data
       console.log('Pre-populating form with basic NextAuth user data:', session.user);
-      if (session.user.name) {
-        const nameParts = session.user.name.split(' ');
-        setValue('first_name', nameParts[0] || '');
-        setValue('last_name', nameParts.slice(1).join(' ') || '');
-      }
-      if (session.user.email) {
-        setValue('email', session.user.email);
-      }
+      populateFromBasicUser(session.user);
     }
   }, [setValue, session]);
 
