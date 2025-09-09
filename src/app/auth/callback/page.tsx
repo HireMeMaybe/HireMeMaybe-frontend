@@ -7,8 +7,6 @@ import { signIn } from 'next-auth/react';
 export default function AuthCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [status, setStatus] = useState<'loading' | 'error' | 'done'>('loading');
-  const [message, setMessage] = useState('');
 
   useEffect(() => {
     async function run() {
@@ -16,14 +14,14 @@ export default function AuthCallbackPage() {
       const error = searchParams.get('error');
 
       if (error) {
-        setStatus('error');
-        setMessage(`Authentication failed: ${error}`);
+        console.error('Authentication failed:', error);
+        router.push('/?error=auth_failed');
         return;
       }
 
       if (!code) {
-        setStatus('error');
-        setMessage('No authorization code found in callback URL');
+        console.error('No authorization code found');
+        router.push('/?error=no_code');
         return;
       }
 
@@ -37,9 +35,8 @@ export default function AuthCallbackPage() {
 
         const payload = await res.json();
         if (!res.ok || !payload?.success) {
-          setStatus('error');
-          setMessage('Backend exchange failed');
-          console.error('Forward-code response:', payload);
+          console.error('Backend exchange failed:', payload);
+          router.push('/?error=backend_exchange');
           return;
         }
 
@@ -49,8 +46,8 @@ export default function AuthCallbackPage() {
         const backendUser = data.user || null;
 
         if (!token) {
-          setStatus('error');
-          setMessage('Backend did not return access token');
+          console.error('Backend did not return access token');
+          router.push('/?error=no_token');
           return;
         }
 
@@ -62,13 +59,11 @@ export default function AuthCallbackPage() {
         });
 
         if (result?.error) {
-          setStatus('error');
-          setMessage('Failed to sign in with backend token');
           console.error('Credentials signIn error:', result);
+          router.push('/?error=signin_failed');
           return;
         }
 
-        setStatus('done');
         // Redirect to registration if needed or home
         if (!backendUser?.program) {
           router.push('/cpsk-register');
@@ -77,35 +72,35 @@ export default function AuthCallbackPage() {
         }
       } catch (err) {
         console.error('Error in auth callback handler:', err);
-        setStatus('error');
-        setMessage('Unexpected error');
+        router.push('/?error=unexpected');
       }
     }
 
     run();
   }, [searchParams, router]);
 
-  if (status === 'loading') {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold">Authenticating...</h2>
-          <p className="mt-2 text-gray-600">Please wait while we finish signing you in.</p>
+  // Always show loading state
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+      <div className="text-center">
+        <div className="relative mb-8">
+          <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-gray-600 border-t-emerald-500"></div>
+          <div className="absolute inset-0 h-16 w-16 animate-ping rounded-full border-2 border-emerald-500 opacity-20"></div>
+        </div>
+        <h2 className="mb-2 text-2xl font-bold text-white">Authenticating...</h2>
+        <p className="text-gray-400">Please wait while we sign you in</p>
+        <div className="mt-4 flex justify-center space-x-1">
+          <div className="h-2 w-2 animate-bounce rounded-full bg-emerald-500"></div>
+          <div
+            className="h-2 w-2 animate-bounce rounded-full bg-emerald-500"
+            style={{ animationDelay: '0.1s' }}
+          ></div>
+          <div
+            className="h-2 w-2 animate-bounce rounded-full bg-emerald-500"
+            style={{ animationDelay: '0.2s' }}
+          ></div>
         </div>
       </div>
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold">Authentication Error</h2>
-          <p className="mt-2 text-red-600">{message}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <div />;
+    </div>
+  );
 }
