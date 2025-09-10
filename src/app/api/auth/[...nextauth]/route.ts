@@ -1,4 +1,5 @@
 import NextAuth from 'next-auth/next';
+import { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 // Small interface to represent the normalized backend user shape we store in the
@@ -16,7 +17,7 @@ interface BackendUser {
   raw?: unknown; // keep original backend payload for debugging / future migration
 }
 
-const handler = NextAuth({
+const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || 'dev-secret-key-change-in-production',
   providers: [
     // Credentials provider allows creating a NextAuth session from a backend-issued token
@@ -145,7 +146,7 @@ const handler = NextAuth({
             u['isRegistered'] = !!normalized.program;
           }
 
-          return true;
+          return true; // Allow sign-in, let redirect callback handle the redirect
         } catch (error) {
           console.error('Error communicating with backend:', error);
           return false;
@@ -171,7 +172,7 @@ const handler = NextAuth({
       s['accessToken'] = (t['accessToken'] as string | undefined) ?? undefined;
       s['backendToken'] = (t['backendToken'] as string | undefined) ?? undefined;
       s['backendUser'] = (t['backendUser'] as BackendUser | undefined) ?? undefined;
-      s['isRegistered'] = (t['isRegistered'] as boolean | undefined) ?? undefined;
+      s['isRegistered'] = (t['backendUser'] as BackendUser | undefined)?.program ? true : false;
       return s as unknown as typeof session;
     },
     async redirect({ url, baseUrl }) {
@@ -183,6 +184,11 @@ const handler = NextAuth({
         return `${baseUrl}/cpsk-register`;
       }
 
+      // If user is registered, redirect to profile
+      if (urlObj.searchParams.get('isRegistered') === 'true') {
+        return `${baseUrl}/profile`;
+      }
+
       // Allow relative URLs
       if (url.startsWith('/')) return `${baseUrl}${url}`;
       // Allow callback URLs on the same origin
@@ -191,8 +197,10 @@ const handler = NextAuth({
     },
   },
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
-});
+};
 
-export { handler as GET, handler as POST };
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST, authOptions };
