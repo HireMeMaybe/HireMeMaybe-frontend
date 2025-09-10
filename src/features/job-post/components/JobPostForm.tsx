@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Calendar } from "lucide-react";
 import { refinedJobPostSchema } from '@/lib/validations/job-post';
 import type { JobPostFormData } from '@/lib/validations/job-post';
 

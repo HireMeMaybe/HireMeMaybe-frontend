@@ -10,13 +10,13 @@ export const jobPostSchema = z.object({
   description: z
     .string()
     .min(1, "Job description is required")
-    .min(50, "Description must be at least 50 characters")
+    .min(10, "Description must be at least 10 characters")
     .max(2000, "Description must be less than 2000 characters"),
   
   requirements: z
     .string()
     .min(1, "Requirements are required")
-    .min(20, "Requirements must be at least 20 characters")
+    .min(10, "Requirements must be at least 10 characters")
     .max(1500, "Requirements must be less than 1500 characters"),
   
   workLocation: z
