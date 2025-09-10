@@ -25,7 +25,8 @@ function generateMockJobs(count: number) {
     - Ensure responsiveness and performance across devices.
     - Write unit and integration tests to maintain reliability.
     - Contribute to architecture discussions and technical decision-making.`,
-        tags: ["Finance", "Posted 2 days ago"],
+        tags: ["Finance"],
+        postedDate: "Posted 2 days ago",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -42,7 +43,7 @@ function generateMockJobs(count: number) {
     - Work with engineers to integrate models into products and services.
 
     Qualifications:
-    - Bachelor’s or Master’s degree in Computer Science, Statistics, or related field.
+    - Bachelor's or Master's degree in Computer Science, Statistics, or related field.
     - Strong experience with Python, TensorFlow, PyTorch, and scikit-learn.
     - Familiarity with big data technologies such as Spark and Hadoop.
     - Excellent problem-solving and critical-thinking skills.
@@ -53,7 +54,8 @@ function generateMockJobs(count: number) {
     - Ensure responsiveness and performance across devices.
     - Write unit and integration tests to maintain reliability.
     - Contribute to architecture discussions and technical decision-making.`,
-        tags: ["Telecom", "Posted 1 week ago"],
+        tags: ["Telecom"],
+        postedDate: "Posted 1 week ago",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -81,7 +83,8 @@ function generateMockJobs(count: number) {
     - Ensure responsiveness and performance across devices.
     - Write unit and integration tests to maintain reliability.
     - Contribute to architecture discussions and technical decision-making.`,
-        tags: ["Technology", "Posted 3 days ago"],
+        tags: ["Technology"],
+        postedDate: "Posted 3 days ago",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -98,7 +101,7 @@ function generateMockJobs(count: number) {
     - Collaborate with developers to ensure smooth CI/CD pipelines.
 
     Qualifications:
-    - Bachelor’s degree in Computer Science, Engineering, or related field.
+    - Bachelor's degree in Computer Science, Engineering, or related field.
     - Strong knowledge of AWS/GCP cloud services.
     - Experience with Docker, Kubernetes, and serverless architecture.
     - Familiarity with DevOps practices and tools (Jenkins, GitHub Actions).
@@ -109,7 +112,8 @@ function generateMockJobs(count: number) {
     - Ensure responsiveness and performance across devices.
     - Write unit and integration tests to maintain reliability.
     - Contribute to architecture discussions and technical decision-making.`,
-        tags: ["Banking", "Posted 5 days ago"],
+        tags: ["Banking"],
+        postedDate: "Posted 5 days ago",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -137,7 +141,8 @@ function generateMockJobs(count: number) {
     - Ensure responsiveness and performance across devices.
     - Write unit and integration tests to maintain reliability.
     - Contribute to architecture discussions and technical decision-making.`,
-        tags: ["Ride-hailing", "Posted 4 days ago"],
+        tags: ["Ride-hailing"],
+        postedDate: "Posted 4 days ago",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -154,7 +159,7 @@ function generateMockJobs(count: number) {
     - Document incidents and recommend improvements.
 
     Qualifications:
-    - Bachelor’s degree in IT, Cybersecurity, or related field.
+    - Bachelor's degree in IT, Cybersecurity, or related field.
     - Familiarity with SIEM tools (Splunk, ELK, QRadar).
     - Knowledge of firewalls, IDS/IPS, and endpoint security.
     - Strong analytical and problem-solving skills.
@@ -165,7 +170,8 @@ function generateMockJobs(count: number) {
     - Ensure responsiveness and performance across devices.
     - Write unit and integration tests to maintain reliability.
     - Contribute to architecture discussions and technical decision-making.`,
-        tags: ["Security", "Posted 1 week ago"],
+        tags: ["Security"],
+        postedDate: "Posted 1 week ago",
         logoPath: "/placeholder-logo.png",
     },
 ];
