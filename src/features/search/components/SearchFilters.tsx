@@ -24,7 +24,7 @@ export default function SearchFilters() {
     <div className="flex flex-wrap justify-center gap-2">
       {Object.entries(filterOptions).map(([filterName, options]) => (
         <Select key={filterName}>
-          <SelectTrigger className="bg-darker-gray rounded-full border-none text-white text-sm px-4">
+          <SelectTrigger className="bg-darker-gray rounded-full border-none text-white text-sm px-4 cursor-pointer">
             <SelectValue placeholder={filterName} />
           </SelectTrigger>
           <SelectContent className="bg-darker-gray border-gray-600">
@@ -32,7 +32,7 @@ export default function SearchFilters() {
               <SelectItem 
                 key={option} 
                 value={option.toLowerCase().replace(/\s+/g, '-')} 
-                className="text-white hover:bg-gray-700"
+                className="text-white hover:bg-gray-700 cursor-pointer"
               >
                 {option}
               </SelectItem>

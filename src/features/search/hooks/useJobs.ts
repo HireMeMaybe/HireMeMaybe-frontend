@@ -17,16 +17,9 @@ function generateMockJobs(count: number) {
     - 2+ years of professional experience in web development.
     - Strong knowledge of JavaScript/TypeScript and modern frameworks.
     - Experience with REST APIs, SQL/NoSQL databases, and cloud deployment.
-    - Familiarity with CI/CD pipelines and Git workflows.
-    
-        Responsibilities:
-    - Build and maintain modern web applications using React, Node.js, and TypeScript.
-    - Collaborate with designers and product managers to deliver high-quality features.
-    - Ensure responsiveness and performance across devices.
-    - Write unit and integration tests to maintain reliability.
-    - Contribute to architecture discussions and technical decision-making.`,
+    - Familiarity with CI/CD pipelines and Git workflows.`,
         tags: ["Finance"],
-        postedDate: "Posted 2 days ago",
+        postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -46,16 +39,9 @@ function generateMockJobs(count: number) {
     - Bachelor's or Master's degree in Computer Science, Statistics, or related field.
     - Strong experience with Python, TensorFlow, PyTorch, and scikit-learn.
     - Familiarity with big data technologies such as Spark and Hadoop.
-    - Excellent problem-solving and critical-thinking skills.
-    
-        Responsibilities:
-    - Build and maintain modern web applications using React, Node.js, and TypeScript.
-    - Collaborate with designers and product managers to deliver high-quality features.
-    - Ensure responsiveness and performance across devices.
-    - Write unit and integration tests to maintain reliability.
-    - Contribute to architecture discussions and technical decision-making.`,
+    - Excellent problem-solving and critical-thinking skills.`,
         tags: ["Telecom"],
-        postedDate: "Posted 1 week ago",
+        postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -75,16 +61,9 @@ function generateMockJobs(count: number) {
     - 3+ years of experience in UI/UX design.
     - Proficiency in Figma, Sketch, or Adobe XD.
     - Strong portfolio showcasing user-centered design.
-    - Excellent communication and teamwork skills.
-    
-        Responsibilities:
-    - Build and maintain modern web applications using React, Node.js, and TypeScript.
-    - Collaborate with designers and product managers to deliver high-quality features.
-    - Ensure responsiveness and performance across devices.
-    - Write unit and integration tests to maintain reliability.
-    - Contribute to architecture discussions and technical decision-making.`,
+    - Excellent communication and teamwork skills.`,
         tags: ["Technology"],
-        postedDate: "Posted 3 days ago",
+        postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -104,16 +83,9 @@ function generateMockJobs(count: number) {
     - Bachelor's degree in Computer Science, Engineering, or related field.
     - Strong knowledge of AWS/GCP cloud services.
     - Experience with Docker, Kubernetes, and serverless architecture.
-    - Familiarity with DevOps practices and tools (Jenkins, GitHub Actions).
-    
-        Responsibilities:
-    - Build and maintain modern web applications using React, Node.js, and TypeScript.
-    - Collaborate with designers and product managers to deliver high-quality features.
-    - Ensure responsiveness and performance across devices.
-    - Write unit and integration tests to maintain reliability.
-    - Contribute to architecture discussions and technical decision-making.`,
+    - Familiarity with DevOps practices and tools (Jenkins, GitHub Actions).`,
         tags: ["Banking"],
-        postedDate: "Posted 5 days ago",
+        postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -133,16 +105,9 @@ function generateMockJobs(count: number) {
     - 2+ years of experience in mobile development.
     - Strong knowledge of Swift (iOS) or Kotlin (Android).
     - Familiarity with mobile architecture patterns (MVVM, Clean Architecture).
-    - Experience with REST APIs and Firebase services.
-
-        Responsibilities:
-    - Build and maintain modern web applications using React, Node.js, and TypeScript.
-    - Collaborate with designers and product managers to deliver high-quality features.
-    - Ensure responsiveness and performance across devices.
-    - Write unit and integration tests to maintain reliability.
-    - Contribute to architecture discussions and technical decision-making.`,
+    - Experience with REST APIs and Firebase services.`,
         tags: ["Ride-hailing"],
-        postedDate: "Posted 4 days ago",
+        postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
     },
     {
@@ -162,16 +127,9 @@ function generateMockJobs(count: number) {
     - Bachelor's degree in IT, Cybersecurity, or related field.
     - Familiarity with SIEM tools (Splunk, ELK, QRadar).
     - Knowledge of firewalls, IDS/IPS, and endpoint security.
-    - Strong analytical and problem-solving skills.
-    
-        Responsibilities:
-    - Build and maintain modern web applications using React, Node.js, and TypeScript.
-    - Collaborate with designers and product managers to deliver high-quality features.
-    - Ensure responsiveness and performance across devices.
-    - Write unit and integration tests to maintain reliability.
-    - Contribute to architecture discussions and technical decision-making.`,
+    - Strong analytical and problem-solving skills.`,
         tags: ["Security"],
-        postedDate: "Posted 1 week ago",
+        postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
     },
 ];

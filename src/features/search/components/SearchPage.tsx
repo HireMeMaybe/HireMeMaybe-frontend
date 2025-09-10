@@ -44,22 +44,23 @@ export default function SearchPage() {
       
 
       {/* Job List + Details */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="container mx-auto px-4 py-8 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch h-full">
           {/* Job List */}
-          <div className="lg:col-span-1 border border-gray-700">
-            {paginatedJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                selected={selectedJob?.id === job.id}
-                onSelect={() => setSelectedJob(job)}
-              />
+          <div className="lg:col-span-1 border border-gray-700 flex flex-col divide-y divide-gray-700 self-stretch">
+            {paginatedJobs.map((job, index) => (
+              <div key={job.id} className={index === paginatedJobs.length - 1 ? "border-b-0" : ""}>
+                <JobCard
+                  job={job}
+                  selected={selectedJob?.id === job.id}
+                  onSelect={() => setSelectedJob(job)}
+                />
+              </div>
             ))}
           </div>
 
           {/* Job Details */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 self-stretch">
             {selectedJob ? <JobDetails job={selectedJob} /> : null}
           </div>
         </div>

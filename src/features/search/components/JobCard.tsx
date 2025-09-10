@@ -25,7 +25,7 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full text-left flex items-center gap-4 p-4 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
+      className={`w-full text-left flex items-center cursor-pointer gap-4 p-4 border-b border-gray-700 hover:bg-gray-800 transition-colors ${
         selected ? "border-l-4 border-primary-green bg-gray-900" : ""
       }`}
     >
@@ -66,7 +66,7 @@ export function JobDetails({ job }: { readonly job: Job }) {
             <p className="text-sm text-white">{job.location}</p>
           </div>
         </div>
-        <ExternalLink className="w-6 h-6 text-gray-400 hover:text-primary-green cursor-pointer" />
+        <ExternalLink className="w-6 h-6 text-gray-400 hover:text-primary-green cursor-pointer mt-2" />
       </div>
 
       {/* Job Title */}
@@ -93,7 +93,7 @@ export function JobDetails({ job }: { readonly job: Job }) {
       </div>
 
       {/* Apply Button */}
-      <Button className="bg-primary-green hover:bg-green-600 text-white text-sm px-8 py-3 mb-6 rounded-full">
+      <Button className="bg-primary-green hover:bg-green-600 text-white text-sm px-8 py-3 mb-6 rounded-full cursor-pointer">
         Apply
       </Button>
 
