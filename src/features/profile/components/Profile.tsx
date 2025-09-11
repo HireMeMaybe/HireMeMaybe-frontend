@@ -40,7 +40,7 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
         <Button
           onClick={onEditClick}
           variant="outline"
-          className="flex items-center gap-2 border-gray-600 bg-transparent text-white hover:bg-gray-800"
+          className="flex items-center gap-2 border-gray-600 bg-transparent text-white hover:bg-white hover:text-black"
         >
           <Edit className="h-4 w-4" />
           Edit Profile
@@ -49,7 +49,7 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
 
       {/* Profile Header */}
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-500 text-2xl font-bold">
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--color-primary-green)] text-2xl font-bold">
           {fullName
             .split(' ')
             .map((n) => n[0])
@@ -57,51 +57,63 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
             .toUpperCase() || 'U'}
         </div>
         <h1 className="mb-2 text-2xl font-bold">{fullName}</h1>
-        <p className="text-green-400">{programDisplay}</p>
-        <p className="text-gray-400">Year {yearDisplay} • Kasetsart University</p>
+        <p className="text-[var(--color-primary-green)]">{programDisplay}</p>
+        <p className="text-[var(--color-pale-pink)]">{yearDisplay} • Kasetsart University</p>
       </div>
 
       {/* Contact Information */}
-      <Card className="mb-6 border-gray-700 bg-gray-800">
+      <Card className="mb-6 gap-3 border-none bg-[var(--color-background-gray)] py-4">
         <CardHeader>
-          <CardTitle className="text-green-400">Contact Information</CardTitle>
+          <CardTitle className="text-xl font-semibold text-[var(--color-primary-green)]">
+            Contact Information
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Phone className="h-5 w-5 text-gray-400" />
-            <span className="text-gray-300">{profileData?.User?.tel || 'Not provided'}</span>
+        <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-light-gray)] p-3">
+            <Phone className="mt-1 h-5 w-5 text-gray-400" />
+            <div>
+              <p className="mb-1 font-medium text-white">Phone</p>
+              <p className="text-gray-300">{profileData?.User?.tel || 'Not provided'}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Mail className="h-5 w-5 text-gray-400" />
-            <span className="text-gray-300">{profileData?.User?.email || 'Not provided'}</span>
+          <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-light-gray)] p-3">
+            <Mail className="mt-1 h-5 w-5 text-gray-400" />
+            <div>
+              <p className="mb-1 font-medium text-white">Email</p>
+              <p className="text-gray-300">{profileData?.User?.email || 'Not provided'}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Education */}
-      <Card className="mb-6 border-gray-700 bg-gray-800">
+      <Card className="mb-6 gap-1 border-none bg-[var(--color-background-gray)] py-4">
         <CardHeader>
-          <CardTitle className="text-green-400">Education</CardTitle>
+          <CardTitle className="text-xl font-semibold text-[var(--color-primary-green)]">
+            Education
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div>
             <h3 className="font-semibold text-white">Bachelor of Engineering</h3>
-            <p className="text-green-400">{programDisplay}</p>
-            <p className="text-gray-400">Kasetsart University • Bangkok, Thailand</p>
+            <p className="text-[var(--color-primary-green)]">{programDisplay}</p>
+            <p className="text-gray-400">Kasetsart University</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Resume */}
-      <Card className="mb-6 border-gray-700 bg-gray-800">
+      <Card className="mb-6 gap-3 border-none bg-[var(--color-background-gray)] py-4">
         <CardHeader>
-          <CardTitle className="text-green-400">Resume</CardTitle>
+          <CardTitle className="text-xl font-semibold text-[var(--color-primary-green)]">
+            Resume
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {profileData?.resume_id ? (
-            <div className="flex items-center justify-between rounded-lg bg-gray-700 p-3">
+            <div className="flex items-center justify-between rounded-lg bg-[var(--color-light-gray)] p-3">
               <div className="flex items-center gap-3">
-                <div className="rounded bg-green-500 p-2">
+                <div className="rounded bg-[var(--color-primary-green)] p-2">
                   <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -121,7 +133,7 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
                 onClick={() => onDownloadResume(profileData.resume_id!)}
                 variant="outline"
                 size="sm"
-                className="border-green-500 bg-green-500 text-white hover:bg-green-600"
+                className="border-[var(--color-primary-green)] bg-[var(--color-primary-green)] text-white hover:bg-[var(--color-darker-green)]"
               >
                 <Download className="mr-1 h-4 w-4" />
                 Download
@@ -136,9 +148,11 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
       </Card>
 
       {/* Soft Skills */}
-      <Card className="mb-6 border-gray-700 bg-gray-800">
+      <Card className="mb-6 gap-3 border-none bg-[var(--color-background-gray)] py-4">
         <CardHeader>
-          <CardTitle className="text-green-400">Soft Skills</CardTitle>
+          <CardTitle className="text-xl font-semibold text-[var(--color-primary-green)]">
+            Soft Skills
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -146,7 +160,7 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
               ? profileData.soft_skill.map((skill, index) => (
                   <span
                     key={index}
-                    className="rounded-full bg-green-500 px-3 py-1 text-sm font-medium text-white"
+                    className="rounded-full border border-[#C4BEBE] bg-[var(--color-light-gray)] px-3 pb-1 text-sm font-medium text-[var(--color-primary-green)]"
                   >
                     {skill}
                   </span>
@@ -155,7 +169,7 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
                   (skill, index) => (
                     <span
                       key={index}
-                      className="rounded-full bg-green-500 px-3 py-1 text-sm font-medium text-white"
+                      className="rounded-full bg-[var(--color-primary-green)] px-3 py-1 text-sm font-medium text-white"
                     >
                       {skill}
                     </span>
@@ -164,60 +178,6 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
           </div>
         </CardContent>
       </Card>
-
-      {/* Technical Skills */}
-      <Card className="border-gray-700 bg-gray-800">
-        <CardHeader>
-          <CardTitle className="text-green-400">Technical Skills</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {['Python', 'JavaScript', 'React', 'Node.js', 'Git', 'Docker'].map((skill, index) => (
-              <span
-                key={index}
-                className="rounded-full bg-gray-700 px-3 py-1 text-sm font-medium text-gray-300"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-interface LoadingStateProps {
-  message?: string;
-}
-
-function LoadingState({ message = 'Loading...' }: LoadingStateProps) {
-  return (
-    <div className="flex min-h-[400px] items-center justify-center">
-      <div className="text-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-green-500"></div>
-        <p className="text-gray-400">{message}</p>
-      </div>
-    </div>
-  );
-}
-
-interface ErrorStateProps {
-  error: string;
-  onRetry?: () => void;
-}
-
-function ErrorState({ error, onRetry }: ErrorStateProps) {
-  return (
-    <div className="flex min-h-[400px] items-center justify-center">
-      <div className="text-center">
-        <p className="mb-4 text-red-400">{error}</p>
-        {onRetry && (
-          <Button onClick={onRetry} variant="outline" className="border-gray-600 text-white">
-            Try Again
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
@@ -239,7 +199,7 @@ export default function Profile(): React.JSX.Element {
 
   // Handle edit button click
   const handleEditClick = () => {
-    router.push('/cpsk-register');
+    router.push('/profile/edit');
   };
 
   // Handle resume download
@@ -253,29 +213,13 @@ export default function Profile(): React.JSX.Element {
     }
   };
 
-  // Show loading state while checking authentication
-  if (status === 'loading') {
-    return <LoadingState message="Checking authentication..." />;
-  }
-
   // Don't render if user is not authenticated (safety check)
   if (status === 'unauthenticated' || !session?.backendToken || !session?.backendUser?.program) {
     return <div></div>;
   }
 
-  // Show loading state while fetching profile data
-  if (loading) {
-    return <LoadingState message="Loading profile..." />;
-  }
-
-  // Show error state
-  if (error) {
-    return <ErrorState error={error} onRetry={refetch} />;
-  }
-
-  // Show message if no profile data
   if (!profileData) {
-    return <ErrorState error="No profile data found" onRetry={refetch} />;
+    return <div></div>;
   }
 
   return (
