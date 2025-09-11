@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Session } from 'next-auth';
+import type { ProfileData } from '@/types/cpsk';
 import {
   Input,
   Label,
@@ -20,8 +21,10 @@ import { cpskSchema, MAX_RESUME_SIZE } from '@/lib/validations/cpsk';
 
 export default function CPSKRegisterForm({
   session,
+  profileData: initialProfile,
 }: {
   session?: Session | null;
+  profileData?: ProfileData | null;
 }): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | { ok: boolean; message: string }>(null);
@@ -110,8 +113,18 @@ export default function CPSKRegisterForm({
     if (user.email) setValue('email', user.email);
   };
 
-  // Check for NextAuth session data and pre-populate form
+  // Prefill: prefer explicit profileData (from backend), then fall back to session
   useEffect(() => {
+    if (initialProfile) {
+      try {
+        // explicit backend profile (authoritative) - used for edit flows
+        populateFromBackendUser(initialProfile);
+      } catch (err) {
+        console.error('Error populating from provided profileData:', err);
+      }
+      return;
+    }
+
     if (session?.backendUser) {
       try {
         console.log('Pre-populating form with NextAuth session data:', session.backendUser);
@@ -123,7 +136,8 @@ export default function CPSKRegisterForm({
       console.log('Pre-populating form with basic NextAuth user data:', session.user);
       populateFromBasicUser(session.user);
     }
-  }, [setValue, session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setValue, session, initialProfile]);
 
   const handleResumeChange = (file?: File | null) => {
     if (!file) {
@@ -312,7 +326,10 @@ export default function CPSKRegisterForm({
             id="email"
             type="email"
             {...register('email')}
-            className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
+            readOnly
+            aria-readonly="true"
+            title="Email cannot be changed"
+            className="bg-muted h-12 cursor-not-allowed rounded-lg px-4 text-base opacity-80 transition-all duration-200"
           />
           <ErrorMessage message={errors.email?.message} />
         </div>

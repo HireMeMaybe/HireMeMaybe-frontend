@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Phone, Mail, Download, Edit } from 'lucide-react';
 import type { ProfileData } from '@/types/cpsk';
 import { useProfile } from '../hooks/useProfile';
+import Loading from '@/app/loading';
+import ErrorPage from '@/app/error';
 
 interface ProfileViewProps {
   profileData: ProfileData;
@@ -228,13 +230,28 @@ export default function Profile(): React.JSX.Element {
     }
   };
 
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (error) {
+    return (
+      <ErrorPage
+        error={new Error(error)}
+        reset={() => {
+          refetch();
+        }}
+      />
+    );
+  }
+
   // Don't render if user is not authenticated (safety check)
   if (status === 'unauthenticated' || !session?.backendToken || !session?.backendUser?.program) {
     return <div></div>;
   }
 
   if (!profileData) {
-    return <div></div>;
+    return <Loading />;
   }
 
   return (
