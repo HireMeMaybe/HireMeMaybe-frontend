@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Building, GraduationCap, Eye, Check } from 'lucide-react';
 import GoogleLogin from '@/features/landing/components/GoogleLogin';
-import { useAuth } from '@/contexts/AuthContext';
 
 type RoleCardProps = Readonly<{
   title: string;
@@ -26,7 +26,8 @@ function RoleCard({
   isDisabled,
 }: RoleCardProps) {
   const pointerActivated = useRef(false);
-  const { isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
+  const isRegistered = session?.backendUser?.program ? true : false;
 
   const handleGoogleLogin = async (title: string) => {
     if (title === 'CPSK') {
@@ -146,7 +147,8 @@ function RoleCard({
 
 export default function LoginSection() {
   const [active, setActive] = useState<string | null>(null);
-  const { isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
+  const isRegistered = session?.backendUser?.program ? true : false;
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -173,7 +175,7 @@ export default function LoginSection() {
             Icon={Building}
             onSelect={() => setActive((s) => (s === 'Company' ? null : 'Company'))}
             isActive={active === 'Company'}
-            isDisabled={isAuthenticated}
+            isDisabled={isRegistered}
           />
 
           <RoleCard
@@ -183,7 +185,7 @@ export default function LoginSection() {
             Icon={GraduationCap}
             onSelect={() => setActive((s) => (s === 'CPSK' ? null : 'CPSK'))}
             isActive={active === 'CPSK'}
-            isDisabled={isAuthenticated}
+            isDisabled={isRegistered}
           />
 
           <RoleCard
@@ -193,7 +195,7 @@ export default function LoginSection() {
             Icon={Eye}
             onSelect={() => setActive((s) => (s === 'Visitor' ? null : 'Visitor'))}
             isActive={active === 'Visitor'}
-            isDisabled={isAuthenticated}
+            isDisabled={isRegistered}
           />
         </div>
       </div>

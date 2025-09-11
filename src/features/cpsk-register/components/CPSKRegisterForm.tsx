@@ -5,6 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useTransition, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import {
   Input,
   Label,
@@ -16,13 +17,40 @@ import {
 } from '@/components/ui';
 import { SuccessModal, ConfirmModal } from '@/components/modals';
 import { cpskSchema, MAX_RESUME_SIZE } from '@/lib/validations/cpsk';
-import { appendIfPresent } from '@/lib/utils/form-helpers';
 
 export default function CPSKRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | { ok: boolean; message: string }>(null);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const router = useRouter();
+
+  // Redirect unauthenticated users to home page
+  useEffect(() => {
+    if (sessionStatus === 'loading') return; // Wait for session to load
+
+    if (sessionStatus === 'unauthenticated' || !session?.backendToken) {
+      router.push('/');
+      return;
+    }
+  }, [session, sessionStatus, router]);
+
+  // Show loading state while checking authentication
+  if (sessionStatus === 'loading') {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <div className="border-primary-green mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render form if user is not authenticated (safety check)
+  if (sessionStatus === 'unauthenticated' || !session?.backendToken) {
+    return <div></div>;
+  }
 
   type FormInput = {
     first_name: string;
@@ -169,40 +197,95 @@ export default function CPSKRegisterForm(): React.JSX.Element {
     startTransition(async () => {
       setStatus(null);
       try {
-        const formData = new FormData();
+        // Check if user is authenticated
+        if (!session?.backendToken) {
+          router.push('/');
+          return;
+        }
 
-        // Use the normalized helper to append fields
-        appendIfPresent(formData, 'first_name', data.first_name);
-        appendIfPresent(formData, 'last_name', data.last_name);
-        appendIfPresent(formData, 'email', data.email);
-        appendIfPresent(formData, 'phone', data.phone);
-        appendIfPresent(formData, 'program', data.program);
-        appendIfPresent(formData, 'year', data.year);
-        appendIfPresent(formData, 'soft_skill', data.soft_skill);
-        appendIfPresent(formData, 'resume', data.resume);
+        // Step 1: Submit profile data (PUT /api/cpsk/profile)
+        const profileData = {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          User: {
+            tel: data.phone,
+          },
+          soft_skill: Array.isArray(data.soft_skill)
+            ? data.soft_skill
+            : data.soft_skill
+              ? [data.soft_skill]
+              : [],
+          program: data.program,
+          year: data.year,
+        };
 
-        const res = await fetch('/api/cpsk-register', { method: 'POST', body: formData });
-        const json = await res.json();
+        const profileRes = await fetch('/api/cpsk/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(profileData),
+        });
 
-        if (res.ok) {
-          setStatus({ ok: true, message: json.message || 'Submitted' });
-          setIsSuccessOpen(true);
-          // Reset form and clear skills after success
-          reset();
-          setSkills([]);
-          setSkillInput('');
-        } else {
-          setStatus({ ok: false, message: json.message || 'Submission failed' });
-          if (json.errors && Array.isArray(json.errors)) {
-            json.errors.forEach((err: { field: string; message: string }) => {
-              if (err.field) {
-                setError(err.field as keyof FormInput, { message: err.message });
-              }
+        if (!profileRes.ok) {
+          const profileJson = await profileRes.json();
+          throw new Error(profileJson.error || `Profile submission failed (${profileRes.status})`);
+        }
+
+        // Step 2: Upload resume if provided (POST /api/cpsk/profile/resume)
+        if (data.resume) {
+          const resumeFormData = new FormData();
+          resumeFormData.append('resume', data.resume);
+
+          const resumeRes = await fetch('/api/cpsk/profile/resume', {
+            method: 'POST',
+            body: resumeFormData,
+          });
+
+          if (!resumeRes.ok) {
+            const resumeJson = await resumeRes.json();
+            console.warn('Resume upload failed:', resumeJson.error);
+            setStatus({
+              ok: true,
+              message:
+                'Profile saved successfully, but resume upload failed. You can try uploading it again later.',
             });
+            setIsSuccessOpen(true);
+
+            // Reset form and clear skills after success
+            reset();
+            setSkills([]);
+            setSkillInput('');
+
+            // Redirect to profile page after partial success
+            setTimeout(() => {
+              router.push('/profile');
+            }, 3000); // Give user more time to read the message
+            return;
           }
         }
+
+        // Both profile and resume (if provided) were successful
+        setStatus({ ok: true, message: 'Registration completed successfully!' });
+        setIsSuccessOpen(true);
+
+        // Reset form and clear skills after success
+        reset();
+        setSkills([]);
+        setSkillInput('');
+
+        // Redirect to profile page after successful submission
+        setTimeout(() => {
+          router.push('/profile');
+        }, 2000); // Give user time to see success message
       } catch (error) {
-        setStatus({ ok: false, message: 'Network error' });
+        console.error('Registration error:', error);
+
+        if (error instanceof Error) {
+          setStatus({ ok: false, message: error.message });
+        } else {
+          setStatus({ ok: false, message: 'Registration failed' });
+        }
       }
     });
   };
@@ -214,7 +297,7 @@ export default function CPSKRegisterForm(): React.JSX.Element {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data" className="space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-3">
           <Label className="flex items-center text-sm">
@@ -421,16 +504,16 @@ export default function CPSKRegisterForm(): React.JSX.Element {
           disabled={isPending}
           className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? 'Submitting...' : 'Submit'}
+          {isPending ? 'Submitting Profile & Resume...' : 'Submit Registration'}
         </Button>
       </div>
 
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
-        title="Submit Register?"
+        title="Submit Registration?"
         message="Please confirm your choice"
-        description="Are you ready to submit your register?"
+        description={`Are you ready to submit your registration?${watchedResume ? ' This will save your profile and upload your resume.' : ' This will save your profile.'}`}
         onConfirm={handleConfirm}
       />
       <SuccessModal

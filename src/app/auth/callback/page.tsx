@@ -51,24 +51,24 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        // Sign into NextAuth using credentials provider; this creates a NextAuth session
+        // Use NextAuth's signIn with credentials to create session
         const result = await signIn('credentials', {
-          redirect: false,
           token,
           user: JSON.stringify(backendUser),
+          redirect: false, // We handle redirect manually
         });
 
         if (result?.error) {
-          console.error('Credentials signIn error:', result);
+          console.error('NextAuth sign-in failed:', result.error);
           router.push('/?error=signin_failed');
           return;
         }
 
-        // Redirect to registration if needed or home
-        if (!backendUser?.program) {
-          router.push('/cpsk-register');
+        // Check if user is registered and redirect accordingly
+        if (backendUser?.program) {
+          router.push('/profile');
         } else {
-          router.push('/');
+          router.push('/cpsk-register');
         }
       } catch (err) {
         console.error('Error in auth callback handler:', err);
@@ -81,7 +81,7 @@ export default function AuthCallbackPage() {
 
   // Always show loading state
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
         <div className="relative mb-8">
           <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-gray-600 border-t-emerald-500"></div>

@@ -3,14 +3,17 @@
 import { Search, User } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSession, signOut } from 'next-auth/react';
+import { UserPen, History, LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ?? '/';
   const [open, setOpen] = useState<boolean>(false);
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  const isLoading = status === 'loading';
+  const isRegistered = session?.backendUser?.program ? true : false;
   const handleUserClick = () => {
     if (isLoading) return;
     if (!isAuthenticated) {
@@ -65,7 +68,7 @@ export default function Navbar() {
           <div className="absolute right-0 mt-2 w-56 rounded-lg bg-[rgb(33,33,33)] p-4 text-white shadow-lg">
             {isLoading ? (
               <div className="py-4">Loading...</div>
-            ) : !isAuthenticated ? (
+            ) : !isRegistered ? (
               <div className="flex flex-col gap-2">
                 <a href="/auth/google" className="rounded px-3 py-2 hover:bg-white/5">
                   Login with Google
@@ -76,31 +79,32 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 border-b pb-3">
                   <div className="h-10 w-10 rounded-full bg-emerald-500" />
                   <div>
-                    <div className="font-bold">
-                      {user?.first_name} {user?.last_name}
-                    </div>
-                    <div className="text-sm text-zinc-400">{user?.email}</div>
+                    <div className="font-bold">{session?.user?.name || 'User'}</div>
+                    <div className="text-sm text-zinc-400">{session?.user?.email}</div>
                   </div>
                 </div>
                 <a
                   href="/profile"
                   className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
                 >
+                  <UserPen className="h-4 w-4" />
                   View profile
                 </a>
                 <a
                   href="/history"
                   className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
                 >
-                  History page
+                  <History className="h-4 w-4" />
+                  History
                 </a>
                 <button
                   onClick={() => {
-                    logout();
+                    signOut();
                     setOpen(false);
                   }}
-                  className="flex items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/5"
+                  className="flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/5"
                 >
+                  <LogOut className="h-4 w-4" />
                   Logout
                 </button>
               </div>
