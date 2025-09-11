@@ -8,6 +8,26 @@ export interface CpskRegistrationResult {
   }[];
 }
 
+export interface ProfileData {
+  id?: string;
+  User?: {
+    ID?: number;
+    CreatedAt?: string;
+    UpdatedAt?: string;
+    DeletedAt?: string | null;
+    tel?: string;
+    email?: string;
+    id?: string;
+    username?: string;
+  };
+  first_name?: string;
+  last_name?: string;
+  program?: string | null;
+  year?: string | number | null;
+  soft_skill?: string[];
+  resume_id?: number | null;
+}
+
 export const MAJOR_OPTIONS = [
   { value: 'CPE', label: 'CPE' },
   { value: 'SKE', label: 'SKE' },
