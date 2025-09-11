@@ -19,11 +19,13 @@ export interface ProfileData {
     email?: string;
     id?: string;
     username?: string;
+    profile_picture?: string | null;
   };
   first_name?: string;
   last_name?: string;
   program?: string | null;
   year?: string | number | null;
+  profile_picture?: string | null;
   soft_skill?: string[];
   resume_id?: number | null;
 }

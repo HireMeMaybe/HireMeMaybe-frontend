@@ -32,6 +32,9 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
       ? profileData.year
       : profileData?.year?.toString() || 'Not specified';
 
+  // Avatar source: prefer top-level, fallback to nested User.profile_picture from API
+  const avatarSrc = profileData.profile_picture || profileData.User?.profile_picture || null;
+
   return (
     <div className="mx-auto max-w-2xl">
       {/* Header with Edit Button */}
@@ -49,13 +52,25 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
 
       {/* Profile Header */}
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--color-primary-green)] text-2xl font-bold">
-          {fullName
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase() || 'U'}
-        </div>
+        {avatarSrc ? (
+          <img
+            src={avatarSrc}
+            alt={fullName || 'Profile picture'}
+            className="mx-auto mb-4 h-20 w-20 rounded-full object-cover"
+            onError={(e) => {
+              // hide broken images so fallback initials are shown
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--color-primary-green)] text-2xl font-bold">
+            {fullName
+              .split(' ')
+              .map((n) => n[0])
+              .join('')
+              .toUpperCase() || 'U'}
+          </div>
+        )}
         <h1 className="mb-2 text-2xl font-bold">{fullName}</h1>
         <p className="text-[var(--color-primary-green)]">{programDisplay}</p>
         <p className="text-[var(--color-pale-pink)]">{yearDisplay} • Kasetsart University</p>
