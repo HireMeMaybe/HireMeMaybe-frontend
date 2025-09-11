@@ -4,8 +4,8 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useTransition, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import type { Session } from 'next-auth';
 import {
   Input,
   Label,
@@ -18,39 +18,15 @@ import {
 import { SuccessModal, ConfirmModal } from '@/components/modals';
 import { cpskSchema, MAX_RESUME_SIZE } from '@/lib/validations/cpsk';
 
-export default function CPSKRegisterForm(): React.JSX.Element {
+export default function CPSKRegisterForm({
+  session,
+}: {
+  session?: Session | null;
+}): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | { ok: boolean; message: string }>(null);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
-
-  // Redirect unauthenticated users to home page
-  useEffect(() => {
-    if (sessionStatus === 'loading') return; // Wait for session to load
-
-    if (sessionStatus === 'unauthenticated' || !session?.backendToken) {
-      router.push('/');
-      return;
-    }
-  }, [session, sessionStatus, router]);
-
-  // Show loading state while checking authentication
-  if (sessionStatus === 'loading') {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <div className="border-primary-green mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render form if user is not authenticated (safety check)
-  if (sessionStatus === 'unauthenticated' || !session?.backendToken) {
-    return <div></div>;
-  }
 
   type FormInput = {
     first_name: string;
