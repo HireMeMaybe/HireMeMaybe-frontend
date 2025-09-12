@@ -31,7 +31,8 @@ export const jobPostSchema = z.object({
   
   salary: z
     .string()
-    .max(100, "Salary must be less than 100 characters")
+    .regex(/^\d+$/, "Salary must be a numeric value")
+    .max(10, "Salary must be less than 10 characters")
     .optional(),
   
   experienceLevel: z
@@ -57,7 +58,7 @@ export const jobPostSchema = z.object({
   
   customFormLink: z
     .string()
-    .url("Please enter a valid URL")
+    .url({ message: "Please enter a valid URL" })
     .optional()
     .or(z.literal(""))
 });
