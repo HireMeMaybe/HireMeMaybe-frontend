@@ -9,11 +9,10 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", { email, password, rememberMe });
+    console.log("Login attempt:", { email, password});
   };
 
   return (
@@ -78,25 +77,6 @@ export default function AdminLoginPage() {
                   )}
                 </button>
               </div>
-            </div>
-
-            {/* Remember Me and Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-600 bg-darker-gray text-primary-green focus:ring-primary-green"
-                />
-                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-300">
-                  Remember me
-                </label>
-              </div>
-              <a href="/forgot-password" className="text-sm text-primary-green hover:text-green-400">
-                Forgot password?
-              </a>
             </div>
 
             {/* Sign In Button */}
