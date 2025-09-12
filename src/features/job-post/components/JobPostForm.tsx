@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { refinedJobPostSchema } from '@/lib/validations/job-post';
 import type { JobPostFormData } from '@/lib/validations/job-post';
+import DefaultApplicationFormQuestions from '@/features/job-post/components/DefaultApplicationFormQuestions';
 
 const HIRING_TYPES = [
   "Full-time",
@@ -54,7 +55,7 @@ export default function JobPostForm() {
     }
   });
 
-  // Watch the includeCustomForm checkbox to show/hide the custom form link field
+  const includeDefaultForm = watch('includeDefaultForm');
   const includeCustomForm = watch('includeCustomForm');
 
   const onSubmit = (data: JobPostFormData) => {
@@ -283,6 +284,12 @@ export default function JobPostForm() {
               Include default application form
             </Label>
           </div>
+
+          {/* Render default questions if checkbox is checked */}
+          {includeDefaultForm && (
+            <DefaultApplicationFormQuestions
+            />
+          )}
 
           {/* Include custom application form */}
           <div className="space-y-3">
