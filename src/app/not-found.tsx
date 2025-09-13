@@ -1,12 +1,8 @@
 import Link from 'next/link';
-import NavBar from '@/components/NavBar';
-import Footer from '@/components/Footer';
 
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-
       <div className="flex-grow flex items-center justify-center p-4">
         <div className="text-center max-w-lg mx-auto">
           {/* Large 404 */}
@@ -35,13 +31,9 @@ export default function NotFound() {
             >
               Go to Homepage
             </Link>
-            
           </div>
-
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }
