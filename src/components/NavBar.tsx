@@ -30,6 +30,7 @@ export default function Navbar() {
     }
     setOpen((o) => !o);
   };
+
   return (
     <nav className="border-border sticky top-0 z-50 flex w-full items-center justify-between border-b bg-[var(--background)] px-15 py-3 text-white shadow-[0px_1px_10px_rgba(2,188,119,255)]">
       {/* Left side - Brand with green indicator */}
@@ -79,7 +80,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 border-b pb-3">
                   <div className="h-10 w-10 rounded-full bg-emerald-500" />
                   <div>
-                    <div className="font-bold">{session?.user?.name || 'User'}</div>
+                    <div className="font-bold">{session?.backendUser?.first_name || 'U'}</div>
                     <div className="text-sm text-zinc-400">{session?.user?.email}</div>
                   </div>
                 </div>
