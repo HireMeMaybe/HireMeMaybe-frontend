@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Phone, Mail, Download, Edit } from 'lucide-react';
 import type { ProfileData } from '@/types/cpsk';
 import { useProfile } from '../hooks/useProfile';
+import { useDownloadResume } from '../hooks/useDownloadResume';
+import { getProfileImageUrl } from '@/lib/utils';
 import Loading from '@/app/loading';
 import ErrorPage from '@/app/error';
 
@@ -35,7 +37,9 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
       : profileData?.year?.toString() || 'Not specified';
 
   // Avatar source: prefer top-level, fallback to nested User.profile_picture from API
-  const avatarSrc = profileData.profile_picture || profileData.User?.profile_picture || null;
+  const avatarSrc = getProfileImageUrl(
+    profileData.profile_picture || profileData.User?.profile_picture || null
+  );
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -60,8 +64,21 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
             alt={fullName || 'Profile picture'}
             className="mx-auto mb-4 h-20 w-20 rounded-full object-cover"
             onError={(e) => {
-              // hide broken images so fallback initials are shown
-              (e.currentTarget as HTMLImageElement).style.display = 'none';
+              // Handle rate limiting and other image errors by hiding the image
+              const target = e.currentTarget as HTMLImageElement;
+              console.warn('Profile image failed to load:', e, 'URL:', avatarSrc);
+
+              // Check if it's a rate limiting issue
+              if (avatarSrc?.includes('profile-image') && e.type === 'error') {
+                console.info('Profile image rate limited or failed, showing initials fallback');
+              }
+
+              target.style.display = 'none';
+            }}
+            onLoad={(e) => {
+              // Ensure image is visible when it loads successfully
+              const target = e.currentTarget as HTMLImageElement;
+              target.style.display = 'block';
             }}
           />
         ) : (
@@ -140,10 +157,7 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
                   </svg>
                 </div>
                 <div>
-                  <p className="font-medium text-white">
-                    {fullName.replace(' ', '_')}_Resume_2024.pdf
-                  </p>
-                  <p className="text-sm text-gray-400">Last updated: 2 weeks ago • 1.2 MB</p>
+                  <p className="font-medium text-white">resume_{profileData.resume_id}.pdf</p>
                 </div>
               </div>
               <Button
@@ -203,6 +217,7 @@ export default function Profile(): React.JSX.Element {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { profileData, loading, error, refetch } = useProfile();
+  const { downloadResume } = useDownloadResume();
 
   // Handle authentication checks
   React.useEffect(() => {
@@ -217,17 +232,6 @@ export default function Profile(): React.JSX.Element {
   // Handle edit button click
   const handleEditClick = () => {
     router.push('/profile/edit');
-  };
-
-  // Handle resume download
-  const handleDownloadResume = async (resumeId: number) => {
-    try {
-      // Implement resume download logic here
-      console.log('Downloading resume with ID:', resumeId);
-      // You would typically make an API call to download the file
-    } catch (error) {
-      console.error('Error downloading resume:', error);
-    }
   };
 
   if (loading) {
@@ -260,7 +264,7 @@ export default function Profile(): React.JSX.Element {
         <ProfileView
           profileData={profileData}
           onEditClick={handleEditClick}
-          onDownloadResume={handleDownloadResume}
+          onDownloadResume={downloadResume}
         />
       </div>
     </div>
