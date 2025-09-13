@@ -3,7 +3,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, useTransition, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Session } from 'next-auth';
 import type { ProfileData } from '@/types/cpsk';
@@ -17,7 +17,12 @@ import {
   ErrorMessage,
 } from '@/components/ui';
 import { SuccessModal, ConfirmModal } from '@/components/modals';
-import { cpskSchema, MAX_RESUME_SIZE } from '@/lib/validations/cpsk';
+import { cpskSchema } from '@/lib/validations/cpsk';
+import { useDownloadResume } from '@/features/profile/hooks/useDownloadResume';
+import { useSoftSkills } from '../hooks/useSoftSkills';
+import { useResumeUpload } from '../hooks/useResumeUpload';
+import { useFormPopulation } from '../hooks/useFormPopulation';
+import { useFormSubmission } from '../hooks/useFormSubmission';
 
 export default function CPSKRegisterForm({
   session,
@@ -26,10 +31,9 @@ export default function CPSKRegisterForm({
   session?: Session | null;
   profileData?: ProfileData | null;
 }): React.JSX.Element {
-  const [isPending, startTransition] = useTransition();
-  const [status, setStatus] = useState<null | { ok: boolean; message: string }>(null);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const router = useRouter();
+  const { downloadResume } = useDownloadResume();
 
   type FormInput = {
     first_name: string;
@@ -70,214 +74,45 @@ export default function CPSKRegisterForm({
 
   const watchedResume = watch('resume');
 
-  // Soft skills tag input state
-  const [skillInput, setSkillInput] = useState('');
-  const [skills, setSkills] = useState<string[]>(() => {
-    const v = watch('soft_skill');
-    if (!v) return [];
-    return Array.isArray(v)
-      ? v
-      : String(v)
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
+  // Extracted hooks
+  const { isPending, status, submitForm } = useFormSubmission({ session });
+
+  const { skillInput, skills, setSkillInput, setSkills, addSkill, removeSkill, onSkillKeyDown } =
+    useSoftSkills({
+      setValue,
+      initialSkills: initialProfile?.soft_skill || [],
+    });
+
+  const { handleResumeChange, getResumeDisplayText } = useResumeUpload({
+    setValue,
+    setError,
+    clearErrors,
+    watchedResume,
   });
 
-  useEffect(() => {
-    // keep react-hook-form value in sync
-    setValue('soft_skill', skills.length > 0 ? skills : undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [skills]);
+  // Use form population hook
+  useFormPopulation({
+    setValue,
+    session,
+    initialProfile,
+    setSkills,
+  });
+  const onSubmit = async (data: FormInput) => {
+    await submitForm(data);
 
-  // Helper functions to reduce cognitive complexity
-  const populateFromBackendUser = (authData: any) => {
-    if (authData.first_name) setValue('first_name', authData.first_name);
-    if (authData.last_name) setValue('last_name', authData.last_name);
-    if (authData.User?.email || session?.user?.email) {
-      setValue('email', authData.User?.email || session?.user?.email || '');
+    // Handle success modal and navigation
+    if (status?.ok) {
+      setIsSuccessOpen(true);
+
+      // Reset form and clear skills after success
+      reset();
+      setSkills([]);
+
+      // Redirect to profile page after successful submission
+      setTimeout(() => {
+        router.push('/profile');
+      }, 2000);
     }
-    if (authData.User?.tel) setValue('phone', authData.User.tel);
-    if (authData.program) setValue('program', authData.program);
-    if (authData.year) setValue('year', authData.year.toString());
-    if (authData.soft_skill && Array.isArray(authData.soft_skill)) {
-      setSkills(authData.soft_skill as string[]);
-    }
-  };
-
-  const populateFromBasicUser = (user: any) => {
-    if (user.name) {
-      const nameParts = user.name.split(' ');
-      setValue('first_name', nameParts[0] || '');
-      setValue('last_name', nameParts.slice(1).join(' ') || '');
-    }
-    if (user.email) setValue('email', user.email);
-  };
-
-  // Prefill: prefer explicit profileData (from backend), then fall back to session
-  useEffect(() => {
-    if (initialProfile) {
-      try {
-        // explicit backend profile (authoritative) - used for edit flows
-        populateFromBackendUser(initialProfile);
-      } catch (err) {
-        console.error('Error populating from provided profileData:', err);
-      }
-      return;
-    }
-
-    if (session?.backendUser) {
-      try {
-        console.log('Pre-populating form with NextAuth session data:', session.backendUser);
-        populateFromBackendUser(session.backendUser);
-      } catch (error) {
-        console.error('Error processing NextAuth session data:', error);
-      }
-    } else if (session?.user) {
-      console.log('Pre-populating form with basic NextAuth user data:', session.user);
-      populateFromBasicUser(session.user);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setValue, session, initialProfile]);
-
-  const handleResumeChange = (file?: File | null) => {
-    if (!file) {
-      setValue('resume', undefined);
-      clearErrors('resume');
-      return;
-    }
-
-    if (file.size > MAX_RESUME_SIZE) {
-      setValue('resume', undefined);
-      setError('resume', { type: 'manual', message: 'Resume must be 10 MB or smaller' });
-      return;
-    }
-
-    // valid
-    clearErrors('resume');
-    setValue('resume', file);
-  };
-
-  const addSkill = (value?: string) => {
-    const raw = (value ?? skillInput).trim();
-    if (!raw) return;
-    if (skills.includes(raw)) {
-      setSkillInput('');
-      return;
-    }
-    setSkills((s) => [...s, raw]);
-    setSkillInput('');
-  };
-
-  const removeSkill = (value: string) => {
-    setSkills((s) => s.filter((x) => x !== value));
-  };
-
-  const onSkillKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addSkill();
-    } else if (e.key === 'Backspace' && skillInput === '' && skills.length) {
-      // remove last and place it into input for quick edit
-      const last = skills[skills.length - 1];
-      setSkills((s) => s.slice(0, -1));
-      setSkillInput(last);
-    }
-  };
-  const onSubmit = (data: FormInput) => {
-    startTransition(async () => {
-      setStatus(null);
-      try {
-        // Check if user is authenticated
-        if (!session?.backendToken) {
-          router.push('/');
-          return;
-        }
-
-        // Step 1: Submit profile data (PUT /api/cpsk/profile)
-        const profileData = {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          User: {
-            tel: data.phone,
-          },
-          soft_skill: Array.isArray(data.soft_skill)
-            ? data.soft_skill
-            : data.soft_skill
-              ? [data.soft_skill]
-              : [],
-          program: data.program,
-          year: data.year,
-        };
-
-        const profileRes = await fetch('/api/cpsk/profile', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(profileData),
-        });
-
-        if (!profileRes.ok) {
-          const profileJson = await profileRes.json();
-          throw new Error(profileJson.error || `Profile submission failed (${profileRes.status})`);
-        }
-
-        // Step 2: Upload resume if provided (POST /api/cpsk/profile/resume)
-        if (data.resume) {
-          const resumeFormData = new FormData();
-          resumeFormData.append('resume', data.resume);
-
-          const resumeRes = await fetch('/api/cpsk/profile/resume', {
-            method: 'POST',
-            body: resumeFormData,
-          });
-
-          if (!resumeRes.ok) {
-            const resumeJson = await resumeRes.json();
-            console.warn('Resume upload failed:', resumeJson.error);
-            setStatus({
-              ok: true,
-              message:
-                'Profile saved successfully, but resume upload failed. You can try uploading it again later.',
-            });
-            setIsSuccessOpen(true);
-
-            // Reset form and clear skills after success
-            reset();
-            setSkills([]);
-            setSkillInput('');
-
-            // Redirect to profile page after partial success
-            setTimeout(() => {
-              router.push('/profile');
-            }, 3000); // Give user more time to read the message
-            return;
-          }
-        }
-
-        // Both profile and resume (if provided) were successful
-        setStatus({ ok: true, message: 'Registration completed successfully!' });
-        setIsSuccessOpen(true);
-
-        // Reset form and clear skills after success
-        reset();
-        setSkills([]);
-        setSkillInput('');
-
-        // Redirect to profile page after successful submission
-        setTimeout(() => {
-          router.push('/profile');
-        }, 2000); // Give user time to see success message
-      } catch (error) {
-        console.error('Registration error:', error);
-
-        if (error instanceof Error) {
-          setStatus({ ok: false, message: error.message });
-        } else {
-          setStatus({ ok: false, message: 'Registration failed' });
-        }
-      }
-    });
   };
 
   const handleConfirm = () => {
@@ -433,18 +268,68 @@ export default function CPSKRegisterForm({
             <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
             </svg>
-            <span>Resume (Optional)</span>
+            <span>
+              Resume{' '}
+              {initialProfile?.resume_id ? '(Current resume will be replaced)' : '(Optional)'}
+            </span>
           </Label>
+
+          {/* Display existing resume if available */}
+          {initialProfile?.resume_id && !watchedResume ? (
+            <div className="mb-4 rounded-lg border border-gray-600 bg-gray-800/50 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="rounded bg-[var(--color-primary-green)] p-2">
+                    <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-white">resume_{initialProfile.resume_id}.pdf</p>
+                    <p className="text-sm text-gray-400">Current resume</p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => downloadResume(initialProfile.resume_id!)}
+                  variant="outline"
+                  size="sm"
+                  className="border-[var(--color-primary-green)] bg-transparent text-[var(--color-primary-green)] hover:bg-[var(--color-primary-green)] hover:text-white"
+                >
+                  <svg className="mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Download
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
           <FileUpload
             className="w-full"
             file={watchedResume as File | undefined}
             accept=".pdf,application/pdf"
-            description="PDF up to 10 MB"
+            description={
+              initialProfile?.resume_id
+                ? 'Upload new resume to replace current one'
+                : 'PDF up to 10 MB'
+            }
             onFileChange={(file) => handleResumeChange(file || undefined)}
           />
           <ErrorMessage message={errors.resume?.message} />
           {watchedResume && (watchedResume as File).name && (
-            <p className="text-muted mt-2 text-sm">Uploaded: {(watchedResume as File).name}</p>
+            <p className="text-muted mt-2 text-sm">
+              {initialProfile?.resume_id ? 'New resume: ' : 'Uploaded: '}
+              {getResumeDisplayText()}
+            </p>
           )}
         </div>
 
@@ -497,22 +382,22 @@ export default function CPSKRegisterForm({
           disabled={isPending}
           className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? 'Submitting Profile & Resume...' : 'Submit Registration'}
+          Submit
         </Button>
       </div>
 
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
-        title="Submit Registration?"
+        title="Submit?"
         message="Please confirm your choice"
-        description={`Are you ready to submit your registration?${watchedResume ? ' This will save your profile and upload your resume.' : ' This will save your profile.'}`}
+        description={`Are you ready to submit your profile?${watchedResume ? (initialProfile?.resume_id ? ' This will replace your current resume.' : ' This will save your profile and upload your resume.') : ' This will save your profile.'}`}
         onConfirm={handleConfirm}
       />
       <SuccessModal
         isOpen={isSuccessOpen}
         onClose={() => setIsSuccessOpen(false)}
-        title="Registration submitted"
+        title="Submitted"
         message={status?.message || 'Submitted successfully'}
         buttonText="Close"
       />
