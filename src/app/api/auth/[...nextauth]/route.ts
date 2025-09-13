@@ -7,14 +7,25 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 interface BackendUser {
   id?: string | number;
   email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   program?: string | null;
   year?: number | null;
   soft_skill?: string[];
   resume_id?: number | null;
   profile_picture?: string | null;
   raw?: unknown; // keep original backend payload for debugging / future migration
+  User?: {
+    ID?: number;
+    CreatedAt?: string;
+    UpdatedAt?: string;
+    DeletedAt?: string | null;
+    tel?: string;
+    email?: string;
+    id?: string;
+    username?: string;
+    profile_picture?: string;
+  };
 }
 
 const authOptions: AuthOptions = {
@@ -128,14 +139,15 @@ const authOptions: AuthOptions = {
           const normalized: BackendUser = {
             id: data.user?.id ?? data.user?.User?.id,
             email: data.user?.User?.email ?? data.user?.email ?? null,
-            firstName: data.user?.first_name ?? null,
-            lastName: data.user?.last_name ?? null,
+            first_name: data.user?.first_name ?? null,
+            last_name: data.user?.last_name ?? null,
             program: data.user?.program ?? null,
             year: data.user?.year ?? null,
             soft_skill: Array.isArray(data.user?.soft_skill) ? data.user.soft_skill : [],
             resume_id: data.user?.resume_id ?? null,
             profile_picture: data.user?.User?.profile_picture ?? null,
             raw: data.user,
+            User: data.user?.User,
           };
 
           // Store backend response data for use in jwt callback (guarded assignments)
