@@ -3,14 +3,30 @@
 import { CPSKRegisterForm } from '@/features/cpsk-register';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import Loading from '@/app/loading';
 
 export default function CPSKRegisterPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Redirect unauthenticated users
+  // Handle authentication redirect
+  useEffect(() => {
+    if (status === 'loading') return; // Still loading, don't redirect yet
+
+    // Redirect if unauthenticated OR if user already has a program (already registered)
+    if (status === 'unauthenticated' || !session?.backendToken || session?.backendUser?.program) {
+      router.push('/');
+    }
+  }, [status, session, router]);
+
+  // Show loading while session is being determined
+  if (status === 'loading') {
+    return <Loading />;
+  }
+
+  // Don't render if unauthenticated or already registered
   if (status === 'unauthenticated' || !session?.backendToken || session?.backendUser?.program) {
-    router.push('/');
     return null;
   }
 
