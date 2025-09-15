@@ -267,10 +267,10 @@ export default function JobPostForm() {
         </div>
       </Card>
 
-      {/* Application Form Card */}
+      {/* Application Questions Card */}
       <Card className="bg-very-dark-gray border-background p-9">
-        <h2 className="text-2xl font-semibold text-white">Application Form (Optional)</h2>
-        
+        <h2 className="text-2xl font-semibold text-white">Application Questions (Optional)</h2>
+
         <div className="space-y-4">
           {/* Include default application form */}
           <div className="flex items-center space-x-3">
@@ -281,7 +281,7 @@ export default function JobPostForm() {
               className="w-4 h-4 text-primary-green bg-darker-gray border-gray-600 rounded focus:ring-primary-green focus:ring-2"
             />
             <Label htmlFor="includeDefaultForm" className="text-white">
-              Include default application form
+              Include default application questions
             </Label>
           </div>
 
@@ -301,7 +301,7 @@ export default function JobPostForm() {
                 className="w-4 h-4 text-primary-green bg-darker-gray border-gray-600 rounded focus:ring-primary-green focus:ring-2"
               />
               <Label htmlFor="includeCustomForm" className="text-white ">
-                Include custom application form
+                Include custom application questions
               </Label>
             </div>
             
