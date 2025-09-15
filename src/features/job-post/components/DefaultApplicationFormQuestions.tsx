@@ -26,7 +26,7 @@ export default function DefaultApplicationFormQuestions() {
       {/* Question 2 */}
       <div>
         <Label className="text-white">
-          What's your expected monthly basic salary? <span className="text-red-500">*</span>
+          What&apos;s your expected monthly basic salary? <span className="text-red-500">*</span>
         </Label>
         <p className="mt-2 text-gray-400">e.g. 50,000 THB</p>
       </div>
@@ -34,7 +34,7 @@ export default function DefaultApplicationFormQuestions() {
       {/* Question 3 */}
       <div>
         <Label className="text-white">
-          How many years' experience do you have as a Software Engineer? <span className="text-red-500">*</span>
+          How many years&apos; experience do you have as a Software Engineer? <span className="text-red-500">*</span>
         </Label>
         <p className="mt-2 text-gray-400">e.g. 5 years</p>
       </div>
