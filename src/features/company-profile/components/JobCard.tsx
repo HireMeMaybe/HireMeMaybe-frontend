@@ -34,7 +34,7 @@ export default function JobCard({
         </p>
 
         {/* Application Count - Company View Only */}
-        {viewType === 'company' && job.applicationCount && (
+        {viewType === 'company' && (
           <div className="flex items-center gap-1 text-white text-sm mb-4">
             <Users className="w-4 h-4 text-primary-green" />
             <span>{job.applicationCount} Applications</span>
