@@ -10,6 +10,7 @@ interface SuccessModalProps {
   readonly title?: string;
   readonly message?: string;
   readonly buttonText?: string;
+  readonly description?: string;
   readonly onConfirm?: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function SuccessModal({
   title = "Action Successful",
   message = "Everything went perfectly",
   buttonText = "Continue",
+  description = "Click the continue button to proceed.",
   onConfirm
 }: SuccessModalProps) {
   const handleConfirm = () => {
@@ -32,7 +34,7 @@ export default function SuccessModal({
         {/* Hidden accessibility components */}
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">
-          {message}. HelloHelloHelloHelloHelloHelloHelloHelloHelloHello
+          {message}.
         </DialogDescription>
         
         <div className="flex flex-col space-y-6 p-8">
@@ -59,7 +61,7 @@ export default function SuccessModal({
           
           {/* Description */}
           <div className="text-lighter-gray-text text-sm">
-            HelloHelloHelloHelloHelloHelloHelloHelloHelloHello
+            {description}
           </div>
           
           {/* Button */}
