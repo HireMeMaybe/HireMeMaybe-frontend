@@ -41,8 +41,8 @@ export const jobPostSchema = z.object({
   
   tags: z
     .string()
-    .max(200, "Tags must be less than 200 characters")
-    .optional(),
+    .min(1, "Tags are required")
+    .max(200, "Tags must be less than 200 characters"),
   
   postTime: z
     .string()
@@ -55,10 +55,11 @@ export const jobPostSchema = z.object({
   includeDefaultForm: z.boolean().optional(),
   includeCustomForm: z.boolean().optional(),
 
-  
   customFormLink: z
     .string()
-    .url({ message: "Please enter a valid URL" })
+    .refine((val) => val === "" || /^https?:\/\/.+\..+/.test(val), {
+      message: "Please enter a valid URL",
+    })
     .optional()
     .or(z.literal(""))
 });

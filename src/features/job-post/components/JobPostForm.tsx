@@ -173,7 +173,7 @@ export default function JobPostForm() {
               id="salary"
               {...register('salary')}
               className="mt-4 bg-darker-gray border-gray-600 text-white placeholder-gray-400"
-              placeholder="e.g. 50,000 - 70,000 THB/month"
+              placeholder="e.g. 50000"
             />
             {errors.salary && (
               <p className="text-red-500 text-sm mt-2">{errors.salary.message}</p>
