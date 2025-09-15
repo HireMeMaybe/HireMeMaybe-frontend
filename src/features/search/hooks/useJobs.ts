@@ -1,4 +1,9 @@
-function generateMockJobs(count: number) {
+"use client";
+
+
+import { JobWithQuestions, ApplicationQuestion } from "@/types/application";
+
+function generateMockJobs(count: number): JobWithQuestions[] {
     const baseJobs = [
     {
         title: "Full Stack Developer",
@@ -21,6 +26,47 @@ function generateMockJobs(count: number) {
         tags: ["Finance"],
         postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
+        questions: [
+          {
+            id: "q1",
+            question: "Which of the following statements best describes your right to work in Thailand?",
+            answer: "",
+            type: "select" as const,
+            options: [
+              "I am a Thai citizen",
+              "I have a valid work permit",
+              "I am authorized to work",
+              "I require sponsorship"
+            ],
+            required: true
+          },
+          {
+            id: "q2",
+            question: "What's your expected monthly basic salary?",
+            answer: "",
+            type: "select" as const,
+            options: [
+              "Less than 30,000 THB",
+              "30,000 - 50,000 THB", 
+              "50,000 - 80,000 THB",
+              "More than 80,000 THB"
+            ],
+            required: true
+          },
+          {
+            id: "q3",
+            question: "How many years' experience do you have as a Software Engineer?",
+            answer: "",
+            type: "select" as const,
+            options: [
+              "No experience",
+              "1-2 years",
+              "3-5 years",
+              "5+ years"
+            ],
+            required: true
+          }
+        ]
     },
     {
         title: "Data Scientist",
@@ -43,6 +89,7 @@ function generateMockJobs(count: number) {
         tags: ["Telecom"],
         postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
+        // No questions for this job
     },
     {
         title: "UI/UX Designer",
@@ -65,6 +112,15 @@ function generateMockJobs(count: number) {
         tags: ["Technology"],
         postedDate: "02 Sep 2025",
         logoPath: "/placeholder-logo.png",
+        questions: [
+          {
+            id: "q1",
+            question: "Tell us about your design philosophy and approach",
+            answer: "",
+            type: "text" as const,
+            required: true
+          }
+        ]
     },
     {
         title: "Cloud Engineer",

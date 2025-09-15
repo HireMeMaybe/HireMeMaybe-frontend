@@ -1,21 +1,13 @@
+// src/features/search/components/JobCard.tsx
 "use client";
 
 import { ExternalLink, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-type Job = {
-  readonly id: number;
-  readonly title: string;
-  readonly company: string;
-  readonly location: string;
-  readonly logoPath: string;
-  readonly tags?: string[];
-  readonly description?: string;
-  readonly postedDate?: string;
-};
+import { useRouter } from "next/navigation";
+import { JobWithQuestions } from "@/types/application";
 
 type JobCardProps = {
-  readonly job: Job;
+  readonly job: JobWithQuestions;
   readonly selected: boolean;
   readonly onSelect: () => void;
 };
@@ -48,7 +40,13 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
   );
 }
 
-export function JobDetails({ job }: { readonly job: Job }) {
+export function JobDetails({ job }: { readonly job: JobWithQuestions }) {
+  const router = useRouter();
+
+  const handleApply = () => {
+    router.push(`/application/${job.id}`);
+  };
+
   return (
     <div className="border border-gray-700 p-6 bg-very-dark-gray rounded-lg">
       {/* Header Section with Company Logo and External Link */}
@@ -93,7 +91,10 @@ export function JobDetails({ job }: { readonly job: Job }) {
       </div>
 
       {/* Apply Button */}
-      <Button className="bg-primary-green hover:bg-green-600 text-white text-sm px-8 py-3 mb-6 rounded-full cursor-pointer">
+      <Button 
+        onClick={handleApply}
+        className="bg-primary-green hover:bg-green-600 text-white text-sm px-8 py-3 mb-6 rounded-full cursor-pointer"
+      >
         Apply
       </Button>
 
