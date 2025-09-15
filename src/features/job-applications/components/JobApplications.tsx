@@ -8,7 +8,7 @@ import { useJobApplications } from '@/features/job-applications/hooks/useJobAppl
 import { useCompanyProfile } from '@/features/company-profile/hooks/useCompanyProfile'; // Import useCompanyProfile
 import type { JobApplicationsProps } from '@/types/application';
 
-export default function JobApplications({ jobId, companyId }: JobApplicationsProps) {
+export default function JobApplications({ jobId, companyId }: Readonly<JobApplicationsProps>) {
   const router = useRouter();
   const { applications, totalApplications, isLoading, error } = useJobApplications({ jobId });
 
