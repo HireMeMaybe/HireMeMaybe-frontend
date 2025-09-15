@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import type { Application, JobApplicationsProps, ApplicationFilters } from '@/types/application';
 
 // Mock data
+// Mock data
 const mockApplications: Application[] = [
   {
     id: '1',
-    jobId: '1',
+    jobId: '1', // Matches job ID in useJobs
     candidateName: 'James Brucker',
     university: 'Kasetsart University',
     program: 'CPE',
@@ -19,30 +20,30 @@ const mockApplications: Application[] = [
     gpa: 3.75
   },
   {
-    id: '2', 
-    jobId: '1',
-    candidateName: 'James Brucker',
-    university: 'Kasetsart University', 
+    id: '2',
+    jobId: '1', // Matches job ID in useJobs
+    candidateName: 'Anna Smith',
+    university: 'Kasetsart University',
     program: 'CPE',
-    skills: ['Python', 'JavaScript', 'React'],
-    appliedDate: '2025-09-10',
+    skills: ['Java', 'Spring Boot', 'SQL'],
+    appliedDate: '2025-09-12',
     status: 'pending',
     profilePicture: undefined,
-    year: '3rd year',
-    gpa: 3.75
+    year: '4th year',
+    gpa: 3.9
   },
   {
     id: '3',
-    jobId: '1', 
-    candidateName: 'James Brucker',
+    jobId: '2', // Matches job ID in useJobs
+    candidateName: 'Michael Tan',
     university: 'Kasetsart University',
-    program: 'CPE', 
-    skills: ['Python', 'JavaScript', 'React'],
-    appliedDate: '2025-09-10',
+    program: 'SKE',
+    skills: ['C++', 'Python', 'Machine Learning'],
+    appliedDate: '2025-09-14',
     status: 'pending',
     profilePicture: undefined,
-    year: '3rd year',
-    gpa: 3.75
+    year: '2nd year',
+    gpa: 3.6
   },
 ];
 

@@ -25,7 +25,7 @@ const mockJobOpenings: JobOpening[] = [
     department: 'Engineering',
     location: 'New York, NY',
     type: 'Full-time',
-    applicationCount: 12,
+    applicationCount: 2,
     imageUrl: '/api/placeholder/job-1',
     postedDate: '2025-08-25'
   },
@@ -35,7 +35,7 @@ const mockJobOpenings: JobOpening[] = [
     department: 'Product',
     location: 'New York, NY', 
     type: 'Full-time',
-    applicationCount: 8,
+    applicationCount: 1,
     imageUrl: '/api/placeholder/job-2',
     postedDate: '2025-08-20'
   }
