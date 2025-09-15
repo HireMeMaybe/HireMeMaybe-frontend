@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import JobCard from './JobCard';
@@ -8,14 +9,18 @@ import type { JobOpening } from '@/types/company';
 interface JobOpeningsProps {
   readonly jobOpenings: JobOpening[];
   readonly viewType: 'student' | 'company';
+  readonly companyId: string; // Add companyId prop
   readonly onPostNewJob?: () => void;
 }
 
 export default function JobOpenings({ 
   jobOpenings, 
-  viewType, 
+  viewType,
+  companyId, // Add companyId parameter
   onPostNewJob 
 }: JobOpeningsProps) {
+  const router = useRouter();
+
   const handleApply = (jobId: string) => {
     console.log('Applied to job:', jobId);
     // Implement actual application logic
@@ -27,8 +32,8 @@ export default function JobOpenings({
   };
 
   const handleViewApplications = (jobId: string) => {
-    console.log('View applications for job:', jobId);
-    // Implement view applications functionality
+    // Navigate to job applications page
+    router.push(`/company/${companyId}/jobs/${jobId}/applications`);
   };
 
   return (
