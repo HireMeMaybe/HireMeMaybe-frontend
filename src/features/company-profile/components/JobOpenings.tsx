@@ -43,7 +43,7 @@ export default function JobOpenings({
         {viewType === 'company' && (
           <Button
             onClick={onPostNewJob}
-            className="bg-primary-green hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            className="bg-primary-green hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Post New Job

@@ -181,7 +181,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                     {viewType === 'company' && (
                       <Button 
                         onClick={handleEditProfile}
-                        className="bg-[#595256] hover:bg-gray-cancel text-white px-6 py-2 rounded-md"
+                        className="bg-[#595256] hover:bg-gray-cancel text-white px-6 py-2 rounded-md cursor-pointer"
                         disabled={isPending}
                       >
                         <Edit className="w-4 h-4" />
