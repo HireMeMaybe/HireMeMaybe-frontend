@@ -21,17 +21,17 @@ export default function JobOpenings({
 }: JobOpeningsProps) {
   const router = useRouter();
 
-  const handleApply = (jobId: string) => {
+  const handleApply = (jobId: number) => {
     console.log('Applied to job:', jobId);
     // Implement actual application logic
   };
 
-  const handleEdit = (jobId: string) => {
+  const handleEdit = (jobId: number) => {
     console.log('Edit job:', jobId);
     // Implement edit functionality
   };
 
-  const handleViewApplications = (jobId: string) => {
+  const handleViewApplications = (jobId: number) => {
     // Navigate to job applications page
     router.push(`/company/${companyId}/jobs/${jobId}/applications`);
   };
@@ -57,9 +57,9 @@ export default function JobOpenings({
             key={job.id}
             job={job}
             viewType={viewType}
-            onApply={handleApply}
-            onEdit={handleEdit}
-            onViewApplications={handleViewApplications}
+            onApply={() => handleApply(job.id)}
+            onEdit={() => handleEdit(job.id)}
+            onViewApplications={() => handleViewApplications(job.id)}
           />
         ))}
         

@@ -13,7 +13,7 @@ export default async function JobApplicationsPage({ params }: JobApplicationsPag
 
   return (
     <div className="min-h-screen bg-background">
-      <JobApplications companyId={id} jobId={jobId} />
+      <JobApplications companyId={id} jobId={Number(jobId)} />
     </div>
   );
 }

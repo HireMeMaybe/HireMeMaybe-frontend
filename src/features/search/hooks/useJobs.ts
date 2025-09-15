@@ -1,7 +1,7 @@
 export function useJobs() {
   const jobs = [
     {
-      id: '1', // Matches jobId in useJobApplications
+      id: 1, // Matches jobId in useJobApplications
       title: "Full Stack Developer",
       company: "OCS",
       location: "Bangkok, Thailand (Hybrid)",
@@ -24,7 +24,7 @@ Qualifications:
       logoPath: "/placeholder-logo.png",
     },
     {
-      id: '2', // Matches jobId in useJobApplications
+      id: 2, // Matches jobId in useJobApplications
       title: "Data Scientist",
       company: "AIS Innovation Lab",
       location: "Bangkok, Thailand",
@@ -47,7 +47,7 @@ Qualifications:
       logoPath: "/placeholder-logo.png",
     },
     {
-      id: '3', // Matches jobId in useJobApplications
+      id: 3, // Matches jobId in useJobApplications
       title: "UI/UX Designer",
       company: "LINE Thailand",
       location: "Bangkok, Thailand",

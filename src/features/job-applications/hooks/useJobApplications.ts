@@ -7,40 +7,37 @@ import type { Application, JobApplicationsProps, ApplicationFilters } from '@/ty
 // Mock data
 const mockApplications: Application[] = [
   {
-    id: '1',
-    jobId: '1', // Matches job ID in useJobs
+    id: 1,
+    jobId: 1, // Matches job ID in useJobs
     candidateName: 'James Brucker',
     university: 'Kasetsart University',
     program: 'CPE',
     skills: ['Python', 'JavaScript', 'React'],
     appliedDate: '2025-09-10',
-    status: 'pending',
     profilePicture: undefined,
     year: '3rd year',
     gpa: 3.75
   },
   {
-    id: '2',
-    jobId: '1', // Matches job ID in useJobs
+    id: 2,
+    jobId: 1, // Matches job ID in useJobs
     candidateName: 'Anna Smith',
     university: 'Kasetsart University',
     program: 'CPE',
     skills: ['Java', 'Spring Boot', 'SQL'],
     appliedDate: '2025-09-12',
-    status: 'pending',
     profilePicture: undefined,
     year: '4th year',
     gpa: 3.9
   },
   {
-    id: '3',
-    jobId: '2', // Matches job ID in useJobs
+    id: 3,
+    jobId: 2, // Matches job ID in useJobs
     candidateName: 'Michael Tan',
     university: 'Kasetsart University',
     program: 'SKE',
     skills: ['C++', 'Python', 'Machine Learning'],
     appliedDate: '2025-09-14',
-    status: 'pending',
     profilePicture: undefined,
     year: '2nd year',
     gpa: 3.6
@@ -80,10 +77,6 @@ export function useJobApplications({ jobId }: Pick<JobApplicationsProps, 'jobId'
   useEffect(() => {
     let filtered = [...applications];
 
-    if (filters.status) {
-      filtered = filtered.filter(app => app.status === filters.status);
-    }
-
     if (filters.program) {
       filtered = filtered.filter(app => app.program === filters.program);
     }
@@ -97,8 +90,9 @@ export function useJobApplications({ jobId }: Pick<JobApplicationsProps, 'jobId'
     // Apply sorting
     if (filters.sortBy) {
       filtered.sort((a, b) => {
-        let aValue: any, bValue: any;
-        
+        let aValue: string | number | Date;
+        let bValue: string | number | Date;
+
         switch (filters.sortBy) {
           case 'date':
             aValue = new Date(a.appliedDate);
@@ -120,7 +114,8 @@ export function useJobApplications({ jobId }: Pick<JobApplicationsProps, 'jobId'
         if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
         return 0;
       });
-    }
+}
+
 
     setFilteredApplications(filtered);
   }, [applications, filters]);

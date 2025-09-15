@@ -20,7 +20,7 @@ const mockCompany: Company = {
 
 const mockJobOpenings: JobOpening[] = [
   {
-    id: '1',
+    id: 1,
     title: 'Senior Software Engineer',
     department: 'Engineering',
     location: 'New York, NY',
@@ -30,7 +30,7 @@ const mockJobOpenings: JobOpening[] = [
     postedDate: '2025-08-25'
   },
   {
-    id: '2',
+    id: 2,
     title: 'Product Manager',
     department: 'Product',
     location: 'New York, NY', 

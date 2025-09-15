@@ -23,7 +23,7 @@ export default function JobApplications({ jobId, companyId }: JobApplicationsPro
     // Implement navigation to job post
   };
 
-  const handleViewApplication = (applicationId: string) => {
+  const handleViewApplication = (applicationId: number) => {
     console.log('View application details:', applicationId);
     // Implement navigation to application details
   };

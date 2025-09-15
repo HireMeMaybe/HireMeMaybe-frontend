@@ -1,12 +1,11 @@
 export interface Application {
-  id: string;
-  jobId: string;
+  id: number;
+  jobId: number;
   candidateName: string;
   university: string;
   program: string; // CPE, SKE
   skills: string[];
   appliedDate: string;
-  status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
   profilePicture?: string;
   resumeUrl?: string;
   coverLetter?: string;
@@ -15,7 +14,7 @@ export interface Application {
 }
 
 export interface JobApplicationsProps {
-  jobId: string;
+  jobId: number;
   companyId: string;
 }
 
