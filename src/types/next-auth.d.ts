@@ -4,6 +4,7 @@ import { DefaultJWT } from 'next-auth/jwt';
 interface BackendUser {
   id?: string | number;
   email?: string | null;
+  // CPSK fields
   first_name?: string | null;
   last_name?: string | null;
   program?: string | null;
@@ -11,6 +12,14 @@ interface BackendUser {
   soft_skill?: string[];
   resume_id?: number | null;
   profile_picture?: string | null;
+  // Company fields
+  name?: string | null;
+  overview?: string | null;
+  industry?: string | null;
+  size?: string | null;
+  verified_status?: 'Unverified' | 'Pending' | 'Verified' | null;
+  // Common fields
+  role?: 'Company' | 'CPSK' | 'Visitor';
   raw?: unknown;
   User?: {
     ID?: number;

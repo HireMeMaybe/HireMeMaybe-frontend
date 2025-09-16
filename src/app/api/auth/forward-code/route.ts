@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { code } = body;
+    const { code, selectedRole } = body;
 
     if (!code) {
       return NextResponse.json(
@@ -20,9 +20,17 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('Forwarding code to backend:', `${backendUrl}/auth/google/cpsk`, { code });
+    console.log('Forwarding code to backend:', { code, selectedRole });
 
-    const res = await fetch(`${backendUrl}/auth/google/cpsk`, {
+    // Determine backend endpoint based on selected role
+    const backendEndpoint =
+      selectedRole === 'Company'
+        ? `${backendUrl}/auth/google/company`
+        : `${backendUrl}/auth/google/cpsk`;
+
+    console.log('Using backend endpoint:', backendEndpoint);
+
+    const res = await fetch(backendEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),
@@ -49,6 +57,11 @@ export async function POST(request: Request) {
         { success: false, message: 'backend error', status: res.status, data: data ?? null, text },
         { status: res.status }
       );
+    }
+
+    // Add selected role to the user data if available
+    if (data && data.user && selectedRole) {
+      data.user.role = selectedRole;
     }
 
     return NextResponse.json({ success: true, data: data ?? text });

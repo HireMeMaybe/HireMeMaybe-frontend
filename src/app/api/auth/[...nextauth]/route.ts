@@ -7,6 +7,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 interface BackendUser {
   id?: string | number;
   email?: string | null;
+  // CPSK fields
   first_name?: string | null;
   last_name?: string | null;
   program?: string | null;
@@ -14,6 +15,14 @@ interface BackendUser {
   soft_skill?: string[];
   resume_id?: number | null;
   profile_picture?: string | null;
+  // Company fields
+  name?: string | null;
+  overview?: string | null;
+  industry?: string | null;
+  size?: string | null;
+  verified_status?: 'Unverified' | 'Pending' | 'Verified' | null;
+  // Common fields
+  role?: 'Company' | 'CPSK' | 'Visitor';
   raw?: unknown; // keep original backend payload for debugging / future migration
   User?: {
     ID?: number;
@@ -64,15 +73,6 @@ const authOptions: AuthOptions = {
 
           const email = extractEmail(backendUser)?.toString() ?? null;
 
-          // Enforce university domain
-          if (!email || !email.toLowerCase().endsWith('@ku.th')) {
-            console.warn(
-              'Credentials.authorize rejected login due to invalid email domain:',
-              email
-            );
-            return null; // Reject sign-in if domain is not allowed
-          }
-
           return {
             backendToken: credentials.token,
             backendUser,
@@ -122,7 +122,11 @@ const authOptions: AuthOptions = {
             return false; // Backend requires raw code for exchange
           }
 
-          const res = await fetch(`${process.env.BACKEND_URL}/auth/google/cpsk`, {
+          // For now, default to CPSK endpoint if no role specified
+          // In practice, this callback might not be used if going through forward-code route
+          const backendEndpoint = `${process.env.BACKEND_URL}/auth/google/cpsk`;
+
+          const res = await fetch(backendEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code }),
@@ -136,9 +140,11 @@ const authOptions: AuthOptions = {
           const data = await res.json();
 
           // Normalize backend user shape to a predictable object we can persist
+          // Handle both CPSK and Company data structures
           const normalized: BackendUser = {
             id: data.user?.id ?? data.user?.User?.id,
             email: data.user?.User?.email ?? data.user?.email ?? null,
+            // CPSK fields
             first_name: data.user?.first_name ?? null,
             last_name: data.user?.last_name ?? null,
             program: data.user?.program ?? null,
@@ -146,6 +152,16 @@ const authOptions: AuthOptions = {
             soft_skill: Array.isArray(data.user?.soft_skill) ? data.user.soft_skill : [],
             resume_id: data.user?.resume_id ?? null,
             profile_picture: data.user?.User?.profile_picture ?? null,
+            // Company fields
+            name: data.user?.name ?? null,
+            overview: data.user?.overview ?? null,
+            industry: data.user?.industry ?? null,
+            size: data.user?.size ?? null,
+            verified_status: data.user?.verified_status ?? null,
+            // Determine role based on data structure or explicit role
+            role:
+              data.user?.role ??
+              (data.user?.name !== undefined ? 'Company' : data.user?.program ? 'CPSK' : 'Visitor'),
             raw: data.user,
             User: data.user?.User,
           };
@@ -155,7 +171,7 @@ const authOptions: AuthOptions = {
             const u = user as unknown as Record<string, unknown>;
             u['backendToken'] = data.access_token || data.accessToken || data.token;
             u['backendUser'] = normalized;
-            u['isRegistered'] = !!normalized.program;
+            u['isRegistered'] = !!(normalized.program || normalized.size);
           }
 
           return true; // Allow sign-in, let redirect callback handle the redirect
@@ -181,10 +197,12 @@ const authOptions: AuthOptions = {
       // Send properties to the client
       const s = session as unknown as Record<string, unknown>;
       const t = token as unknown as Record<string, unknown>;
+      const backendUser = t['backendUser'] as BackendUser | undefined;
       s['accessToken'] = (t['accessToken'] as string | undefined) ?? undefined;
       s['backendToken'] = (t['backendToken'] as string | undefined) ?? undefined;
-      s['backendUser'] = (t['backendUser'] as BackendUser | undefined) ?? undefined;
-      s['isRegistered'] = (t['backendUser'] as BackendUser | undefined)?.program ? true : false;
+      s['backendUser'] = backendUser ?? undefined;
+      // User is registered if they have program (CPSK) or name (Company)
+      s['isRegistered'] = backendUser?.program || backendUser?.name ? true : false;
       return s as unknown as typeof session;
     },
     async redirect({ url, baseUrl }) {
