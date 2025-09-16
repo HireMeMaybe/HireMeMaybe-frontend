@@ -12,6 +12,7 @@ export default function AuthCallbackPage() {
     async function run() {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
+      const state = searchParams.get('state');
 
       if (error) {
         console.error('Authentication failed:', error);
@@ -25,12 +26,23 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      // Parse role from state parameter
+      let selectedRole: 'Company' | 'CPSK' | 'Visitor' | null = null;
+      if (state) {
+        try {
+          const stateData = JSON.parse(state);
+          selectedRole = stateData.role;
+        } catch (err) {
+          console.warn('Could not parse state parameter:', err);
+        }
+      }
+
       try {
         // Forward the code to our server route which forwards to the backend
         const res = await fetch('/api/auth/forward-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, selectedRole }),
         });
 
         const payload = await res.json();
@@ -54,7 +66,7 @@ export default function AuthCallbackPage() {
         // Use NextAuth's signIn with credentials to create session
         const result = await signIn('credentials', {
           token,
-          user: JSON.stringify(backendUser),
+          user: JSON.stringify({ ...backendUser, role: selectedRole || backendUser?.role }),
           redirect: false, // We handle redirect manually
         });
 
@@ -66,8 +78,16 @@ export default function AuthCallbackPage() {
 
         // Check if user is registered and redirect accordingly
         if (backendUser?.program) {
+          // CPSK user with program
           router.push('/profile');
+        } else if (backendUser?.size) {
+          // Company user with name
+          router.push(`/company/${backendUser.id}`); // or wherever companies should go
+        } else if (selectedRole === 'Company') {
+          // New company user needs to complete registration
+          router.push('/company-register');
         } else {
+          // New CPSK user needs to complete registration
           router.push('/cpsk-register');
         }
       } catch (err) {
