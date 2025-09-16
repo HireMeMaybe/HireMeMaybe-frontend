@@ -3,7 +3,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Session } from 'next-auth';
 import type { ProfileData } from '@/types/cpsk';
@@ -99,8 +99,10 @@ export default function CPSKRegisterForm({
   });
   const onSubmit = async (data: FormInput) => {
     await submitForm(data);
+  };
 
-    // Handle success modal and navigation
+  // Handle success modal and navigation when status changes
+  useEffect(() => {
     if (status?.ok) {
       setIsSuccessOpen(true);
 
@@ -113,7 +115,7 @@ export default function CPSKRegisterForm({
         router.push('/profile');
       }, 2000);
     }
-  };
+  }, [status, reset, setSkills, router]);
 
   const handleConfirm = () => {
     // close modal then submit form
