@@ -13,7 +13,7 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
-  const isRegistered = session?.backendUser?.program ? true : false;
+  const isRegistered = (session as any)?.isRegistered ?? false;
   const handleUserClick = () => {
     if (isLoading) return;
     if (!isAuthenticated) {
@@ -80,7 +80,11 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 border-b pb-3">
                   <div className="h-10 w-10 rounded-full bg-emerald-500" />
                   <div>
-                    <div className="font-bold">{session?.backendUser?.first_name || 'U'}</div>
+                    <div className="font-bold">
+                      {session?.backendUser?.role === 'Company'
+                        ? session?.backendUser?.name || 'Company'
+                        : session?.backendUser?.first_name || 'U'}
+                    </div>
                     <div className="text-sm text-zinc-400">{session?.user?.email}</div>
                   </div>
                 </div>

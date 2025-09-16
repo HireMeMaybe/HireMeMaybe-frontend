@@ -12,6 +12,7 @@ type RoleCardProps = Readonly<{
   checks: string[];
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   onSelect?: () => void;
+  onCloseModal?: () => void;
   isActive?: boolean;
   isDisabled?: boolean;
 }>;
@@ -22,12 +23,13 @@ function RoleCard({
   checks,
   Icon,
   onSelect,
+  onCloseModal,
   isActive,
   isDisabled,
 }: RoleCardProps) {
   const pointerActivated = useRef(false);
   const { data: session, status } = useSession();
-  const isRegistered = session?.backendUser?.program ? true : false;
+  const isRegistered = (session as any)?.isRegistered ?? false;
 
   const handleGoogleLogin = async (title: string) => {
     if (title === 'CPSK') {
@@ -36,7 +38,7 @@ function RoleCard({
         // Build Google OAuth2 URL and redirect user to Google
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID_CPSK;
         const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/auth/callback`;
-        const state = Math.random().toString(36).slice(2);
+        const state = JSON.stringify({ role: title, random: Math.random().toString(36).slice(2) });
         // Store state to validate on callback if desired
         sessionStorage.setItem('oauth_state', state);
 
@@ -56,6 +58,40 @@ function RoleCard({
         console.error('❌ Error during Google authentication:', error);
         alert('Error starting Google authentication. Please try again.');
       }
+    } else if (title === 'Company') {
+      try {
+        console.log('🔄 Starting Google authentication for Company...');
+        // Build Google OAuth2 URL and redirect user to Google
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID_CPSK;
+        const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/auth/callback`;
+        const state = JSON.stringify({ role: title, random: Math.random().toString(36).slice(2) });
+        // Store state to validate on callback if desired
+        sessionStorage.setItem('oauth_state', state);
+
+        const params = new URLSearchParams({
+          client_id: clientId || '',
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope: 'openid profile email',
+          access_type: 'offline',
+          prompt: 'consent',
+          state,
+        });
+
+        const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+        window.location.href = googleUrl;
+      } catch (error) {
+        console.error('❌ Error during Company authentication:', error);
+        alert('Error starting Company authentication. Please try again.');
+      }
+    } else if (title === 'Visitor') {
+      // Visitors don't need authentication, just set role and close modal
+      console.log('Setting Visitor role...');
+      // You might want to set a cookie or localStorage to remember visitor role
+      localStorage.setItem('visitorRole', 'Visitor');
+      onCloseModal?.();
+      // Redirect to a visitor-specific page or just close the modal
+      alert('Welcome as a Visitor! You can browse the platform without logging in.');
     } else {
       console.log('Google login for', title, '- not implemented yet');
     }
@@ -148,7 +184,7 @@ function RoleCard({
 export default function LoginSection() {
   const [active, setActive] = useState<string | null>(null);
   const { data: session, status } = useSession();
-  const isRegistered = session?.backendUser?.program ? true : false;
+  const isRegistered = (session as any)?.isRegistered ?? false;
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -174,6 +210,7 @@ export default function LoginSection() {
             checks={['Create company profile', 'Post job openings', 'Track applications']}
             Icon={Building}
             onSelect={() => setActive((s) => (s === 'Company' ? null : 'Company'))}
+            onCloseModal={() => setActive(null)}
             isActive={active === 'Company'}
             isDisabled={isRegistered}
           />
@@ -184,6 +221,7 @@ export default function LoginSection() {
             checks={['Build your profile', 'Apply to positions', 'Search & filter jobs']}
             Icon={GraduationCap}
             onSelect={() => setActive((s) => (s === 'CPSK' ? null : 'CPSK'))}
+            onCloseModal={() => setActive(null)}
             isActive={active === 'CPSK'}
             isDisabled={isRegistered}
           />
@@ -194,6 +232,7 @@ export default function LoginSection() {
             checks={['View job posts', 'Browse company profiles', 'Explore opportunities']}
             Icon={Eye}
             onSelect={() => setActive((s) => (s === 'Visitor' ? null : 'Visitor'))}
+            onCloseModal={() => setActive(null)}
             isActive={active === 'Visitor'}
             isDisabled={isRegistered}
           />
