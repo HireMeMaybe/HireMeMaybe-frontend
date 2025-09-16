@@ -1,6 +1,7 @@
-"use client";
+'use client';
 
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { User } from 'lucide-react';
 import type { Application } from '@/types/application';
 
@@ -10,46 +11,42 @@ interface ApplicationCardProps {
   readonly onViewApplication?: () => void;
 }
 
-export default function ApplicationCard({ 
-  application,
-  onViewPost,
-  onViewApplication 
-}: ApplicationCardProps) {
+export default function ApplicationCard({ application, onViewApplication }: ApplicationCardProps) {
   return (
-    <div className="bg-very-dark-gray border border-zinc-700 rounded-xl p-6 hover:border-zinc-600 transition-colors">
+    <div className="bg-very-dark-gray rounded-xl border border-zinc-700 p-6 transition-colors hover:border-zinc-600">
       <div className="flex items-center justify-between">
         {/* Left side - Candidate info */}
         <div className="flex items-center gap-4">
           {/* Profile Picture */}
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 rounded-full bg-primary-green flex items-center justify-center overflow-hidden">
+            <div className="bg-primary-green flex h-12 w-12 items-center justify-center overflow-hidden rounded-full">
               {application.profilePicture ? (
-                <img 
-                  src={application.profilePicture} 
+                <Image
+                  src={application.profilePicture as string}
                   alt={`${application.candidateName} profile`}
-                  className="w-full h-full object-cover"
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <User className="w-6 h-6 text-white" />
+                <User className="h-6 w-6 text-white" />
               )}
             </div>
           </div>
-          
+
           {/* Candidate Details */}
           <div className="min-w-0 flex-1">
-            <h3 className="text-white font-semibold text-lg mb-1">
-              {application.candidateName}
-            </h3>
-            <p className="text-lighter-gray-text text-sm mb-2">
+            <h3 className="mb-1 text-lg font-semibold text-white">{application.candidateName}</h3>
+            <p className="text-lighter-gray-text mb-2 text-sm">
               {application.program} student at {application.university}
             </p>
-            
+
             {/* Skills */}
             <div className="flex flex-wrap gap-2">
               {application.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="px-2 py-1 bg-very-dark-gray text-xs text-primary-green rounded-md border border-zinc-600"
+                  className="bg-very-dark-gray text-primary-green rounded-md border border-zinc-600 px-2 py-1 text-xs"
                 >
                   {skill}
                 </span>
@@ -60,19 +57,20 @@ export default function ApplicationCard({
 
         {/* Right side - Applied date and actions */}
         <div className="flex-shrink-0 text-right">
-          <p className="text-lighter-gray-text text-sm mb-4">
-            Applied {new Date(application.appliedDate).toLocaleDateString('en-US', {
+          <p className="text-lighter-gray-text mb-4 text-sm">
+            Applied{' '}
+            {new Date(application.appliedDate).toLocaleDateString('en-US', {
               year: 'numeric',
-              month: 'short', 
-              day: 'numeric'
+              month: 'short',
+              day: 'numeric',
             })}
           </p>
-          
+
           {/* Action Buttons */}
           <div className="flex gap-2">
             <Button
               onClick={onViewApplication}
-              className="bg-primary-green hover:bg-green-700 text-white px-4 py-2 text-sm cursor-pointer"
+              className="bg-primary-green cursor-pointer px-4 py-2 text-sm text-white hover:bg-green-700"
             >
               View Application
             </Button>

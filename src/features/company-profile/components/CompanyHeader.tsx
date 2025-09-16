@@ -140,9 +140,11 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
               <div className="flex-shrink-0">
                 <div className="bg-component flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border border-zinc-600">
                   {company.logoUrl ? (
-                    <img
-                      src={company.logoUrl}
+                    <Image
+                      src={company.logoUrl as string}
                       alt={`${company.name} logo`}
+                      width={96}
+                      height={96}
                       className="h-full w-full object-cover"
                     />
                   ) : (
