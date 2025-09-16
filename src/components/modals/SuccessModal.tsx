@@ -9,7 +9,6 @@ interface SuccessModalProps {
   readonly onClose: () => void;
   readonly title?: string;
   readonly message?: string;
-  readonly description?: string;
   readonly buttonText?: string;
   readonly description?: string;
   readonly onConfirm?: () => void;
