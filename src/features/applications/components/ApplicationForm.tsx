@@ -1,4 +1,3 @@
-// src/features/application/components/ApplicationForm.tsx
 "use client";
 
 import { useState } from "react";
