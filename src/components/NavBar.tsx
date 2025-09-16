@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Search, User } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
@@ -83,7 +84,18 @@ export default function Navbar() {
             ) : (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3 border-b pb-3">
-                  <div className="h-10 w-10 rounded-full bg-emerald-500" />
+                  {/* User avatar: prefer backendUser.User.profile_picture, fall back to a colored circle */}
+                  {session?.backendUser?.User?.profile_picture ? (
+                    <Image
+                      src={session.backendUser.User.profile_picture as string}
+                      alt={session.backendUser?.name || session.backendUser?.first_name || 'User'}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-emerald-500" />
+                  )}
                   <div>
                     <div className="font-bold">
                       {session?.backendUser?.role === 'Company'
