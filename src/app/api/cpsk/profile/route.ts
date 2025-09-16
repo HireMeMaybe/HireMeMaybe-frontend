@@ -48,7 +48,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // 3. Authenticate user
-    const authResult = await requireAuth(request);
+    const authResult = await requireAuth();
     if (authResult instanceof Response) {
       return authResult; // Authentication failed
     }
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Authenticate user
-    const authResult = await requireAuth(request);
+    const authResult = await requireAuth();
     if (authResult instanceof Response) {
       return authResult; // Authentication failed
     }

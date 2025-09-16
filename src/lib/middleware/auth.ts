@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import authOptions from '@/lib/authOptions';
 
 // Extended session type that includes our custom properties
 export interface ExtendedSession {
@@ -25,7 +25,7 @@ export interface ExtendedSession {
  * Authentication middleware for API routes
  * Validates NextAuth session and extracts backend token
  */
-export async function requireAuth(request: NextRequest): Promise<
+export async function requireAuth(): Promise<
   | {
       session: ExtendedSession;
       token: string;

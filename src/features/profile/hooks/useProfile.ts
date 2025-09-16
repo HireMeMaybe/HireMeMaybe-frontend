@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import type { ProfileData } from '@/types/cpsk';
 
@@ -17,7 +17,7 @@ export function useProfile(): UseProfileReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     if (status !== 'authenticated' || !session?.backendToken) {
       setLoading(false);
       return;
@@ -46,13 +46,13 @@ export function useProfile(): UseProfileReturn {
     } finally {
       setLoading(false);
     }
-  };
+  }, [status, session?.backendToken]);
 
   useEffect(() => {
     if (status !== 'loading') {
       fetchProfileData();
     }
-  }, [status, session]);
+  }, [status, fetchProfileData]);
 
   return {
     profileData,

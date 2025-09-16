@@ -13,7 +13,12 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
-  const isRegistered = (session as any)?.isRegistered ?? false;
+  // Type guard for app-extended session property
+  function hasIsRegistered(obj: unknown): obj is { isRegistered?: boolean } {
+    return typeof obj === 'object' && obj !== null && 'isRegistered' in obj;
+  }
+
+  const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
   const handleUserClick = () => {
     if (isLoading) return;
     if (!isAuthenticated) {

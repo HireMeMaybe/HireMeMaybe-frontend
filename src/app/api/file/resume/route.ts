@@ -114,11 +114,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Authenticate user
-    const authResult = await requireAuth(request);
+    const authResult = await requireAuth();
     if (authResult instanceof Response) {
       return authResult; // Authentication failed
     }
-    const { session, token } = authResult;
+    const { token } = authResult;
 
     // 3. Parse and validate form data
     const formResult = await parseFormData(request);

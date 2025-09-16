@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +42,9 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
     profileData.profile_picture || profileData.User?.profile_picture || null
   );
 
+  // Track image load failure to show initials fallback
+  const [imgFailed, setImgFailed] = React.useState(false);
+
   return (
     <div className="mx-auto max-w-2xl">
       {/* Header with Edit Button */}
@@ -58,29 +62,21 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
 
       {/* Profile Header */}
       <div className="mb-8 text-center">
-        {avatarSrc ? (
-          <img
-            src={avatarSrc}
-            alt={fullName || 'Profile picture'}
-            className="mx-auto mb-4 h-20 w-20 rounded-full object-cover"
-            onError={(e) => {
-              // Handle rate limiting and other image errors by hiding the image
-              const target = e.currentTarget as HTMLImageElement;
-              console.warn('Profile image failed to load:', e, 'URL:', avatarSrc);
-
-              // Check if it's a rate limiting issue
-              if (avatarSrc?.includes('profile-image') && e.type === 'error') {
-                console.info('Profile image rate limited or failed, showing initials fallback');
-              }
-
-              target.style.display = 'none';
-            }}
-            onLoad={(e) => {
-              // Ensure image is visible when it loads successfully
-              const target = e.currentTarget as HTMLImageElement;
-              target.style.display = 'block';
-            }}
-          />
+        {avatarSrc && !imgFailed ? (
+          <div className="relative mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full">
+            <Image
+              src={avatarSrc}
+              alt={fullName || 'Profile picture'}
+              fill
+              sizes="80px"
+              className="object-cover"
+              onError={(e) => {
+                console.warn('Profile image failed to load:', e, 'URL:', avatarSrc);
+                // mark as failed to show initials fallback
+                setImgFailed(true);
+              }}
+            />
+          </div>
         ) : (
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--color-primary-green)] text-2xl font-bold">
             {fullName

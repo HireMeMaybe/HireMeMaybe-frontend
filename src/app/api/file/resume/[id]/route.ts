@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // 2. Authenticate user
-    const authResult = await requireAuth(request);
+    const authResult = await requireAuth();
     if (authResult instanceof Response) {
       return authResult; // Authentication failed
     }

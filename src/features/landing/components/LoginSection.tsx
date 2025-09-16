@@ -2,6 +2,11 @@
 
 import React, { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+
+// Type guard to safely detect custom `isRegistered` property on session
+function hasIsRegistered(obj: unknown): obj is { isRegistered?: boolean } {
+  return typeof obj === 'object' && obj !== null && 'isRegistered' in obj;
+}
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Building, GraduationCap, Eye, Check } from 'lucide-react';
 import GoogleLogin from '@/features/landing/components/GoogleLogin';
@@ -28,8 +33,6 @@ function RoleCard({
   isDisabled,
 }: RoleCardProps) {
   const pointerActivated = useRef(false);
-  const { data: session, status } = useSession();
-  const isRegistered = (session as any)?.isRegistered ?? false;
 
   const handleGoogleLogin = async (title: string) => {
     if (title === 'CPSK') {
@@ -183,8 +186,8 @@ function RoleCard({
 
 export default function LoginSection() {
   const [active, setActive] = useState<string | null>(null);
-  const { data: session, status } = useSession();
-  const isRegistered = (session as any)?.isRegistered ?? false;
+  const { data: session } = useSession();
+  const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {

@@ -1,44 +1,101 @@
-import { useEffect } from 'react';
-import { UseFormSetValue } from 'react-hook-form';
+import { useEffect, useCallback } from 'react';
+import { UseFormSetValue, Path, PathValue } from 'react-hook-form';
 import type { Session } from 'next-auth';
 import type { ProfileData } from '@/types/cpsk';
 
-interface UseFormPopulationProps {
-  setValue: UseFormSetValue<any>;
+// Concrete form values so setValue('key', value) accepts the literal keys we use
+interface FormValues {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  program?: string;
+  year?: string;
+  soft_skill?: string | string[];
+  resume?: File | undefined;
+  [key: string]: unknown;
+}
+
+// Backend user shape (partial) coming from our API/session
+interface BackendUser {
+  first_name?: string;
+  last_name?: string;
+  User?: { email?: string; tel?: string };
+  program?: string;
+  year?: number | string;
+  soft_skill?: string[];
+}
+
+// Basic user shape from NextAuth session.user
+interface BasicUser {
+  name?: string;
+  email?: string;
+}
+
+interface UseFormPopulationProps<T extends FormValues = FormValues> {
+  setValue: UseFormSetValue<T>;
   session?: Session | null;
   initialProfile?: ProfileData | null;
   setSkills: (skills: string[]) => void;
 }
 
-export function useFormPopulation({
+export function useFormPopulation<T extends FormValues = FormValues>({
   setValue,
   session,
   initialProfile,
   setSkills,
-}: UseFormPopulationProps) {
+}: UseFormPopulationProps<T>) {
   // Helper functions to reduce cognitive complexity
-  const populateFromBackendUser = (authData: any) => {
-    if (authData.first_name) setValue('first_name', authData.first_name);
-    if (authData.last_name) setValue('last_name', authData.last_name);
-    if (authData.User?.email || session?.user?.email) {
-      setValue('email', authData.User?.email || session?.user?.email || '');
-    }
-    if (authData.User?.tel) setValue('phone', authData.User.tel);
-    if (authData.program) setValue('program', authData.program);
-    if (authData.year) setValue('year', authData.year.toString());
-    if (authData.soft_skill && Array.isArray(authData.soft_skill)) {
-      setSkills(authData.soft_skill as string[]);
-    }
-  };
+  const populateFromBackendUser = useCallback(
+    (authData: BackendUser | ProfileData) => {
+      if (authData.first_name)
+        setValue('first_name' as Path<T>, authData.first_name as unknown as PathValue<T, Path<T>>);
+      if (authData.last_name)
+        setValue('last_name' as Path<T>, authData.last_name as unknown as PathValue<T, Path<T>>);
+      if (authData.User?.email || session?.user?.email) {
+        setValue(
+          'email' as Path<T>,
+          (authData.User?.email || session?.user?.email || '') as unknown as PathValue<T, Path<T>>
+        );
+      }
+      if (authData.User?.tel)
+        setValue('phone' as Path<T>, authData.User.tel as unknown as PathValue<T, Path<T>>);
+      if (authData.program)
+        setValue('program' as Path<T>, authData.program as unknown as PathValue<T, Path<T>>);
+      if ('year' in authData && authData.year != null) {
+        // authData may be BackendUser or ProfileData; convert to string safely
+        const yearVal = (authData as BackendUser).year ?? (authData as ProfileData).year;
+        if (yearVal != null)
+          setValue('year' as Path<T>, String(yearVal) as unknown as PathValue<T, Path<T>>);
+      }
 
-  const populateFromBasicUser = (user: any) => {
-    if (user.name) {
-      const nameParts = user.name.split(' ');
-      setValue('first_name', nameParts[0] || '');
-      setValue('last_name', nameParts.slice(1).join(' ') || '');
-    }
-    if (user.email) setValue('email', user.email);
-  };
+      if ('soft_skill' in authData) {
+        const skills = (authData as BackendUser).soft_skill ?? (authData as ProfileData).soft_skill;
+        if (Array.isArray(skills)) setSkills(skills as string[]);
+      }
+    },
+    [setValue, setSkills, session]
+  );
+
+  const populateFromBasicUser = useCallback(
+    (user: BasicUser) => {
+      if (user.name) {
+        const nameParts = user.name.split(' ');
+        setValue('first_name' as Path<T>, (nameParts[0] || '') as unknown as PathValue<T, Path<T>>);
+        setValue(
+          'last_name' as Path<T>,
+          (nameParts.slice(1).join(' ') || '') as unknown as PathValue<T, Path<T>>
+        );
+      }
+      if (user.email) setValue('email' as Path<T>, user.email as unknown as PathValue<T, Path<T>>);
+    },
+    [setValue]
+  );
+
+  // Type guard for app-extended session
+  function hasBackendUser(obj: unknown): obj is { backendUser?: BackendUser } {
+    return typeof obj === 'object' && obj !== null && 'backendUser' in obj;
+  }
 
   // Prefill: prefer explicit profileData (from backend), then fall back to session
   useEffect(() => {
@@ -52,17 +109,25 @@ export function useFormPopulation({
       return;
     }
 
-    if (session?.backendUser) {
+    if (session && hasBackendUser(session) && session.backendUser) {
       try {
-        console.log('Pre-populating form with NextAuth session data:', session.backendUser);
-        populateFromBackendUser(session.backendUser);
+        const backendUser = session.backendUser as BackendUser;
+        console.log('Pre-populating form with NextAuth session data:', backendUser);
+        populateFromBackendUser(backendUser);
       } catch (error) {
         console.error('Error processing NextAuth session data:', error);
       }
     } else if (session?.user) {
       console.log('Pre-populating form with basic NextAuth user data:', session.user);
-      populateFromBasicUser(session.user);
+      populateFromBasicUser(session.user as BasicUser);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setValue, session, initialProfile]);
+    // include helpers in deps
+  }, [
+    setValue,
+    session,
+    initialProfile,
+    setSkills,
+    populateFromBackendUser,
+    populateFromBasicUser,
+  ]);
 }

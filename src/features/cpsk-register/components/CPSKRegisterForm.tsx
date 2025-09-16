@@ -42,8 +42,8 @@ export default function CPSKRegisterForm({
     phone: string;
     program: string;
     year: string;
-    soft_skill?: string | string[];
-    resume?: File;
+    soft_skill?: string | string[] | undefined;
+    resume?: File | undefined;
   };
 
   const {

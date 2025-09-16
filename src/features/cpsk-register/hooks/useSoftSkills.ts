@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { UseFormSetValue } from 'react-hook-form';
+import { UseFormSetValue, Path, PathValue } from 'react-hook-form';
 
-interface UseSoftSkillsProps {
-  setValue: UseFormSetValue<any>;
+// Make the hook generic so it can accept the form's concrete value type
+interface UseSoftSkillsProps<
+  TFieldValues extends { soft_skill?: string | string[] | undefined } = {
+    soft_skill?: string | string[] | undefined;
+  },
+> {
+  setValue: UseFormSetValue<TFieldValues>;
   initialSkills?: string[];
 }
 
@@ -16,18 +21,25 @@ interface UseSoftSkillsReturn {
   onSkillKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
-export function useSoftSkills({
-  setValue,
-  initialSkills = [],
-}: UseSoftSkillsProps): UseSoftSkillsReturn {
+export function useSoftSkills<
+  TFieldValues extends { soft_skill?: string | string[] | undefined } = {
+    soft_skill?: string | string[] | undefined;
+  },
+>({ setValue, initialSkills = [] }: UseSoftSkillsProps<TFieldValues>): UseSoftSkillsReturn {
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>(initialSkills);
 
   useEffect(() => {
-    // keep react-hook-form value in sync
-    setValue('soft_skill', skills.length > 0 ? skills : undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [skills]);
+    // Keep react-hook-form value in sync. We constrain TFieldValues to include
+    // `soft_skill?: string[] | undefined` so the call below is correctly typed.
+    setValue(
+      'soft_skill' as Path<TFieldValues>,
+      (skills.length > 0 ? skills : undefined) as unknown as PathValue<
+        TFieldValues,
+        Path<TFieldValues>
+      >
+    );
+  }, [skills, setValue]);
 
   const addSkill = (value?: string) => {
     const raw = (value ?? skillInput).trim();

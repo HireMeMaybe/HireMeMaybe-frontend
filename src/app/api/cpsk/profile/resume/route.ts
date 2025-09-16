@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Authenticate user
-    const authResult = await requireAuth(request);
+    const authResult = await requireAuth();
     if (authResult instanceof Response) {
       return authResult; // Authentication failed
     }
