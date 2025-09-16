@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --background: #171214;
@@ -10,21 +10,25 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --color-primary-green: #02BC77;
-  --color-very-green: #0D6B6D;
-  --color-green-yellow: #B0AE2B;
-  --color-pale-green: #D2DFD8;
+  --color-primary-green: #02bc77;
+  --color-darker-green: #029e64;
+  --color-very-green: #0d6b6d;
+  --color-green-yellow: #b0ae2b;
+  --color-pale-green: #d2dfd8;
+  --color-pale-pink: #b29eba;
+  --color-background-gray: #2a2a2a;
+  --color-light-gray: #333333;
   --color-dark-gray: #595256;
-  --color-default-gray: #D9D9D9;
+  --color-default-gray: #d9d9d9;
   --color-component: #382933;
-  --color-gray-text: #8C8C8C;
-  --color-red-reject: #FF6B6B;
+  --color-gray-text: #8c8c8c;
+  --color-red-reject: #ff6b6b;
   --color-yellow-warning: #e79e28;
-  --color-sky-blue: #5DA1F4;
-  --color-lighter-gray-text: #B8BCBA;
+  --color-sky-blue: #5da1f4;
+  --color-lighter-gray-text: #b8bcba;
   --color-gray-cancel: #333333;
-  --color-darker-gray: #2A2A2A;
-  --color-very-dark-gray: #1A1A1A;
+  --color-darker-gray: #2a2a2a;
+  --color-very-dark-gray: #1a1a1a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -38,5 +42,18 @@ body {
   background: var(--background);
   color: var(--foreground);
   /* Use Inter via the CSS variable set by next/font/google; fall back to system fonts */
-  font-family: var(--font-sans), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family:
+    var(--font-sans),
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'Noto Sans',
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol';
 }
