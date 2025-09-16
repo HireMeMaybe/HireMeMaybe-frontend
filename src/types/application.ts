@@ -15,7 +15,7 @@ export interface ApplicationFormData {
   resume: File | null;
   
   // Skills
-  softSkills: string;
+  softSkills: string[]; // Change from string to string[]
   
   // Dynamic Questions (from job posting)
   questions: ApplicationQuestion[];

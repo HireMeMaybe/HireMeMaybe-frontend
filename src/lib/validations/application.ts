@@ -41,9 +41,9 @@ export const applicationFormSchema = z.object({
     .refine((file) => ACCEPTED_FILE_TYPES.includes(file.type), "Only PDF, DOC, and DOCX files are allowed"),
     
   softSkills: z
-    .string()
-    .min(1, "Please select soft skills"),
-    
+    .array(z.string().min(1, "Soft skill cannot be empty")) // Validate an array of non-empty strings
+    .min(1, "Please add at least one soft skill"), // Ensure at least one skill is added
+
   defaultQuestions: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
 });
 

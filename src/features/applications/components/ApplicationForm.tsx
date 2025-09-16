@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -42,9 +42,12 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     major: "",
     educationLevel: "",
     resume: null,
-    softSkills: "",
+    softSkills: [],
     questions: getInitialQuestions(),
   });
+
+  // Add a new state for managing soft skills as an array
+  const [softSkills, setSoftSkills] = useState<string[]>([]);
 
   const handleInputChange = (field: keyof ApplicationFormData, value: any) => {
     setFormData(prev => ({
@@ -84,6 +87,31 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       setFormData(prev => ({ ...prev, resume: file }));
     }
   };
+
+  // Function to handle adding a new soft skill
+  const handleAddSoftSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && e.currentTarget.value.trim() !== "") {
+      e.preventDefault();
+      const newSkill = e.currentTarget.value.trim();
+      if (!softSkills.includes(newSkill)) {
+        setSoftSkills((prev) => [...prev, newSkill]);
+      }
+      e.currentTarget.value = ""; // Clear the input field
+    }
+  };
+
+  // Function to remove a soft skill
+  const handleRemoveSoftSkill = (skill: string) => {
+    setSoftSkills((prev) => prev.filter((s) => s !== skill));
+  };
+
+  // Update the formData state to include the softSkills array
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      softSkills: softSkills, // Store as an array to match ApplicationFormData type
+    }));
+  }, [softSkills]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,17 +256,31 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {/* Soft Skills */}
           <div className="space-y-2">
             <Label htmlFor="soft-skills" className="text-white">Soft Skills</Label>
-            <Select value={formData.softSkills} onValueChange={(value) => handleInputChange("softSkills", value)}>
-              <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
-                <SelectValue placeholder="Communication & ..." />
-              </SelectTrigger>
-              <SelectContent className="bg-darker-gray border-gray-600">
-                <SelectItem value="communication" className="text-white hover:bg-gray-700">Communication &amp; Teamwork</SelectItem>
-                <SelectItem value="leadership" className="text-white hover:bg-gray-700">Leadership</SelectItem>
-                <SelectItem value="problem-solving" className="text-white hover:bg-gray-700">Problem Solving</SelectItem>
-                <SelectItem value="creativity" className="text-white hover:bg-gray-700">Creativity</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="bg-darker-gray border border-gray-600 rounded-lg p-4">
+              <input
+                type="text"
+                placeholder="Type a skill and press Enter"
+                className="bg-darker-gray border-gray-600 text-white w-full p-2 rounded"
+                onKeyDown={handleAddSoftSkill}
+              />
+              <div className="flex flex-wrap gap-2 mt-2">
+                {softSkills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="bg-primary-green text-white px-3 py-1 rounded-full flex items-center gap-2"
+                  >
+                    {skill}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSoftSkill(skill)}
+                      className="text-white hover:text-red-500"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Default Questions */}
