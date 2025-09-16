@@ -7,9 +7,9 @@ import type { JobOpening } from '@/types/company';
 interface JobCardProps {
   readonly job: JobOpening;
   readonly viewType: 'student' | 'company';
-  readonly onApply?: (jobId: string) => void;
-  readonly onEdit?: (jobId: string) => void;
-  readonly onViewApplications?: (jobId: string) => void;
+  readonly onApply?: (jobId: number) => void;
+  readonly onEdit?: (jobId: number) => void;
+  readonly onViewApplications?: (jobId: number) => void;
 }
 
 export default function JobCard({ 
@@ -34,7 +34,7 @@ export default function JobCard({
         </p>
 
         {/* Application Count - Company View Only */}
-        {viewType === 'company' && job.applicationCount && (
+        {viewType === 'company' && (
           <div className="flex items-center gap-1 text-white text-sm mb-4">
             <Users className="w-4 h-4 text-primary-green" />
             <span>{job.applicationCount} Applications</span>
@@ -47,14 +47,14 @@ export default function JobCard({
             <>
               <Button
                 onClick={() => onEdit?.(job.id)}
-                className="bg-[#595256] hover:bg-gray-cancel text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
+                className="bg-[#595256] hover:bg-gray-cancel text-white px-4 py-2 rounded-md text-sm flex items-center gap-1 cursor-pointer"
               >
                 <Edit className="w-4 h-4" />
                 Edit
               </Button>
               <Button
                 onClick={() => onViewApplications?.(job.id)}
-                className="bg-[#02BC77] hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
+                className="bg-[#02BC77] hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center gap-1 cursor-pointer"
               >
                 <Eye className="w-4 h-4" />
                 View Applications
@@ -74,7 +74,7 @@ export default function JobCard({
       {/* Right Side - Job Image */}
       <div className="flex-shrink-0 ml-6">
         <div className="w-60 h-40 rounded-lg overflow-hidden">
-          {job.id === '1' ? (
+          {job.id === 1 ? (
             <div className="w-full h-full bg-gradient-to-br from-amber-100 via-amber-200 to-amber-300 flex items-center justify-center relative">
               <div className="absolute inset-2 border-2 border-amber-400/30 rounded-lg"></div>
               <div className="absolute inset-4 border border-amber-400/20 rounded-md"></div>

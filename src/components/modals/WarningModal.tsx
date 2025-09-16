@@ -81,7 +81,7 @@ export default function WarningModal({
               onClick={handleSave}
               className="bg-yellow-warning hover:bg-yellow-600 text-white px-6 py-2 rounded-md"
             >
-              Save & Stay
+              Keep Editing
             </Button>
           </div>
         </div>

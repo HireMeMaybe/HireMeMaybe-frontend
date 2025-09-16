@@ -7,11 +7,11 @@ import type { Company, JobOpening } from '@/types/company';
 const mockCompany: Company = {
   id: 'tech-innovators',
   name: 'Tech Innovators Inc.',
-  industry: 'Software Development',
-  employeeCount: '500-1000 employees',
+  industry: 'Technology',
+  employeeCount: '501-1000 employees',
   location: 'New York, NY',
   email: 'contact@techinnovators.com',
-  phone: '+1 (555) 123-4567',
+  phone: '094-123-4567',
   logoUrl: 'https://i.postimg.cc/dV3X3hq9/image.png',
   bannerUrl: 'https://i.postimg.cc/cH3GHrBz/banner.png',
   about: 'Tech Innovators Inc. is a leading software development company specializing in innovative solutions for businesses across various industries. Our mission is to empower organizations with cutting-edge technology that drives growth and efficiency. We foster a collaborative and inclusive work environment where creativity and innovation thrive. Our core values include integrity, excellence, and a commitment to continuous learning and development.',
@@ -20,22 +20,22 @@ const mockCompany: Company = {
 
 const mockJobOpenings: JobOpening[] = [
   {
-    id: '1',
+    id: 1,
     title: 'Senior Software Engineer',
     department: 'Engineering',
     location: 'New York, NY',
     type: 'Full-time',
-    applicationCount: 12,
+    applicationCount: 2,
     imageUrl: '/api/placeholder/job-1',
     postedDate: '2025-08-25'
   },
   {
-    id: '2',
+    id: 2,
     title: 'Product Manager',
     department: 'Product',
     location: 'New York, NY', 
     type: 'Full-time',
-    applicationCount: 8,
+    applicationCount: 1,
     imageUrl: '/api/placeholder/job-2',
     postedDate: '2025-08-20'
   }

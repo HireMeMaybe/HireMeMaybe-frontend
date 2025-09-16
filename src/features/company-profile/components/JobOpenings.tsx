@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import JobCard from './JobCard';
@@ -8,27 +9,31 @@ import type { JobOpening } from '@/types/company';
 interface JobOpeningsProps {
   readonly jobOpenings: JobOpening[];
   readonly viewType: 'student' | 'company';
+  readonly companyId: string; // Add companyId prop
   readonly onPostNewJob?: () => void;
 }
 
 export default function JobOpenings({ 
   jobOpenings, 
-  viewType, 
+  viewType,
+  companyId, // Add companyId parameter
   onPostNewJob 
 }: JobOpeningsProps) {
-  const handleApply = (jobId: string) => {
+  const router = useRouter();
+
+  const handleApply = (jobId: number) => {
     console.log('Applied to job:', jobId);
     // Implement actual application logic
   };
 
-  const handleEdit = (jobId: string) => {
+  const handleEdit = (jobId: number) => {
     console.log('Edit job:', jobId);
     // Implement edit functionality
   };
 
-  const handleViewApplications = (jobId: string) => {
-    console.log('View applications for job:', jobId);
-    // Implement view applications functionality
+  const handleViewApplications = (jobId: number) => {
+    // Navigate to job applications page
+    router.push(`/company/${companyId}/jobs/${jobId}/applications`);
   };
 
   return (
@@ -38,7 +43,7 @@ export default function JobOpenings({
         {viewType === 'company' && (
           <Button
             onClick={onPostNewJob}
-            className="bg-primary-green hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            className="bg-primary-green hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Post New Job
@@ -52,9 +57,9 @@ export default function JobOpenings({
             key={job.id}
             job={job}
             viewType={viewType}
-            onApply={handleApply}
-            onEdit={handleEdit}
-            onViewApplications={handleViewApplications}
+            onApply={() => handleApply(job.id)}
+            onEdit={() => handleEdit(job.id)}
+            onViewApplications={() => handleViewApplications(job.id)}
           />
         ))}
         

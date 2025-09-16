@@ -11,6 +11,7 @@ interface SuccessModalProps {
   readonly message?: string;
   readonly description?: string;
   readonly buttonText?: string;
+  readonly description?: string;
   readonly onConfirm?: () => void;
 }
 
@@ -19,8 +20,8 @@ export default function SuccessModal({
   onClose,
   title = 'Action Successful',
   message = 'Everything went perfectly',
-  description = 'You can now proceed with the next steps.',
   buttonText = 'Continue',
+  description = 'Click the continue button to proceed.',
   onConfirm,
 }: SuccessModalProps) {
   const handleConfirm = () => {
@@ -35,7 +36,7 @@ export default function SuccessModal({
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">{message}.</DialogDescription>
 
-        <div className="flex flex-col items-center space-y-6 p-8">
+        <div className="flex flex-col space-y-6 p-8">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="border-primary-green flex h-16 w-16 items-center justify-center rounded-full border-2">
@@ -58,7 +59,7 @@ export default function SuccessModal({
           <div className="my-4 self-stretch border-t border-zinc-600"></div>
 
           {/* Description */}
-          <div className="text-lighter-gray-text text text-sm">{description}</div>
+          <div className="text-lighter-gray-text text-sm">{description}</div>
 
           {/* Button */}
           <div className="flex justify-center pt-4">
