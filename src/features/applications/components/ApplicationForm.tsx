@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useJobs } from "@/features/search/hooks/useJobs";
-import { ApplicationFormData, EDUCATION_LEVELS, PROGRAMMING_LANGUAGES, DEFAULT_QUESTIONS } from "@/types/application";
+import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from "@/types/application";
 
 interface ApplicationFormProps {
   jobId: string;
@@ -44,10 +44,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     resume: null,
     softSkills: "",
     questions: getInitialQuestions(),
-    programmingLanguages: PROGRAMMING_LANGUAGES.map(lang => ({
-      name: lang,
-      selected: false
-    }))
   });
 
   const handleInputChange = (field: keyof ApplicationFormData, value: any) => {
@@ -80,15 +76,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     }
 
     handleQuestionChange(questionId, newAnswers);
-  };
-
-  const handleLanguageToggle = (langName: string) => {
-    setFormData(prev => ({
-      ...prev,
-      programmingLanguages: prev.programmingLanguages.map(lang =>
-        lang.name === langName ? { ...lang, selected: !lang.selected } : lang
-      )
-    }));
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

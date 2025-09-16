@@ -19,9 +19,6 @@ export interface ApplicationFormData {
   
   // Dynamic Questions (from job posting)
   questions: ApplicationQuestion[];
-  
-  // Programming Languages
-  programmingLanguages: ProgrammingLanguage[];
 }
 
 export interface ApplicationQuestion {
@@ -124,16 +121,5 @@ export const EDUCATION_LEVELS = [
   'PhD'
 ] as const;
 
-export const PROGRAMMING_LANGUAGES = [
-  'React',
-  'C#',
-  'HTML/CSS',
-  'Java',
-  'JavaScript',
-  'Vue.js',
-  'PHP',
-  'Python',
-  'Node.js'
-] as const;
 
 
