@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, ChevronDown } from "lucide-react";
+import { Upload, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useJobs } from "@/features/search/hooks/useJobs";
-import { ApplicationFormData, EDUCATION_LEVELS, PROGRAMMING_LANGUAGES } from "@/types/application";
+import { ApplicationFormData, EDUCATION_LEVELS, PROGRAMMING_LANGUAGES, DEFAULT_QUESTIONS } from "@/types/application";
 
 interface ApplicationFormProps {
   jobId: string;
@@ -20,6 +20,20 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const { jobs } = useJobs();
   const job = jobs.find((j) => j.id.toString() === jobId);
 
+  // Initialize questions based on job settings
+  const getInitialQuestions = () => {
+    if (!job) return [];
+    
+    const questions = [];
+    
+    // Add default questions if job includes them
+    if (job.includeDefaultQuestions) {
+      questions.push(...DEFAULT_QUESTIONS);
+    }
+    
+    return questions;
+  };
+
   const [formData, setFormData] = useState<ApplicationFormData>({
     name: "",
     surname: "",
@@ -29,7 +43,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     educationLevel: "",
     resume: null,
     softSkills: "",
-    questions: job?.questions || [],
+    questions: getInitialQuestions(),
     programmingLanguages: PROGRAMMING_LANGUAGES.map(lang => ({
       name: lang,
       selected: false
@@ -43,13 +57,29 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     }));
   };
 
-  const handleQuestionChange = (questionId: string, answer: string) => {
+  const handleQuestionChange = (questionId: string, answer: string | string[]) => {
     setFormData(prev => ({
       ...prev,
       questions: prev.questions.map(q => 
-        q.id === questionId ? { ...q, answer } : q
+        q.id === questionId ? { ...q, answer: Array.isArray(answer) ? answer.join(", ") : answer } : q
       )
     }));
+  };
+
+  const handleMultiselectChange = (questionId: string, option: string, isChecked: boolean) => {
+    const question = formData.questions.find(q => q.id === questionId);
+    if (!question) return;
+
+    const currentAnswers = question.answer ? question.answer.split(", ") : [];
+    let newAnswers: string[];
+
+    if (isChecked) {
+      newAnswers = [...currentAnswers, option];
+    } else {
+      newAnswers = currentAnswers.filter(answer => answer !== option);
+    }
+
+    handleQuestionChange(questionId, newAnswers);
   };
 
   const handleLanguageToggle = (langName: string) => {
@@ -224,13 +254,17 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             </Select>
           </div>
 
-          {/* Dynamic Questions */}
-          {formData.questions.length > 0 && (
+          {/* Default Questions */}
+          {job.includeDefaultQuestions && formData.questions.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Questions</h3>
               {formData.questions.map((question) => (
                 <div key={question.id} className="space-y-2">
-                  <Label className="text-white">{question.question}</Label>
+                  <Label className="text-white">
+                    {question.question}
+                    {question.required && <span className="text-red-500 ml-1">*</span>}
+                  </Label>
+                  
                   {question.type === 'select' ? (
                     <Select 
                       value={question.answer} 
@@ -247,6 +281,24 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
+                  ) : question.type === 'multiselect' ? (
+                    <div className="space-y-2">
+                      {question.options?.map((option) => {
+                        const currentAnswers = question.answer ? question.answer.split(", ") : [];
+                        const isChecked = currentAnswers.includes(option);
+                        return (
+                          <label key={option} className="flex items-center gap-2 text-white cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => handleMultiselectChange(question.id, option, e.target.checked)}
+                              className="text-primary-green"
+                            />
+                            {option}
+                          </label>
+                        );
+                      })}
+                    </div>
                   ) : (
                     <Textarea
                       value={question.answer}
@@ -261,23 +313,25 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             </div>
           )}
 
-          {/* Programming Languages */}
-          <div className="space-y-2">
-            <Label className="text-white">What of the following programming languages and you experienced in?</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {formData.programmingLanguages.map((lang) => (
-                <label key={lang.name} className="flex items-center gap-2 text-white cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={lang.selected}
-                    onChange={() => handleLanguageToggle(lang.name)}
-                    className="text-primary-green"
-                  />
-                  {lang.name}
-                </label>
-              ))}
+          {/* Custom Questions Link */}
+          {job.includeCustomQuestions && job.customQuestionsLink && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-white">Additional Questions</h3>
+              <div className="bg-darker-gray border border-gray-600 rounded-lg p-4">
+                <p className="text-white mb-3">
+                  Please complete the additional questions for this position:
+                </p>
+                <Button 
+                  type="button"
+                  onClick={() => window.open(job.customQuestionsLink, '_blank')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-2"
+                >
+                  Complete Custom Questions
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Submit Button */}
           <Button

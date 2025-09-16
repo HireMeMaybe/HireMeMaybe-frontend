@@ -44,23 +44,7 @@ export const applicationFormSchema = z.object({
     .string()
     .min(1, "Please select soft skills"),
     
-  programmingLanguages: z
-    .array(z.object({
-      name: z.string(),
-      selected: z.boolean()
-    }))
-    .refine((languages) => languages.some(lang => lang.selected), "Please select at least one programming language"),
-    
-  questions: z
-    .array(z.object({
-      id: z.string(),
-      question: z.string(),
-      answer: z.string(),
-      type: z.enum(["text", "select", "multiselect"]),
-      options: z.array(z.string()).optional(),
-      required: z.boolean().optional()
-    }))
-    .optional(),
+  defaultQuestions: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
 });
 
 export type ApplicationFormData = z.infer<typeof applicationFormSchema>;
