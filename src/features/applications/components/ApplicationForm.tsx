@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { Upload, ExternalLink } from "lucide-react";
@@ -121,18 +120,40 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               <Input
                 id="name"
                 {...register("name", { required: "Name is required" })}
-                className="bg-darker-gray border-gray-600 text-white"
+                className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
-              {errors.name && <p className="text-red-500">{errors.name.message}</p>}
+              {errors.name && (
+                <p className="text-red-reject flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {errors.name.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="surname" className="text-white">Surname</Label>
               <Input
                 id="surname"
                 {...register("surname", { required: "Surname is required" })}
-                className="bg-darker-gray border-gray-600 text-white"
+                className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
-              {errors.surname && <p className="text-red-500">{errors.surname.message}</p>}
+              {errors.surname && (
+                <p className="text-red-reject flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {errors.surname.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -144,18 +165,40 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 id="email"
                 type="email"
                 {...register("email", { required: "Email is required" })}
-                className="bg-darker-gray border-gray-600 text-white"
+                className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
-              {errors.email && <p className="text-red-500">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-red-reject flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {errors.email.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-white">Phone</Label>
               <Input
                 id="phone"
                 {...register("phone", { required: "Phone number is required" })}
-                className="bg-darker-gray border-gray-600 text-white"
+                className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
-              {errors.phone && <p className="text-red-500">{errors.phone.message}</p>}
+              {errors.phone && (
+                <p className="text-red-reject flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {errors.phone.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -180,7 +223,47 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 SKE
               </label>
             </div>
-            {errors.major && <p className="text-red-500">{errors.major.message}</p>}
+            {errors.major && (
+              <p className="text-red-reject flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {errors.major.message}
+              </p>
+            )}
+          </div>
+
+          {/* Education Level */}
+          <div className="space-y-2">
+            <Label className="text-white">Education Level</Label>
+            <div className="flex flex-col gap-4">
+              {EDUCATION_LEVELS.map((level) => (
+                <label key={level} className="flex items-center gap-2 text-white cursor-pointer">
+                  <input
+                    type="radio"
+                    value={level}
+                    {...register("educationLevel", { required: "Education level is required" })}
+                  />
+                  {level}
+                </label>
+              ))}
+            </div>
+            {errors.educationLevel && (
+              <p className="text-red-reject flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {errors.educationLevel.message}
+              </p>
+            )}
           </div>
 
           {/* Resume Upload */}
@@ -208,7 +291,18 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 </div>
               )}
             />
-            {errors.resume && <p className="text-red-500">{errors.resume.message}</p>}
+            {errors.resume && (
+              <p className="text-red-reject flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                {errors.resume.message}
+              </p>
+            )}
           </div>
 
           {/* Soft Skills */}

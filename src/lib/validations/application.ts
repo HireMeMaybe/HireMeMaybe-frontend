@@ -19,7 +19,7 @@ export const applicationFormSchema = z.object({
   email: z
     .string()
     .min(1, "Email is required")
-    .email("Please enter a valid email address"),
+    .refine((val) => !!val, { message: "Please enter a valid email address" }),
     
   phone: z
     .string()
