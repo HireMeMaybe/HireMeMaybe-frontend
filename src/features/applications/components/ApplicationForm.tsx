@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
 import { Upload, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,102 +21,77 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const { jobs } = useJobs();
   const job = jobs.find((j) => j.id.toString() === jobId);
 
-  // Initialize questions based on job settings
   const getInitialQuestions = () => {
     if (!job) return [];
-    
     const questions = [];
-    
-    // Add default questions if job includes them
     if (job.includeDefaultQuestions) {
       questions.push(...DEFAULT_QUESTIONS);
     }
-    
     return questions;
   };
 
-  const [formData, setFormData] = useState<ApplicationFormData>({
-    name: "",
-    surname: "",
-    email: "",
-    phone: "",
-    major: "",
-    educationLevel: "",
-    resume: null,
-    softSkills: [],
-    questions: getInitialQuestions(),
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ApplicationFormData>({
+    defaultValues: {
+      name: "",
+      surname: "",
+      email: "",
+      phone: "",
+      major: "",
+      educationLevel: "",
+      resume: null,
+      softSkills: [],
+      questions: getInitialQuestions(),
+    },
   });
 
-  // Add a new state for managing soft skills as an array
-  const [softSkills, setSoftSkills] = useState<string[]>([]);
+  const softSkills = watch("softSkills");
+  const formData = watch();
 
-  const handleInputChange = (field: keyof ApplicationFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleQuestionChange = (questionId: string, answer: string | string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      questions: prev.questions.map(q => 
-        q.id === questionId ? { ...q, answer: Array.isArray(answer) ? answer.join(", ") : answer } : q
-      )
-    }));
-  };
-
-  const handleMultiselectChange = (questionId: string, option: string, isChecked: boolean) => {
-    const question = formData.questions.find(q => q.id === questionId);
-    if (!question) return;
-
-    const currentAnswers = question.answer ? question.answer.split(", ") : [];
-    let newAnswers: string[];
-
-    if (isChecked) {
-      newAnswers = [...currentAnswers, option];
-    } else {
-      newAnswers = currentAnswers.filter(answer => answer !== option);
-    }
-
-    handleQuestionChange(questionId, newAnswers);
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, resume: file }));
-    }
-  };
-
-  // Function to handle adding a new soft skill
   const handleAddSoftSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && e.currentTarget.value.trim() !== "") {
       e.preventDefault();
       const newSkill = e.currentTarget.value.trim();
       if (!softSkills.includes(newSkill)) {
-        setSoftSkills((prev) => [...prev, newSkill]);
+        setValue("softSkills", [...softSkills, newSkill]);
       }
       e.currentTarget.value = ""; // Clear the input field
     }
   };
 
-  // Function to remove a soft skill
   const handleRemoveSoftSkill = (skill: string) => {
-    setSoftSkills((prev) => prev.filter((s) => s !== skill));
+    setValue("softSkills", softSkills.filter((s) => s !== skill));
   };
 
-  // Update the formData state to include the softSkills array
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      softSkills: softSkills, // Store as an array to match ApplicationFormData type
-    }));
-  }, [softSkills]);
+  const handleQuestionChange = (id: string, value: string) => {
+    const updatedQuestions = formData.questions.map((q) =>
+      q.id === id ? { ...q, answer: value } : q
+    );
+    setValue("questions", updatedQuestions);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Application submitted:", formData);
+  const handleMultiselectChange = (id: string, option: string, checked: boolean) => {
+    const updatedQuestions = formData.questions.map((q) => {
+      if (q.id === id) {
+        const currentAnswers = q.answer ? q.answer.split(", ") : [];
+        const updatedAnswers = checked
+          ? [...currentAnswers, option]
+          : currentAnswers.filter((ans) => ans !== option);
+        return { ...q, answer: updatedAnswers.join(", ") };
+      }
+      return q;
+    });
+    setValue("questions", updatedQuestions);
+  };
+
+  const onSubmit = (data: ApplicationFormData) => {
+    console.log("Application submitted:", data);
     router.push("/search");
   };
 
@@ -136,29 +112,27 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold text-white mb-8">Application form</h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Name and Surname */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-white">Name</Label>
               <Input
                 id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
+                {...register("name", { required: "Name is required" })}
                 className="bg-darker-gray border-gray-600 text-white"
-                required
               />
+              {errors.name && <p className="text-red-500">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="surname" className="text-white">Surname</Label>
               <Input
                 id="surname"
-                value={formData.surname}
-                onChange={(e) => handleInputChange("surname", e.target.value)}
+                {...register("surname", { required: "Surname is required" })}
                 className="bg-darker-gray border-gray-600 text-white"
-                required
               />
+              {errors.surname && <p className="text-red-500">{errors.surname.message}</p>}
             </div>
           </div>
 
@@ -169,21 +143,19 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
+                {...register("email", { required: "Email is required" })}
                 className="bg-darker-gray border-gray-600 text-white"
-                required
               />
+              {errors.email && <p className="text-red-500">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-white">Phone</Label>
               <Input
                 id="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
+                {...register("phone", { required: "Phone number is required" })}
                 className="bg-darker-gray border-gray-600 text-white"
-                required
               />
+              {errors.phone && <p className="text-red-500">{errors.phone.message}</p>}
             </div>
           </div>
 
@@ -194,63 +166,49 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               <label className="flex items-center gap-2 text-white cursor-pointer">
                 <input
                   type="radio"
-                  name="major"
                   value="CPE"
-                  checked={formData.major === "CPE"}
-                  onChange={(e) => handleInputChange("major", e.target.value)}
-                  className="text-primary-green"
+                  {...register("major", { required: "Major is required" })}
                 />
                 CPE
               </label>
               <label className="flex items-center gap-2 text-white cursor-pointer">
                 <input
                   type="radio"
-                  name="major"
                   value="SKE"
-                  checked={formData.major === "SKE"}
-                  onChange={(e) => handleInputChange("major", e.target.value)}
-                  className="text-primary-green"
+                  {...register("major", { required: "Major is required" })}
                 />
                 SKE
               </label>
             </div>
-          </div>
-
-          {/* Education Level */}
-          <div className="space-y-2">
-            <Label htmlFor="education-level" className="text-white">Education Level</Label>
-            <Select value={formData.educationLevel} onValueChange={(value) => handleInputChange("educationLevel", value)}>
-              <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
-                <SelectValue placeholder="Select education level" />
-              </SelectTrigger>
-              <SelectContent className="bg-darker-gray border-gray-600">
-                {EDUCATION_LEVELS.map((level) => (
-                  <SelectItem key={level} value={level} className="text-white hover:bg-gray-700">
-                    {level}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {errors.major && <p className="text-red-500">{errors.major.message}</p>}
           </div>
 
           {/* Resume Upload */}
           <div className="space-y-2">
             <Label className="text-white">Resume</Label>
-            <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center bg-darker-gray">
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="resume-upload"
-              />
-              <label htmlFor="resume-upload" className="cursor-pointer">
-                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-400">
-                  {formData.resume ? formData.resume.name : "Upload File (PDF)"}
-                </p>
-              </label>
-            </div>
+            <Controller
+              name="resume"
+              control={control}
+              rules={{ required: "Resume is required" }}
+              render={({ field }) => (
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center bg-darker-gray">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => field.onChange(e.target.files?.[0])}
+                    className="hidden"
+                    id="resume-upload"
+                  />
+                  <label htmlFor="resume-upload" className="cursor-pointer">
+                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-400">
+                      {field.value ? field.value.name : "Upload File (PDF)"}
+                    </p>
+                  </label>
+                </div>
+              )}
+            />
+            {errors.resume && <p className="text-red-500">{errors.resume.message}</p>}
           </div>
 
           {/* Soft Skills */}
