@@ -57,3 +57,10 @@ body {
     'Segoe UI Emoji',
     'Segoe UI Symbol';
 }
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);        /* turns black icon into white */
+  cursor: pointer;
+  position: absolute;
+  right: 10px;
+}
