@@ -165,6 +165,7 @@ export default function CompanyProfile({ companyId, viewType }: Readonly<Company
       <JobOpenings 
         jobOpenings={jobOpenings} 
         viewType={viewType}
+        companyId={companyId} // Pass companyId to JobOpenings
         onPostNewJob={handlePostNewJob}
       />
     </div>
