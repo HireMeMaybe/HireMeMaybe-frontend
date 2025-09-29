@@ -93,7 +93,7 @@ export default function JobPostForm() {
           {/* Opening Position */}
           <div className="lg:col-span-2">
             <Label htmlFor="openingPosition" className="text-white">
-              Opening Position <span className="text-red-500">*</span>
+              Opening Position <span className="text-red-reject">*</span>
             </Label>
             <Input
               id="openingPosition"
@@ -102,14 +102,14 @@ export default function JobPostForm() {
               placeholder="e.g. Senior Software Engineer"
             />
             {errors.openingPosition && (
-              <p className="mt-2 text-sm text-red-500">{errors.openingPosition.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.openingPosition.message}</p>
             )}
           </div>
 
           {/* Description */}
           <div className="lg:col-span-2">
             <Label htmlFor="description" className="text-white">
-              Description of Position <span className="text-red-500">*</span>
+              Description of Position <span className="text-red-reject">*</span>
             </Label>
             <Textarea
               id="description"
@@ -118,14 +118,14 @@ export default function JobPostForm() {
               placeholder="Provide a detailed description of the role, responsibilities, and what you're looking for..."
             />
             {errors.description && (
-              <p className="mt-2 text-sm text-red-500">{errors.description.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.description.message}</p>
             )}
           </div>
 
           {/* Requirements */}
           <div className="lg:col-span-2">
             <Label htmlFor="requirements" className="text-white">
-              Requirements <span className="text-red-500">*</span>
+              Requirements <span className="text-red-reject">*</span>
             </Label>
             <Textarea
               id="requirements"
@@ -134,14 +134,14 @@ export default function JobPostForm() {
               placeholder="List the required qualifications, skills, experience, and education..."
             />
             {errors.requirements && (
-              <p className="mt-2 text-sm text-red-500">{errors.requirements.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.requirements.message}</p>
             )}
           </div>
 
           {/* Work Location */}
           <div>
             <Label htmlFor="workLocation" className="text-white">
-              Work Location <span className="text-red-500">*</span>
+              Work Location <span className="text-red-reject">*</span>
             </Label>
             <Input
               id="workLocation"
@@ -150,14 +150,14 @@ export default function JobPostForm() {
               placeholder="e.g. Bangkok, Thailand"
             />
             {errors.workLocation && (
-              <p className="mt-2 text-sm text-red-500">{errors.workLocation.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.workLocation.message}</p>
             )}
           </div>
 
           {/* Hiring Type */}
           <div>
             <Label htmlFor="hiringType" className="text-white">
-              Hiring Type <span className="text-red-500">*</span>
+              Hiring Type <span className="text-red-reject">*</span>
             </Label>
             <Controller
               name="hiringType"
@@ -178,7 +178,7 @@ export default function JobPostForm() {
               )}
             />
             {errors.hiringType && (
-              <p className="mt-2 text-sm text-red-500">{errors.hiringType.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.hiringType.message}</p>
             )}
           </div>
 
@@ -193,13 +193,13 @@ export default function JobPostForm() {
               className="bg-darker-gray mt-4 border-gray-600 text-white placeholder-gray-400"
               placeholder="e.g. 50000"
             />
-            {errors.salary && <p className="mt-2 text-sm text-red-500">{errors.salary.message}</p>}
+            {errors.salary && <p className="mt-2 text-sm text-red-reject">{errors.salary.message}</p>}
           </div>
 
           {/* Experience Level */}
           <div>
             <Label htmlFor="experienceLevel" className="text-white">
-              Experience Level <span className="text-red-500">*</span>
+              Experience Level <span className="text-red-reject">*</span>
             </Label>
             <Controller
               name="experienceLevel"
@@ -224,7 +224,7 @@ export default function JobPostForm() {
               )}
             />
             {errors.experienceLevel && (
-              <p className="mt-2 text-sm text-red-500">{errors.experienceLevel.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.experienceLevel.message}</p>
             )}
           </div>
 
@@ -268,7 +268,7 @@ export default function JobPostForm() {
               {/* Hidden input for form submission */}
               <input type="hidden" {...register('tags')} />
             </div>
-            {errors.tags && <p className="mt-2 text-sm text-red-500">{errors.tags.message}</p>}
+            {errors.tags && <p className="mt-2 text-sm text-red-reject">{errors.tags.message}</p>}
           </div>
         </div>
       </Card>
@@ -291,7 +291,7 @@ export default function JobPostForm() {
               placeholder="16 Aug 2025 07:00 AM"
             />
             {errors.postTime && (
-              <p className="mt-2 text-sm text-red-500">{errors.postTime.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.postTime.message}</p>
             )}
           </div>
 
@@ -308,7 +308,7 @@ export default function JobPostForm() {
               placeholder="dd/mm/yyyy HH:MM AM"
             />
             {errors.expiringTime && (
-              <p className="mt-2 text-sm text-red-500">{errors.expiringTime.message}</p>
+              <p className="mt-2 text-sm text-red-reject">{errors.expiringTime.message}</p>
             )}
           </div>
         </div>
@@ -359,7 +359,7 @@ export default function JobPostForm() {
                   placeholder="Add link to your custom application form"
                 />
                 {errors.customFormLink && (
-                  <p className="mt-2 text-sm text-red-500">{errors.customFormLink.message}</p>
+                  <p className="mt-2 text-sm text-red-reject">{errors.customFormLink.message}</p>
                 )}
               </div>
             )}

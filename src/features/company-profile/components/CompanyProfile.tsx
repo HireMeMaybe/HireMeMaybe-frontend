@@ -62,22 +62,6 @@ export default function CompanyProfile({ companyId, viewType }: Readonly<Company
     }
   }, [initialCompany, reset]);
 
-  const handlePostNewJob = () => {
-    startTransition(async () => {
-      try {
-        console.log('Post new job clicked');
-        // Implement navigation to job posting form
-        // This could involve form validation or API calls if needed
-        
-      } catch (error) {
-        console.error('Error posting new job:', error);
-        setError('companyName', {
-          message: 'Failed to navigate to job posting. Please try again.',
-        });
-      }
-    });
-  };
-
   const handleCompanyUpdate = (updatedCompany: Company) => {
     startTransition(async () => {
       try {
@@ -165,7 +149,6 @@ export default function CompanyProfile({ companyId, viewType }: Readonly<Company
       <JobOpenings 
         jobOpenings={jobOpenings} 
         viewType={viewType}
-        onPostNewJob={handlePostNewJob}
       />
     </div>
   );
