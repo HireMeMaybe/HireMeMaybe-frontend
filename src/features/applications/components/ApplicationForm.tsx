@@ -135,7 +135,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
               {errors.name && (
-                <p className="text-red-reject flex items-center gap-2">
+                <p className="text-red-reject flex items-center gap-2 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -155,7 +155,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
               {errors.surname && (
-                <p className="text-red-reject flex items-center gap-2">
+                <p className="text-red-reject flex items-center gap-2 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -180,7 +180,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
               {errors.email && (
-                <p className="text-red-reject flex items-center gap-2">
+                <p className="text-red-reject flex items-center gap-2 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -200,7 +200,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 className="bg-muted border-border rounded-lg h-12 px-4 text-base focus:ring-2 focus:ring-primary-green/20 focus:border-primary-green transition-all duration-200"
               />
               {errors.phone && (
-                <p className="text-red-reject flex items-center gap-2">
+                <p className="text-red-reject flex items-center gap-2 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -234,7 +234,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               </label>
             </div>
             {errors.major && (
-              <p className="text-red-reject flex items-center gap-2">
+              <p className="text-red-reject flex items-center gap-2 text-sm">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
@@ -263,7 +263,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               ))}
             </div>
             {errors.educationLevel && (
-              <p className="text-red-reject flex items-center gap-2">
+              <p className="text-red-reject flex items-center gap-2 text-sm">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
@@ -303,7 +303,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               )}
             />
             {errors.resume && (
-              <p className="text-red-reject flex items-center gap-2">
+              <p className="text-red-reject flex items-center gap-2 text-sm">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
