@@ -222,7 +222,7 @@ export function CompanyRegisterForm() {
               <div className="relative z-10">
                 <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
                 <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
-                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG, PDF files up to 10MB</p>
+                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG files up to 10MB</p>
               </div>
               <input
                 type="file"
@@ -296,7 +296,7 @@ export function CompanyRegisterForm() {
               <div className="relative z-10">
                 <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
                 <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
-                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG, PDF files up to 10MB</p>
+                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG files up to 10MB</p>
               </div>
               <input
                 type="file"

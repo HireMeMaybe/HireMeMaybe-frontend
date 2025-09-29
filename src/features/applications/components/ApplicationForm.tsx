@@ -281,10 +281,11 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                     id="resume-upload"
                   />
                   <label htmlFor="resume-upload" className="cursor-pointer">
-                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-400">
+                    <Upload className="h-8 w-8 text-lighter-gray-text mx-auto mb-2" />
+                    <p className="text-lighter-gray-text">
                       {field.value ? field.value.name : "Upload File (PDF)"}
                     </p>
+                    <p className="text-sm text-muted-foreground text-lighter-gray-text mt-1">PDF files up to 10MB</p>
                   </label>
                 </div>
               )}
