@@ -46,7 +46,7 @@ export interface Company {
 }
 
 export interface JobOpening {
-  id: string;
+  id: number;
   title: string;
   department: string;
   location: string;

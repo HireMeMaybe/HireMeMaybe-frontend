@@ -20,22 +20,22 @@ const mockCompany: Company = {
 
 const mockJobOpenings: JobOpening[] = [
   {
-    id: '1',
+    id: 1,
     title: 'Senior Software Engineer',
     department: 'Engineering',
     location: 'New York, NY',
     type: 'Full-time',
-    applicationCount: 12,
+    applicationCount: 2,
     imageUrl: '/api/placeholder/job-1',
     postedDate: '2025-08-25'
   },
   {
-    id: '2',
+    id: 2,
     title: 'Product Manager',
     department: 'Product',
     location: 'New York, NY', 
     type: 'Full-time',
-    applicationCount: 8,
+    applicationCount: 1,
     imageUrl: '/api/placeholder/job-2',
     postedDate: '2025-08-20'
   }
