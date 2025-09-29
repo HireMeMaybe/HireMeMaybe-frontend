@@ -105,7 +105,8 @@ export const DEFAULT_QUESTIONS: ApplicationQuestion[] = [
       "TypeScript",
       "PHP",
       "Python",
-      "Flutter"
+      "Flutter",
+      "None of the above"
     ],
     required: true
   }

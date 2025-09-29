@@ -60,7 +60,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       if (!softSkills.includes(newSkill)) {
         setValue("softSkills", [...softSkills, newSkill]);
       }
-      e.currentTarget.value = ""; // Clear the input field
+      e.currentTarget.value = "";
     }
   };
 
@@ -90,6 +90,18 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   };
 
   const onSubmit = (data: ApplicationFormData) => {
+    // Validate required questions
+    if (job?.includeDefaultQuestions) {
+      const unansweredRequired = data.questions.filter(
+        (q) => q.required && (!q.answer || q.answer.trim() === "")
+      );
+      
+      if (unansweredRequired.length > 0) {
+        alert("Please answer all required questions");
+        return;
+      }
+    }
+
     console.log("Application submitted:", data);
     router.push("/search");
   };
@@ -266,7 +278,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
           {/* Resume Upload */}
           <div className="space-y-2">
-            <Label className="text-white">Resume</Label>
+            <Label className="text-white">Resume <span className="text-red-reject">*</span></Label>
             <Controller
               name="resume"
               control={control}
@@ -338,66 +350,111 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {job.includeDefaultQuestions && formData.questions.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Questions</h3>
-              {formData.questions.map((question) => (
-                <div key={question.id} className="space-y-2">
-                  <Label className="text-white">
-                    {question.question}
-                    {question.required && <span className="text-red-reject ml-1">*</span>}
-                  </Label>
-                  
-                  {(() => {
-                    if (question.type === 'select') {
-                      return (
-                        <Select 
-                          value={question.answer} 
-                          onValueChange={(value) => handleQuestionChange(question.id, value)}
-                        >
-                          <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
-                            <SelectValue placeholder="Select an option" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-darker-gray border-gray-600">
-                            {question.options?.map((option) => (
-                              <SelectItem key={option} value={option} className="text-white hover:bg-gray-700">
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      );
-                    } else if (question.type === 'multiselect') {
-                      return (
-                        <div className="space-y-2">
-                          {question.options?.map((option) => {
-                            const currentAnswers = question.answer ? question.answer.split(", ") : [];
-                            const isChecked = currentAnswers.includes(option);
-                            return (
-                              <label key={option} className="flex items-center gap-2 text-white cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={(e) => handleMultiselectChange(question.id, option, e.target.checked)}
-                                  className="text-primary-green"
-                                />
-                                {option}
-                              </label>
-                            );
-                          })}
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <Textarea
-                          value={question.answer}
-                          onChange={(e) => handleQuestionChange(question.id, e.target.value)}
-                          className="bg-darker-gray border-gray-600 text-white"
-                          rows={3}
-                          required={question.required}
-                        />
-                      );
-                    }
-                  })()}
-                </div>
-              ))}
+              {formData.questions.map((question) => {
+                const questionError = question.required && (!question.answer || question.answer.trim() === "");
+                
+                return (
+                  <div key={question.id} className="space-y-2">
+                    <Label className="text-white">
+                      {question.question}
+                      {question.required && <span className="text-red-reject ml-1">*</span>}
+                    </Label>
+                    
+                    {(() => {
+                      if (question.type === 'select') {
+                        return (
+                          <>
+                            <Select 
+                              value={question.answer} 
+                              onValueChange={(value) => handleQuestionChange(question.id, value)}
+                            >
+                              <SelectTrigger className="bg-darker-gray border-gray-600 text-white cursor-pointer">
+                                <SelectValue placeholder="Select an option" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-darker-gray border-gray-600">
+                                {question.options?.map((option) => (
+                                  <SelectItem key={option} value={option} className="text-white hover:bg-gray-700 cursor-pointer">
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {questionError && (
+                              <p className="text-red-reject flex items-center gap-2 text-sm">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                This question is required
+                              </p>
+                            )}
+                          </>
+                        );
+                      } else if (question.type === 'multiselect') {
+                        return (
+                          <>
+                            <div className="space-y-2">
+                              {question.options?.map((option) => {
+                                const currentAnswers = question.answer ? question.answer.split(", ") : [];
+                                const isChecked = currentAnswers.includes(option);
+                                return (
+                                  <label key={option} className="flex items-center gap-2 text-white cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={(e) => handleMultiselectChange(question.id, option, e.target.checked)}
+                                      className="text-primary-green"
+                                    />
+                                    {option}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            {questionError && (
+                              <p className="text-red-reject flex items-center gap-2 text-sm">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                This question is required
+                              </p>
+                            )}
+                          </>
+                        );
+                      } else {
+                        return (
+                          <>
+                            <Textarea
+                              value={question.answer}
+                              onChange={(e) => handleQuestionChange(question.id, e.target.value)}
+                              className="bg-darker-gray border-gray-600 text-white"
+                              rows={3}
+                            />
+                            {questionError && (
+                              <p className="text-red-reject flex items-center gap-2 text-sm">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                This question is required
+                              </p>
+                            )}
+                          </>
+                        );
+                      }
+                    })()}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -412,7 +469,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 <Button 
                   type="button"
                   onClick={() => window.open(job.customQuestionsLink, '_blank')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-2"
+                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-2 cursor-pointer"
                 >
                   Complete Custom Questions
                   <ExternalLink className="h-4 w-4" />
@@ -424,7 +481,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full bg-primary-green hover:bg-green-600 text-white font-semibold py-3 rounded-lg"
+            className="w-full bg-primary-green hover:bg-green-600 text-white font-semibold py-3 rounded-lg cursor-pointer"
           >
             Submit
           </Button>

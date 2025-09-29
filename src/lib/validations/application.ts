@@ -60,7 +60,7 @@ export const applicationFormSchema = z.object({
         type: z.string(),
         required: z.boolean(),
         options: z.array(z.string()).optional(),
-        answer: z.string().optional(),
+        answer: z.string().min(1, 'This question is required'),
       })
     )
     .optional(),
