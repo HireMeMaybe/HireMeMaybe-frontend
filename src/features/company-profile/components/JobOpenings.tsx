@@ -16,17 +16,17 @@ export default function JobOpenings({
   viewType, 
   onPostNewJob 
 }: JobOpeningsProps) {
-  const handleApply = (jobId: string) => {
+  const handleApply = (jobId: number) => {
     console.log('Applied to job:', jobId);
     // Implement actual application logic
   };
 
-  const handleEdit = (jobId: string) => {
+  const handleEdit = (jobId: number) => {
     console.log('Edit job:', jobId);
     // Implement edit functionality
   };
 
-  const handleViewApplications = (jobId: string) => {
+  const handleViewApplications = (jobId: number) => {
     console.log('View applications for job:', jobId);
     // Implement view applications functionality
   };
