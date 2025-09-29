@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useJobs } from "@/features/search/hooks/useJobs";
 import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from "@/types/application";
+import { useState } from "react";
 
 interface ApplicationFormProps {
   readonly jobId: string;
@@ -19,6 +20,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const router = useRouter();
   const { jobs } = useJobs();
   const job = jobs.find((j) => j.id.toString() === jobId);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const getInitialQuestions = () => {
     if (!job) return [];
@@ -90,6 +92,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   };
 
   const onSubmit = (data: ApplicationFormData) => {
+    setIsSubmitted(true);
+    
     // Validate required questions
     if (job?.includeDefaultQuestions) {
       const unansweredRequired = data.questions.filter(
@@ -351,7 +355,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Questions</h3>
               {formData.questions.map((question) => {
-                const questionError = question.required && (!question.answer || question.answer.trim() === "");
+                const questionError = isSubmitted && question.required && (!question.answer || question.answer.trim() === "");
                 
                 return (
                   <div key={question.id} className="space-y-2">
