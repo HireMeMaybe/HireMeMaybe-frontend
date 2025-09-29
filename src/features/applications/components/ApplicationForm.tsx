@@ -12,7 +12,7 @@ import { useJobs } from "@/features/search/hooks/useJobs";
 import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from "@/types/application";
 
 interface ApplicationFormProps {
-  jobId: string;
+  readonly jobId: string;
 }
 
 export function ApplicationForm({ jobId }: ApplicationFormProps) {
@@ -115,8 +115,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Name and Surname */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-white">Name</Label>
+            <div className="space-y-3">
+              <Label htmlFor="name" className="text-white">Name <span className="text-red-reject">*</span> </Label>
               <Input
                 id="name"
                 {...register("name", { required: "Name is required" })}
@@ -135,8 +135,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="surname" className="text-white">Surname</Label>
+            <div className="space-y-3">
+              <Label htmlFor="surname" className="text-white">Surname <span className="text-red-reject">*</span> </Label>
               <Input
                 id="surname"
                 {...register("surname", { required: "Surname is required" })}
@@ -159,8 +159,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
           {/* Email and Phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-white">Email</Label>
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-white">Email <span className="text-red-reject">*</span> </Label>
               <Input
                 id="email"
                 type="email"
@@ -180,8 +180,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-white">Phone</Label>
+            <div className="space-y-3">
+              <Label htmlFor="phone" className="text-white">Phone <span className="text-red-reject">*</span> </Label>
               <Input
                 id="phone"
                 {...register("phone", { required: "Phone number is required" })}
@@ -204,23 +204,21 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
           {/* Major */}
           <div className="space-y-2">
-            <Label className="text-white">Major</Label>
+            <Label className="text-white">Major <span className="text-red-reject">*</span> </Label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 text-white cursor-pointer">
                 <input
                   type="radio"
                   value="CPE"
                   {...register("major", { required: "Major is required" })}
-                />
-                CPE
+                />CPE
               </label>
               <label className="flex items-center gap-2 text-white cursor-pointer">
                 <input
                   type="radio"
                   value="SKE"
                   {...register("major", { required: "Major is required" })}
-                />
-                SKE
+                />SKE
               </label>
             </div>
             {errors.major && (
@@ -239,7 +237,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
           {/* Education Level */}
           <div className="space-y-2">
-            <Label className="text-white">Education Level</Label>
+            <Label className="text-white">Education Level <span className="text-red-reject">*</span> </Label>
             <div className="flex flex-col gap-4">
               {EDUCATION_LEVELS.map((level) => (
                 <label key={level} className="flex items-center gap-2 text-white cursor-pointer">
@@ -343,52 +341,60 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 <div key={question.id} className="space-y-2">
                   <Label className="text-white">
                     {question.question}
-                    {question.required && <span className="text-red-500 ml-1">*</span>}
+                    {question.required && <span className="text-red-reject ml-1">*</span>}
                   </Label>
                   
-                  {question.type === 'select' ? (
-                    <Select 
-                      value={question.answer} 
-                      onValueChange={(value) => handleQuestionChange(question.id, value)}
-                    >
-                      <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
-                        <SelectValue placeholder="Select an option" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-darker-gray border-gray-600">
-                        {question.options?.map((option) => (
-                          <SelectItem key={option} value={option} className="text-white hover:bg-gray-700">
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : question.type === 'multiselect' ? (
-                    <div className="space-y-2">
-                      {question.options?.map((option) => {
-                        const currentAnswers = question.answer ? question.answer.split(", ") : [];
-                        const isChecked = currentAnswers.includes(option);
-                        return (
-                          <label key={option} className="flex items-center gap-2 text-white cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => handleMultiselectChange(question.id, option, e.target.checked)}
-                              className="text-primary-green"
-                            />
-                            {option}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <Textarea
-                      value={question.answer}
-                      onChange={(e) => handleQuestionChange(question.id, e.target.value)}
-                      className="bg-darker-gray border-gray-600 text-white"
-                      rows={3}
-                      required={question.required}
-                    />
-                  )}
+                  {(() => {
+                    if (question.type === 'select') {
+                      return (
+                        <Select 
+                          value={question.answer} 
+                          onValueChange={(value) => handleQuestionChange(question.id, value)}
+                        >
+                          <SelectTrigger className="bg-darker-gray border-gray-600 text-white">
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-darker-gray border-gray-600">
+                            {question.options?.map((option) => (
+                              <SelectItem key={option} value={option} className="text-white hover:bg-gray-700">
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      );
+                    } else if (question.type === 'multiselect') {
+                      return (
+                        <div className="space-y-2">
+                          {question.options?.map((option) => {
+                            const currentAnswers = question.answer ? question.answer.split(", ") : [];
+                            const isChecked = currentAnswers.includes(option);
+                            return (
+                              <label key={option} className="flex items-center gap-2 text-white cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => handleMultiselectChange(question.id, option, e.target.checked)}
+                                  className="text-primary-green"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <Textarea
+                          value={question.answer}
+                          onChange={(e) => handleQuestionChange(question.id, e.target.value)}
+                          className="bg-darker-gray border-gray-600 text-white"
+                          rows={3}
+                          required={question.required}
+                        />
+                      );
+                    }
+                  })()}
                 </div>
               ))}
             </div>
