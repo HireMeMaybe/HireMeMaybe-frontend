@@ -231,7 +231,7 @@ export default function JobPostForm() {
           {/* Tags */}
           <div className="lg:col-span-2">
             <Label htmlFor="tags" className="text-white">
-              Tags
+              Tags <span className="text-red-reject">*</span>
             </Label>
             <div className="mt-4">
               {/* Tag input */}
