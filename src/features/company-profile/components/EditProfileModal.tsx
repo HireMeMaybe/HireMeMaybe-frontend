@@ -266,7 +266,7 @@ export default function EditProfileModal({
                     <div className="bg-component flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-zinc-600">
                       {logoPreview ? (
                         <Image
-                          src={logoPreview as string}
+                          src={logoPreview}
                           alt="Company logo"
                           width={80}
                           height={80}
@@ -330,7 +330,7 @@ export default function EditProfileModal({
                     {bannerPreview ? (
                       <>
                         <Image
-                          src={bannerPreview as string}
+                          src={bannerPreview}
                           alt="Company banner"
                           fill
                           className="object-cover"
