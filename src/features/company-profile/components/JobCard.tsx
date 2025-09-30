@@ -34,7 +34,7 @@ export default function JobCard({
         </p>
 
         {/* Application Count - Company View Only */}
-        {viewType === 'company' && job.applicationCount && (
+        {viewType === 'company' && (
           <div className="flex items-center gap-1 text-white text-sm mb-4">
             <Users className="w-4 h-4 text-primary-green" />
             <span>{job.applicationCount} Applications</span>
@@ -47,14 +47,14 @@ export default function JobCard({
             <>
               <Button
                 onClick={() => onEdit?.(job.id)}
-                className="bg-[#595256] hover:bg-gray-cancel text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
+                className="bg-[#595256] hover:bg-gray-cancel text-white px-4 py-2 rounded-md text-sm flex items-center gap-1 cursor-pointer"
               >
                 <Edit className="w-4 h-4" />
                 Edit
               </Button>
               <Button
                 onClick={() => onViewApplications?.(job.id)}
-                className="bg-[#02BC77] hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"
+                className="bg-[#02BC77] hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm flex items-center gap-1 cursor-pointer"
               >
                 <Eye className="w-4 h-4" />
                 View Applications
