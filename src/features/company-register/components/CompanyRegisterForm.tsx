@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useTransition } from 'react';
@@ -64,7 +63,7 @@ export function CompanyRegisterForm(): React.JSX.Element {
         // Helper to conditionally append non-empty values
         const appendIfPresent = (key: string, value: string | File | undefined) => {
           if (value && value !== '') {
-            formData.append(key, value as string | File);
+            formData.append(key, value);
           }
         };
 
@@ -135,61 +134,6 @@ export function CompanyRegisterForm(): React.JSX.Element {
             </svg>
             <span>Company Logo</span>
           </Label>
-          
-          {/* Preview or Upload Area */}
-          {logoPreview ? (
-            <div className="relative group border-2 border-border rounded-xl p-4 bg-muted/30">
-              <div className="relative">
-                <img 
-                  src={logoPreview} 
-                  alt="Logo preview" 
-                  className="w-full h-48 object-contain rounded-lg bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFile("logo");
-                  }}
-                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 z-30"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="mt-3 text-center">
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-semibold">Uploaded: {watchedLogo?.name}</span>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Click the X to remove or click anywhere to upload a new file</p>
-              </div>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  handleFileUpload("logo", file);
-                }}
-              />
-            </div>
-          ) : (
-            <div className="group border-2 border-dashed border-border rounded-xl p-10 text-center bg-muted/50 hover:bg-muted/70 hover:border-muted-foreground/30 transition-all duration-300 cursor-pointer text-gray-text relative overflow-hidden">
-              <div className="relative z-10">
-                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
-                <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
-                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG files up to 10MB</p>
-              </div>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  handleFileUpload("logo", file);
-                }}
-              />
-            </div>
-          )}
 
           <FileUpload
             file={watchedLogo}
@@ -229,61 +173,6 @@ export function CompanyRegisterForm(): React.JSX.Element {
             </svg>
             <span>Company Banner</span>
           </Label>
-          
-          {/* Preview or Upload Area */}
-          {bannerPreview ? (
-            <div className="relative group border-2 border-border rounded-xl p-4 bg-muted/30">
-              <div className="relative">
-                <img 
-                  src={bannerPreview} 
-                  alt="Banner preview" 
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFile("banner");
-                  }}
-                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100 z-30"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="mt-3 text-center">
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-semibold">{watchedBanner?.name}</span>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">Click the X to remove or click anywhere to upload a new file</p>
-              </div>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  handleFileUpload("banner", file);
-                }}
-              />
-            </div>
-          ) : (
-            <div className="group border-2 border-dashed border-border rounded-xl p-10 text-center bg-muted/50 hover:bg-muted/70 hover:border-muted-foreground/30 transition-all duration-300 cursor-pointer text-gray-text relative overflow-hidden">
-              <div className="relative z-10">
-                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3 text-gray-text group-hover:scale-110 transition-transform duration-300" />
-                <p className="text-base font-medium text-muted-foreground text-lighter-gray-text mb-1">Upload Image</p>
-                <p className="text-sm text-muted-foreground text-lighter-gray-text">JPG, JPEG, PNG files up to 10MB</p>
-              </div>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  handleFileUpload("banner", file);
-                }}
-              />
-            </div>
-          )}
 
           <FileUpload
             file={watchedBanner}
