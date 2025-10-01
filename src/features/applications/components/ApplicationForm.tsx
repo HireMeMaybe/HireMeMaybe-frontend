@@ -28,7 +28,6 @@ import { useSoftSkills } from '@/features/cpsk-register/hooks/useSoftSkills';
 import { useResumeUpload } from '@/features/cpsk-register/hooks/useResumeUpload';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useApplicationSubmit } from '@/features/applications/hooks';
-import { useDownloadResume } from '@/features/profile/hooks/useDownloadResume';
 
 interface ApplicationFormProps {
   readonly jobId: string;
@@ -96,9 +95,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   // Application submission hook
   const { isSubmitting, submitError, submitApplication } = useApplicationSubmit();
 
-  // Resume download hook
-  const { downloadResume} = useDownloadResume();
-
   // Populate form with profile data when it loads
   useEffect(() => {
     if (profileData && !isLoading) {
@@ -153,12 +149,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     setValue('questions', updatedQuestions);
   };
 
-  const handleDownloadResume = async () => {
-    if (profileData?.resume_id) {
-      await downloadResume(profileData.resume_id);
-    }
-  };
-
   const openResumePreview = async () => {
     // If user has just selected a new file (not yet uploaded), preview it locally
     if (watchedResume instanceof File) {
@@ -195,7 +185,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       // Force PDF MIME so iframe can render even if server sends octet-stream
       let blobType = 'application/pdf';
       const ct = response.headers.get('content-type');
-      if (ct && ct.includes('image/')) {
+      if (ct?.includes('image/')) {
         blobType = ct; // allow image if backend actually returns one
       }
 
@@ -451,7 +441,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                       type="button"
                       onClick={openResumePreview}
                       disabled={resumePreviewLoading}
-                      className="flex items-center gap-2 bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                      className="flex items-center gap-2 bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 cursor-pointer"
                     >
                       <Eye className="h-4 w-4" />
                       {resumePreviewLoading ? 'Loading...' : 'Preview'}
@@ -474,7 +464,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
               render={({ field }) => (
                 <FileUpload
                   className="w-full"
-                  file={field.value as File | undefined}
+                  file={field.value}
                   accept=".pdf,application/pdf"
                   description="PDF up to 10 MB"
                   onFileChange={(file) => handleResumeChange(file || undefined)}
@@ -634,7 +624,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 <Button
                   type="button"
                   onClick={() => window.open(job.customQuestionsLink, '_blank')}
-                  className="inline-flex cursor-pointer items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                  className="inline-flex cursor-pointer items-center gap-2 bg-darker-green text-white hover:bg-green-700"
                 >
                   Complete Custom Questions
                   <ExternalLink className="h-4 w-4" />
