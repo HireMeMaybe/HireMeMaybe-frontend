@@ -199,9 +199,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-3">
               <Label htmlFor="name" className="flex items-center text-sm">
-                <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 2a4 4 0 100 8 4 4 0 000-8zM2 18a8 8 0 0116 0H2z" />
-                </svg>
                 <span>Name*</span>
               </Label>
               <Input
@@ -229,10 +226,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-3">
               <Label htmlFor="email" className="flex items-center text-sm">
-                <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2.94 6.34L10 10.882l7.06-4.543A2 2 0 0016.882 4H3.118a2 2 0 00-.178 2.34z" />
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </svg>
                 <span>Email*</span>
               </Label>
               <Input
@@ -246,9 +239,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
             <div className="space-y-3">
               <Label htmlFor="phone" className="flex items-center text-sm">
-                <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                </svg>
                 <span>Phone*</span>
               </Label>
               <Input
@@ -264,9 +254,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {/* Major */}
           <div className="space-y-3">
             <Label className="flex items-center text-sm">
-              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2l3 6H7l3-6zM4 14l6 4 6-4V6H4v8z" />
-              </svg>
               <span>Major*</span>
             </Label>
             <Controller
@@ -294,9 +281,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {/* Education Level */}
           <div className="space-y-3">
             <Label className="flex items-center text-sm">
-              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 00-1-1H6zM7 9h6v2H7V9z" />
-              </svg>
               <span>Education Level*</span>
             </Label>
             <Controller
@@ -327,9 +311,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {/* Resume Upload */}
           <div className="space-y-3">
             <Label className="flex items-center text-sm font-semibold">
-              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-              </svg>
               <span>Resume*</span>
             </Label>
             <Controller
@@ -355,10 +336,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {/* Soft Skills */}
           <div className="space-y-3">
             <Label className="flex items-center text-sm">
-              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2H2V5zm0 4h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9z" />
-              </svg>
-              <span>Soft Skills (Optional)</span>
+              <span>Soft Skills</span>
             </Label>
             <div className="flex flex-col">
               <div className="flex flex-wrap gap-2">
@@ -418,7 +396,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                           <SelectTrigger className="bg-muted border-border h-12 cursor-pointer rounded-lg">
                             <SelectValue placeholder="Select an option" />
                           </SelectTrigger>
-                          <SelectContent className="bg-muted border-border">
+                          <SelectContent className="bg-background border-border">
                             {question.options?.map((option) => (
                               <SelectItem
                                 key={option}
