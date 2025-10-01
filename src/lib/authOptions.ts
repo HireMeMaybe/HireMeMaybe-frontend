@@ -36,6 +36,85 @@ interface BackendUser {
   };
 }
 
+// Helper: Extract authorization code from account object
+function getCodeFromAccount(acct: unknown): string | null {
+  if (!acct || typeof acct !== 'object') return null;
+  const a = acct as Record<string, unknown>;
+  const tryParams = (obj: unknown) => {
+    if (!obj || typeof obj !== 'object') return null;
+    return (obj as Record<string, unknown>)['code'] as string | undefined | null;
+  };
+  return (
+    (a['code'] as string | undefined) ||
+    tryParams(a['params']) ||
+    tryParams((a['oauthTokenRequest'] as Record<string, unknown> | undefined)?.['params']) ||
+    null
+  );
+}
+
+// Helper: Normalize backend user data structure
+function normalizeBackendUser(dataUser: unknown): BackendUser {
+  const user =
+    dataUser && typeof dataUser === 'object' ? (dataUser as Record<string, unknown>) : null;
+  const userObj = user as Record<string, unknown> | null;
+  const UserField = userObj?.['User'] as Record<string, unknown> | undefined;
+
+  return {
+    id:
+      (userObj?.['id'] as string | number | undefined) ??
+      (UserField?.['id'] as string | number | undefined) ??
+      undefined,
+    email:
+      (UserField?.['email'] as string | undefined) ??
+      (userObj?.['email'] as string | undefined) ??
+      null,
+    // CPSK fields
+    first_name: (userObj?.['first_name'] as string | undefined) ?? null,
+    last_name: (userObj?.['last_name'] as string | undefined) ?? null,
+    program: (userObj?.['program'] as string | undefined) ?? null,
+    year: (userObj?.['year'] as number | undefined) ?? null,
+    soft_skill: Array.isArray(userObj?.['soft_skill']) ? (userObj['soft_skill'] as string[]) : [],
+    resume_id: (userObj?.['resume_id'] as number | undefined) ?? null,
+    profile_picture: (UserField?.['profile_picture'] as string | undefined) ?? null,
+    // Company fields
+    name: (userObj?.['name'] as string | undefined) ?? null,
+    overview: (userObj?.['overview'] as string | undefined) ?? null,
+    industry: (userObj?.['industry'] as string | undefined) ?? null,
+    size: (userObj?.['size'] as string | undefined) ?? null,
+    verified_status:
+      (userObj?.['verified_status'] as 'Unverified' | 'Pending' | 'Verified' | undefined) ?? null,
+    // Determine role based on data structure or explicit role
+    role:
+      (userObj?.['role'] as 'Company' | 'CPSK' | 'Visitor' | undefined) ??
+      (userObj?.['name'] !== undefined ? 'Company' : userObj?.['program'] ? 'CPSK' : 'Visitor'),
+    raw: dataUser,
+    User: UserField
+      ? {
+          ID: UserField['ID'] as number | undefined,
+          CreatedAt: UserField['CreatedAt'] as string | undefined,
+          UpdatedAt: UserField['UpdatedAt'] as string | undefined,
+          DeletedAt: UserField['DeletedAt'] as string | null | undefined,
+          tel: UserField['tel'] as string | undefined,
+          email: UserField['email'] as string | undefined,
+          id: UserField['id'] as string | undefined,
+          username: UserField['username'] as string | undefined,
+          profile_picture: UserField['profile_picture'] as string | undefined,
+        }
+      : undefined,
+  };
+}
+
+// Helper: Store backend data in user session object
+function storeUserDataInSession(user: unknown, data: unknown, normalized: BackendUser): void {
+  if (user && typeof user === 'object') {
+    const u = user as Record<string, unknown>;
+    const d = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+    u['backendToken'] = d['access_token'] || d['accessToken'] || d['token'];
+    u['backendUser'] = normalized;
+    u['isRegistered'] = !!(normalized.program || normalized.size);
+  }
+}
+
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || 'dev-secret-key-change-in-production',
   providers: [
@@ -92,94 +171,38 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({ account, user }) {
-      if (account?.provider === 'google') {
-        try {
-          // Try to locate the raw authorization code in common places
-          const getCodeFromAccount = (acct: unknown): string | null => {
-            if (!acct || typeof acct !== 'object') return null;
-            const a = acct as Record<string, unknown>;
-            const tryParams = (obj: unknown) => {
-              if (!obj || typeof obj !== 'object') return null;
-              return (obj as Record<string, unknown>)['code'] as string | undefined | null;
-            };
-            return (
-              (a['code'] as string | undefined) ||
-              tryParams(a['params']) ||
-              tryParams(
-                (a['oauthTokenRequest'] as Record<string, unknown> | undefined)?.['params']
-              ) ||
-              null
-            );
-          };
+      if (account?.provider !== 'google') return true;
 
-          const code = getCodeFromAccount(account);
-
-          if (!code) {
-            console.error('No authorization code found on account object — failing signIn', {
-              account,
-            });
-            return false; // Backend requires raw code for exchange
-          }
-
-          // For now, default to CPSK endpoint if no role specified
-          // In practice, this callback might not be used if going through forward-code route
-          const backendEndpoint = `${process.env.BACKEND_URL}/auth/google/cpsk`;
-
-          const res = await fetch(backendEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code }),
+      try {
+        const code = getCodeFromAccount(account);
+        if (!code) {
+          console.error('No authorization code found on account object — failing signIn', {
+            account,
           });
-
-          if (!res.ok) {
-            console.error('Backend authentication failed:', res.status);
-            return false; // This will prevent the sign-in
-          }
-
-          const data = await res.json();
-
-          // Normalize backend user shape to a predictable object we can persist
-          // Handle both CPSK and Company data structures
-          const normalized: BackendUser = {
-            id: data.user?.id ?? data.user?.User?.id,
-            email: data.user?.User?.email ?? data.user?.email ?? null,
-            // CPSK fields
-            first_name: data.user?.first_name ?? null,
-            last_name: data.user?.last_name ?? null,
-            program: data.user?.program ?? null,
-            year: data.user?.year ?? null,
-            soft_skill: Array.isArray(data.user?.soft_skill) ? data.user.soft_skill : [],
-            resume_id: data.user?.resume_id ?? null,
-            profile_picture: data.user?.User?.profile_picture ?? null,
-            // Company fields
-            name: data.user?.name ?? null,
-            overview: data.user?.overview ?? null,
-            industry: data.user?.industry ?? null,
-            size: data.user?.size ?? null,
-            verified_status: data.user?.verified_status ?? null,
-            // Determine role based on data structure or explicit role
-            role:
-              data.user?.role ??
-              (data.user?.name !== undefined ? 'Company' : data.user?.program ? 'CPSK' : 'Visitor'),
-            raw: data.user,
-            User: data.user?.User,
-          };
-
-          // Store backend response data for use in jwt callback (guarded assignments)
-          if (user && typeof user === 'object') {
-            const u = user as unknown as Record<string, unknown>;
-            u['backendToken'] = data.access_token || data.accessToken || data.token;
-            u['backendUser'] = normalized;
-            u['isRegistered'] = !!(normalized.program || normalized.size);
-          }
-
-          return true; // Allow sign-in, let redirect callback handle the redirect
-        } catch (error) {
-          console.error('Error communicating with backend:', error);
           return false;
         }
+
+        const backendEndpoint = `${process.env.BACKEND_URL}/auth/google/cpsk`;
+        const res = await fetch(backendEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+
+        if (!res.ok) {
+          console.error('Backend authentication failed:', res.status);
+          return false;
+        }
+
+        const data = await res.json();
+        const normalized = normalizeBackendUser(data.user);
+        storeUserDataInSession(user, data, normalized);
+
+        return true;
+      } catch (error) {
+        console.error('Error communicating with backend:', error);
+        return false;
       }
-      return true;
     },
     async jwt({ token, account, user }) {
       // On initial sign-in, store backend data

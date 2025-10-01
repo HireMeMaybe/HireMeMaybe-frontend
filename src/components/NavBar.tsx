@@ -5,6 +5,7 @@ import { Search, User } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { UserPen, History, LogOut } from 'lucide-react';
 
@@ -12,6 +13,7 @@ export default function Navbar() {
   const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ?? '/';
   const [open, setOpen] = useState<boolean>(false);
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
   // Type guard for app-extended session property
@@ -20,20 +22,26 @@ export default function Navbar() {
   }
 
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
+  const scrollToLoginSection = () => {
+    setOpen(false);
+    const el = typeof document !== 'undefined' ? document.getElementById('login-section') : null;
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      const base = frontendUrl.replace(/\/$/, '');
+      window.location.href = `${base}#login-section`;
+    }
+  };
+
   const handleUserClick = () => {
     if (isLoading) return;
-    if (!isAuthenticated) {
-      // Don't open dropdown. Try to scroll to in-page login section, otherwise navigate to the frontend URL with anchor.
-      setOpen(false);
-      const el = typeof document !== 'undefined' ? document.getElementById('login-section') : null;
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        const base = frontendUrl.replace(/\/$/, '');
-        window.location.href = `${base}#login-section`;
-      }
+
+    // If user is unauthenticated or authenticated-but-not-registered, send them to login section
+    if (!isAuthenticated || (isAuthenticated && !isRegistered)) {
+      scrollToLoginSection();
       return;
     }
+
     setOpen((o) => !o);
   };
 
@@ -47,19 +55,21 @@ export default function Navbar() {
         </div>
       </a>
 
-      {/* Center - Search bar */}
-      <div className="mx-8 max-w-md flex-1">
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Search..."
-            className="bg-component w-full rounded-full border-none text-white placeholder-zinc-500 focus:ring-purple-500"
-          />
-          <span className="absolute inset-y-0 right-0 flex items-center pr-3">
-            <Search className="h-5 w-5 text-zinc-500" />
-          </span>
+      {/* Center - Search bar (hidden on the dedicated search page) */}
+      {!(pathname && pathname.startsWith('/search')) && (
+        <div className="mx-8 max-w-md flex-1">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search..."
+              className="bg-component w-full rounded-full border-none text-white placeholder-zinc-500 focus:ring-purple-500"
+            />
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3">
+              <Search className="h-5 w-5 text-zinc-500" />
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Right side - User icon and dropdown */}
       <div className="relative ml-auto">
@@ -72,14 +82,15 @@ export default function Navbar() {
         </button>
 
         {open && (
-          <div className="absolute right-0 mt-2 w-56 rounded-lg bg-[rgb(33,33,33)] p-4 text-white shadow-lg">
+          <div className="absolute right-0 mt-2 min-w-56 rounded-lg bg-[rgb(33,33,33)] p-4 text-white shadow-lg">
             {isLoading ? (
               <div className="py-4">Loading...</div>
             ) : !isRegistered ? (
-              <div className="flex flex-col gap-2">
-                <a href="/auth/google" className="rounded px-3 py-2 hover:bg-white/5">
-                  Login with Google
-                </a>
+              // If user is authenticated but not registered, we do not show the usual
+              // dropdown actions. Clicking the user icon will already scroll the
+              // page to the login/registration section. Show a subtle message here.
+              <div className="py-3 text-sm text-gray-400">
+                Complete your registration to see account actions.
               </div>
             ) : (
               <div className="flex flex-col gap-3">
@@ -96,13 +107,15 @@ export default function Navbar() {
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-emerald-500" />
                   )}
-                  <div>
-                    <div className="font-bold">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-bold">
                       {session?.backendUser?.role === 'Company'
                         ? session?.backendUser?.name || 'Company'
                         : session?.backendUser?.first_name || 'U'}
                     </div>
-                    <div className="text-sm text-zinc-400">{session?.user?.email}</div>
+                    <div className="overflow-wrap-anywhere text-sm break-all text-zinc-400">
+                      {session?.user?.email}
+                    </div>
                   </div>
                 </div>
                 <a
