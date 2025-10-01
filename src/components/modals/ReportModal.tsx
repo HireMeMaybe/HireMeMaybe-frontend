@@ -1,6 +1,12 @@
-"use client";
+'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -16,7 +22,7 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
   const [formData, setFormData] = useState({
     type: '',
     reason: '',
-    details: ''
+    details: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,48 +34,43 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-background border-gray-700 text-white">
-        <DialogHeader className="text-left space-y-2">
+      <DialogContent className="bg-background border-gray-700 text-white sm:max-w-md">
+        <DialogHeader className="space-y-2 text-left">
           <DialogTitle className="text-xl font-semibold text-white">
             Report Job Post / Company
           </DialogTitle>
-          <DialogDescription className="text-gray-400 text-sm">
+          <DialogDescription className="text-sm text-gray-400">
             Help us maintain a safe platform
           </DialogDescription>
         </DialogHeader>
 
         {/* Separator */}
         <div className="border-t border-zinc-600"></div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
-    
-          
           {/* Report details */}
           <div className="space-y-2">
-            <Label className="text-white text-sm">Reason for reporting</Label>
+            <Label className="text-sm text-white">Reason for reporting</Label>
             <Textarea
               value={formData.details}
-              onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, details: e.target.value }))}
               placeholder="Please provide details about your report..."
-              className="bg-darker-gray border-gray-600 text-white placeholder-gray-400 resize-none min-h-[100px]"
+              className="bg-darker-gray min-h-[100px] resize-none border-gray-600 text-white placeholder-gray-400"
               rows={4}
             />
           </div>
-          
+
           {/* Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button 
+            <Button
               type="button"
-              variant="outline" 
-              onClick={onClose} 
-              className="flex-1 border-none bg-gray-cancel text-white hover:bg-gray-800"
+              variant="outline"
+              onClick={onClose}
+              className="bg-gray-cancel flex-1 border-none text-white hover:bg-gray-800"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit"
-              className="flex-1 bg-red-reject hover:bg-red-700 text-white"
-            >
+            <Button type="submit" className="bg-red-reject flex-1 text-white hover:bg-red-700">
               Submit Report
             </Button>
           </div>
