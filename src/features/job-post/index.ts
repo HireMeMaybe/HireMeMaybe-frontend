@@ -1,0 +1,1 @@
+export { default as JobPostForm } from './components/JobPostForm';
