@@ -29,9 +29,9 @@ export function useApplicationSubmit(): UseApplicationSubmitReturn {
       if (data.resume) {
         formData.append('resume', data.resume);
       }
-      
-      if (data.softSkills && data.softSkills.length > 0) {
-        data.softSkills.forEach((skill) => {
+
+      if (data.soft_skill && data.soft_skill.length > 0) {
+        data.soft_skill.forEach((skill) => {
           formData.append('softSkills', skill);
         });
       }

@@ -97,7 +97,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const { isSubmitting, submitError, submitApplication } = useApplicationSubmit();
 
   // Resume download hook
-  const { downloadResume, loading: downloadLoading, error: downloadError } = useDownloadResume();
+  const { downloadResume} = useDownloadResume();
 
   // Populate form with profile data when it loads
   useEffect(() => {
