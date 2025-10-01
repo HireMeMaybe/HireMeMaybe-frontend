@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Download, Eye } from 'lucide-react';
 import {
   Input,
   Label,
@@ -22,12 +22,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useJobs } from '@/features/search/hooks/useJobs';
 import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from '@/types/application';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ConfirmModal, SuccessModal } from '@/components/modals';
-import { useSession } from 'next-auth/react';
 import { useSoftSkills } from '@/features/cpsk-register/hooks/useSoftSkills';
 import { useResumeUpload } from '@/features/cpsk-register/hooks/useResumeUpload';
-import { useProfileData, useApplicationSubmit } from '@/features/applications/hooks';
+import { useProfile } from '@/features/profile/hooks/useProfile';
+import { useApplicationSubmit } from '@/features/applications/hooks';
+import { useDownloadResume } from '@/features/profile/hooks/useDownloadResume';
 
 interface ApplicationFormProps {
   readonly jobId: string;
@@ -35,12 +36,12 @@ interface ApplicationFormProps {
 
 export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const router = useRouter();
-  const { data: session } = useSession();
   const { jobs } = useJobs();
   const job = jobs.find((j) => j.id.toString() === jobId);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [hasExistingResume, setHasExistingResume] = useState(false);
 
   const getInitialQuestions = () => {
     if (!job) return [];
@@ -90,14 +91,44 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   });
 
   // Fetch profile data and populate form
-  const { isLoading, error: profileError } = useProfileData({
-    session,
-    setValue,
-    setSkills,
-  });
+  const { profileData, loading: isLoading, error: profileError } = useProfile();
 
   // Application submission hook
   const { isSubmitting, submitError, submitApplication } = useApplicationSubmit();
+
+  // Resume download hook
+  const { downloadResume, loading: downloadLoading, error: downloadError } = useDownloadResume();
+
+  // Populate form with profile data when it loads
+  useEffect(() => {
+    if (profileData && !isLoading) {
+      // Populate basic info
+      if (profileData.first_name) setValue('name', profileData.first_name);
+      if (profileData.last_name) setValue('surname', profileData.last_name);
+      if (profileData.User?.email) setValue('email', profileData.User.email);
+      if (profileData.User?.tel) setValue('phone', profileData.User.tel);
+      if (profileData.program) {
+        const majorValue =
+          profileData.program === 'CPE' ? 'CPE' : profileData.program === 'SKE' ? 'SKE' : '';
+        setValue('major', majorValue);
+      }
+      if (profileData.year) setValue('educationLevel', String(profileData.year));
+
+      // Populate soft skills
+      if (profileData.soft_skill && Array.isArray(profileData.soft_skill)) {
+        setSkills(profileData.soft_skill);
+        setValue('soft_skill', profileData.soft_skill);
+      }
+
+      // Handle resume if it exists in profile
+      if (profileData.resume_id) {
+        setHasExistingResume(true);
+        console.log('Profile has resume data:', profileData.resume_id);
+      } else {
+        setHasExistingResume(false);
+      }
+    }
+  }, [profileData, isLoading, setValue, setSkills]);
 
   const formData = watch();
 
@@ -121,6 +152,84 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     });
     setValue('questions', updatedQuestions);
   };
+
+  const handleDownloadResume = async () => {
+    if (profileData?.resume_id) {
+      await downloadResume(profileData.resume_id);
+    }
+  };
+
+  const openResumePreview = async () => {
+    // If user has just selected a new file (not yet uploaded), preview it locally
+    if (watchedResume instanceof File) {
+      if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+      const localUrl = URL.createObjectURL(watchedResume);
+      setResumePreviewUrl(localUrl);
+      setResumePreviewError(null);
+      setIsResumePreviewOpen(true);
+      return;
+    }
+
+    // Otherwise fetch existing resume from server
+    if (!profileData?.resume_id) return;
+    setResumePreviewLoading(true);
+    setResumePreviewError(null);
+
+    try {
+      if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+
+      const response = await fetch(`/api/file/resume/${profileData.resume_id}?preview=1`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/pdf',
+        },
+      });
+
+      if (!response.ok) {
+        setResumePreviewError('Failed to load resume preview.');
+        return;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+
+      // Force PDF MIME so iframe can render even if server sends octet-stream
+      let blobType = 'application/pdf';
+      const ct = response.headers.get('content-type');
+      if (ct && ct.includes('image/')) {
+        blobType = ct; // allow image if backend actually returns one
+      }
+
+      const blob = new Blob([arrayBuffer], { type: blobType });
+
+      if (blob.size === 0) {
+        setResumePreviewError('Empty file received.');
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      setResumePreviewUrl(url);
+      setIsResumePreviewOpen(true);
+    } catch (e) {
+      console.error('Error previewing resume:', e);
+      setResumePreviewError('Error while loading resume preview.');
+    } finally {
+      setResumePreviewLoading(false);
+    }
+  };
+
+  // Local preview (modal) state
+  const [isResumePreviewOpen, setIsResumePreviewOpen] = useState(false);
+  const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
+  const [resumePreviewLoading, setResumePreviewLoading] = useState(false);
+  const [resumePreviewError, setResumePreviewError] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resumePreviewUrl) {
+        URL.revokeObjectURL(resumePreviewUrl);
+      }
+    };
+  }, [resumePreviewUrl]);
 
   const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitted(true);
@@ -317,10 +426,60 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             <Label className="flex items-center text-sm font-semibold">
               <span>Resume*</span>
             </Label>
+
+            {/* Show existing resume if available */}
+            {hasExistingResume && profileData?.resume_id && (
+              <div className="bg-muted mb-4 rounded-lg border border-gray-600 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary-green/20 text-primary-green rounded-lg p-2">
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">Existing Resume</p>
+                      <p className="text-muted text-sm">Resume from your profile</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      onClick={openResumePreview}
+                      disabled={resumePreviewLoading}
+                      className="flex items-center gap-2 bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                    >
+                      <Eye className="h-4 w-4" />
+                      {resumePreviewLoading ? 'Loading...' : 'Preview'}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleDownloadResume}
+                      disabled={downloadLoading}
+                      className="flex items-center gap-2 bg-gray-600 px-3 py-2 text-sm text-white hover:bg-gray-700"
+                    >
+                      <Download className="h-4 w-4" />
+                      {downloadLoading ? 'Downloading...' : 'Download'}
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-3 border-t border-gray-600 pt-3">
+                  <p className="text-muted text-xs">
+                    You can upload a new resume below to replace your existing one for this
+                    application.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <Controller
               name="resume"
               control={control}
-              rules={{ required: 'Resume is required' }}
+              rules={{ required: !hasExistingResume ? 'Resume is required' : false }}
               render={({ field }) => (
                 <FileUpload
                   className="w-full"
@@ -334,10 +493,15 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             <ErrorMessage message={errors.resume?.message} />
             {watchedResume && (watchedResume as File).name && (
               <div className="mt-2 flex items-center gap-2">
-                <p className="text-muted text-sm">Uploaded: {getResumeDisplayText()}</p>
-                {!isLoading && (
-                  <span className="text-primary-green text-xs">(From your profile)</span>
-                )}
+                <p className="text-muted text-sm">New upload: {getResumeDisplayText()}</p>
+                <span className="text-xs text-blue-400">(Will replace existing resume)</span>
+              </div>
+            )}
+            {hasExistingResume && !watchedResume && (
+              <div className="mt-2">
+                <p className="text-primary-green text-sm">
+                  ✓ Using existing resume from your profile
+                </p>
               </div>
             )}
           </div>
@@ -520,6 +684,79 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
         message="Application submitted successfully!"
         buttonText="Close"
       />
+
+      {/* Resume Preview Modal */}
+      {isResumePreviewOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-gray-700 bg-[#1f1f23] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-700 px-4 py-3">
+              <h2 className="text-lg font-semibold text-white">Resume Preview</h2>
+              <button
+                onClick={() => {
+                  if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+                  setResumePreviewUrl(null);
+                  setIsResumePreviewOpen(false);
+                }}
+                className="rounded p-1 text-gray-400 hover:bg-gray-700 hover:text-white"
+                aria-label="Close preview"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto bg-neutral-900">
+              {resumePreviewError && (
+                <div className="flex h-full items-center justify-center p-6">
+                  <p className="text-sm text-red-400">{resumePreviewError}</p>
+                </div>
+              )}
+
+              {!resumePreviewError && !resumePreviewUrl && (
+                <div className="flex h-full items-center justify-center p-6">
+                  <p className="text-sm text-gray-300">Loading...</p>
+                </div>
+              )}
+
+              {resumePreviewUrl && (
+                <div className="h-full w-full">
+                  <iframe
+                    title="Resume Preview"
+                    src={resumePreviewUrl}
+                    className="h-full w-full"
+                    style={{ border: 'none' }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-gray-700 bg-[#18181b] px-4 py-3">
+              <Button
+                type="button"
+                onClick={() => {
+                  if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+                  setResumePreviewUrl(null);
+                  setIsResumePreviewOpen(false);
+                }}
+                className="bg-gray-600 hover:bg-gray-700"
+              >
+                Close
+              </Button>
+              <Button
+                type="button"
+                onClick={handleDownloadResume}
+                disabled={downloadLoading}
+                className="bg-primary-green hover:bg-darker-green"
+              >
+                {downloadLoading ? 'Downloading...' : 'Download'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
