@@ -624,7 +624,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 <Button
                   type="button"
                   onClick={() => window.open(job.customQuestionsLink, '_blank')}
-                  className="inline-flex cursor-pointer items-center gap-2 bg-darker-green text-white hover:bg-green-700"
+                  className="inline-flex cursor-pointer items-center gap-2 bg-primary-green/70 text-white hover:bg-primary-green/60"
                 >
                   Complete Custom Questions
                   <ExternalLink className="h-4 w-4" />
