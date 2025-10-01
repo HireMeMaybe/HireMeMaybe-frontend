@@ -5,6 +5,7 @@ import { Search, User } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { UserPen, History, LogOut } from 'lucide-react';
 
@@ -12,6 +13,7 @@ export default function Navbar() {
   const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ?? '/';
   const [open, setOpen] = useState<boolean>(false);
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
   // Type guard for app-extended session property
@@ -53,19 +55,21 @@ export default function Navbar() {
         </div>
       </a>
 
-      {/* Center - Search bar */}
-      <div className="mx-8 max-w-md flex-1">
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Search..."
-            className="bg-component w-full rounded-full border-none text-white placeholder-zinc-500 focus:ring-purple-500"
-          />
-          <span className="absolute inset-y-0 right-0 flex items-center pr-3">
-            <Search className="h-5 w-5 text-zinc-500" />
-          </span>
+      {/* Center - Search bar (hidden on the dedicated search page) */}
+      {!(pathname && pathname.startsWith('/search')) && (
+        <div className="mx-8 max-w-md flex-1">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search..."
+              className="bg-component w-full rounded-full border-none text-white placeholder-zinc-500 focus:ring-purple-500"
+            />
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3">
+              <Search className="h-5 w-5 text-zinc-500" />
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Right side - User icon and dropdown */}
       <div className="relative ml-auto">
