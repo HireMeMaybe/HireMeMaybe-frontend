@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
-import { ExternalLink, Download, Eye } from 'lucide-react';
+import { ExternalLink, Eye } from 'lucide-react';
 import {
   Input,
   Label,
@@ -456,15 +456,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                       <Eye className="h-4 w-4" />
                       {resumePreviewLoading ? 'Loading...' : 'Preview'}
                     </Button>
-                    <Button
-                      type="button"
-                      onClick={handleDownloadResume}
-                      disabled={downloadLoading}
-                      className="flex items-center gap-2 bg-gray-600 px-3 py-2 text-sm text-white hover:bg-gray-700"
-                    >
-                      <Download className="h-4 w-4" />
-                      {downloadLoading ? 'Downloading...' : 'Download'}
-                    </Button>
                   </div>
                 </div>
                 <div className="mt-3 border-t border-gray-600 pt-3">
@@ -744,14 +735,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 className="bg-gray-600 hover:bg-gray-700"
               >
                 Close
-              </Button>
-              <Button
-                type="button"
-                onClick={handleDownloadResume}
-                disabled={downloadLoading}
-                className="bg-primary-green hover:bg-darker-green"
-              >
-                {downloadLoading ? 'Downloading...' : 'Download'}
               </Button>
             </div>
           </div>
