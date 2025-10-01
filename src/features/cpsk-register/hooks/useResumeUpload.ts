@@ -7,15 +7,13 @@ import {
 } from 'react-hook-form';
 import { MAX_RESUME_SIZE } from '@/lib/validations/cpsk';
 
-// Use a generic for form values to avoid explicit any
-// Define form values with an optional `resume` key so literal 'resume' is accepted
-interface FormValues {
+// Minimal required shape for the hook
+interface FormValuesBase {
   resume?: File | undefined;
   soft_skill?: string | string[] | undefined;
-  [key: string]: unknown;
 }
 
-interface UseResumeUploadProps<T extends FormValues = FormValues> {
+interface UseResumeUploadProps<T extends FormValuesBase> {
   setValue: UseFormSetValue<T>;
   setError: UseFormSetError<T>;
   clearErrors: UseFormClearErrors<T>;
@@ -27,7 +25,7 @@ interface UseResumeUploadReturn {
   getResumeDisplayText: () => string;
 }
 
-export function useResumeUpload<T extends FormValues = FormValues>({
+export function useResumeUpload<T extends FormValuesBase>({
   setValue,
   setError,
   clearErrors,
@@ -46,15 +44,12 @@ export function useResumeUpload<T extends FormValues = FormValues>({
       return;
     }
 
-    // valid
     clearErrors('resume' as Path<T>);
     setValue('resume' as Path<T>, file as unknown as PathValue<T, Path<T>>);
   };
 
   const getResumeDisplayText = (): string => {
-    if (watchedResume && watchedResume.name) {
-      return watchedResume.name;
-    }
+    if (watchedResume?.name) return watchedResume.name;
     return '';
   };
 

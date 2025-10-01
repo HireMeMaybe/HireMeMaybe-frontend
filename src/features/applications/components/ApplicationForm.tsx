@@ -68,27 +68,25 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       phone: '',
       major: '',
       educationLevel: '',
-      resume: null,
-      softSkills: [],
+      resume: undefined,
+      soft_skill: [],
       questions: getInitialQuestions(),
     },
   });
 
   const watchedResume = watch('resume');
 
-  // Use soft skills hook
   const { skillInput, skills, setSkillInput, setSkills, addSkill, removeSkill, onSkillKeyDown } =
-    useSoftSkills({
+    useSoftSkills<ApplicationFormData>({
       setValue,
       initialSkills: [],
     });
 
-  // Use resume upload hook
-  const { handleResumeChange, getResumeDisplayText } = useResumeUpload({
+  const { handleResumeChange, getResumeDisplayText } = useResumeUpload<ApplicationFormData>({
     setValue,
     setError,
     clearErrors,
-    watchedResume: watchedResume as File | undefined,
+    watchedResume: watchedResume || undefined,
   });
 
   // Fetch profile data and populate form
@@ -141,10 +139,10 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
     // Submit the application
     const success = await submitApplication(data);
-    
+
     if (success) {
       setIsSuccessOpen(true);
-      
+
       // Redirect after success
       setTimeout(() => {
         router.push('/search');
@@ -167,7 +165,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           <h1 className="mb-4 text-2xl font-bold">Job not found</h1>
           <Button
             onClick={() => router.push('/search')}
-            className="bg-primary-green hover:bg-green-600 cursor-pointer"
+            className="bg-primary-green cursor-pointer hover:bg-green-600"
           >
             Back to Search
           </Button>
@@ -432,9 +430,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                             ))}
                           </SelectContent>
                         </Select>
-                        {questionError && (
-                          <ErrorMessage message="This question is required" />
-                        )}
+                        {questionError && <ErrorMessage message="This question is required" />}
                       </>
                     ) : question.type === 'multiselect' ? (
                       <>
@@ -462,9 +458,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                             );
                           })}
                         </div>
-                        {questionError && (
-                          <ErrorMessage message="This question is required" />
-                        )}
+                        {questionError && <ErrorMessage message="This question is required" />}
                       </>
                     ) : (
                       <>
@@ -474,9 +468,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                           className="bg-muted border-border min-h-[100px] rounded-lg"
                           rows={3}
                         />
-                        {questionError && (
-                          <ErrorMessage message="This question is required" />
-                        )}
+                        {questionError && <ErrorMessage message="This question is required" />}
                       </>
                     )}
                   </div>

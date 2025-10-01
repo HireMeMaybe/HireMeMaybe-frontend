@@ -10,10 +10,10 @@ export interface ApplicationFormData {
   educationLevel: string;
   
   // Files
-  resume: File | null;
+  resume: File | undefined;
   
   // Skills
-  softSkills: string[]; // Change from string to string[]
+  soft_skill: string[]; // Change from string to string[]
   
   // Dynamic Questions (from job posting)
   questions: ApplicationQuestion[];
