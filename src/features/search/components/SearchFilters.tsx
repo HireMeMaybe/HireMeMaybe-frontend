@@ -9,13 +9,14 @@ import {
 } from "@/components/ui/select";
 
 const filterOptions = {
-  "Job Type": ["Full-time", "Part-time", "Contract", "Internship", "Remote"],
+  "Job Type": ["Onsite", "Hybrid", "Remote"],
   "Tag": ["Finance", "Technology", "Banking", "Healthcare", "Education", "Marketing"],
-  "Salary": ["0-30k", "30k-50k", "50k-80k", "80k-120k", "120k+"],
-  "Experience Level": ["Entry Level", "Mid Level", "Senior Level", "Lead", "Manager"],
+  "Salary": ["Lessthan 15,000", "15,000-30,000", "30,000-50,000", "50,000-80,000", "80,000-120,000", "More than 120,000"],
+  "Experience Level": ["Internship", "Junior", "Mid-Level", "Senior", "Lead/Principal", "Executive"],
   "Company": ["OCS", "AIS Innovation Lab", "LINE Thailand", "SCB TechX", "Grab", "True Digital Group"],
+  "Company Size": ["1-50", "51-500", "501-5,000", "5,000+"],
   "Industry": ["Technology", "Banking", "Telecommunications", "Transportation", "E-commerce", "Healthcare"],
-  "Date Posted": ["Today", "This Week", "This Month", "Last 3 Months"],
+  "Date Posted": ["Past 24 hours", "Past Week", "Past Month"],
   "Location": ["Bangkok", "Chiang Mai", "Phuket", "Remote", "Hybrid"],
 };
 
