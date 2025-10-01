@@ -68,10 +68,12 @@ export const DEFAULT_QUESTIONS: ApplicationQuestion[] = [
     answer: "",
     type: "select",
     options: [
-      "Less than 30,000 THB",
-      "30,000 - 50,000 THB",
-      "50,000 - 80,000 THB", 
-      "80,000+ THB"
+      "Less than 15,000 THB",
+      "15,000-30,000 THB",
+      "30,000-50,000 THB",
+      "50,000-80,000 THB",
+      "80,000-120,000 THB",
+      "More than 120,000 THB"
     ],
     required: true
   },

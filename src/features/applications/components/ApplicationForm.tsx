@@ -335,6 +335,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 id="email"
                 type="email"
                 {...register('email', { required: 'Email is required' })}
+                disabled
+                readOnly
                 className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
               />
               <ErrorMessage message={errors.email?.message} />
