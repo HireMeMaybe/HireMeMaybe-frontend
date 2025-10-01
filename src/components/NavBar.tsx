@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Search, User } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { UserPen, History, LogOut } from 'lucide-react';
 
@@ -20,20 +20,26 @@ export default function Navbar() {
   }
 
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
+  const scrollToLoginSection = () => {
+    setOpen(false);
+    const el = typeof document !== 'undefined' ? document.getElementById('login-section') : null;
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      const base = frontendUrl.replace(/\/$/, '');
+      window.location.href = `${base}#login-section`;
+    }
+  };
+
   const handleUserClick = () => {
     if (isLoading) return;
-    if (!isAuthenticated) {
-      // Don't open dropdown. Try to scroll to in-page login section, otherwise navigate to the frontend URL with anchor.
-      setOpen(false);
-      const el = typeof document !== 'undefined' ? document.getElementById('login-section') : null;
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        const base = frontendUrl.replace(/\/$/, '');
-        window.location.href = `${base}#login-section`;
-      }
+
+    // If user is unauthenticated or authenticated-but-not-registered, send them to login section
+    if (!isAuthenticated || (isAuthenticated && !isRegistered)) {
+      scrollToLoginSection();
       return;
     }
+
     setOpen((o) => !o);
   };
 
@@ -76,10 +82,11 @@ export default function Navbar() {
             {isLoading ? (
               <div className="py-4">Loading...</div>
             ) : !isRegistered ? (
-              <div className="flex flex-col gap-2">
-                <a href="/auth/google" className="rounded px-3 py-2 hover:bg-white/5">
-                  Login with Google
-                </a>
+              // If user is authenticated but not registered, we do not show the usual
+              // dropdown actions. Clicking the user icon will already scroll the
+              // page to the login/registration section. Show a subtle message here.
+              <div className="py-3 text-sm text-gray-400">
+                Complete your registration to see account actions.
               </div>
             ) : (
               <div className="flex flex-col gap-3">
