@@ -441,7 +441,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                       type="button"
                       onClick={openResumePreview}
                       disabled={resumePreviewLoading}
-                      className="flex items-center gap-2 bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 cursor-pointer"
+                      className="flex items-center gap-2 bg-primary-green/70 px-3 py-2 text-sm text-white hover:bg-primary-green/60 cursor-pointer"
                     >
                       <Eye className="h-4 w-4" />
                       {resumePreviewLoading ? 'Loading...' : 'Preview'}
