@@ -177,8 +177,12 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center text-white">
-          <p>Loading your profile...</p>
+        <div className="flex min-h-[400px] items-center justify-center">
+          <div className="text-center text-white">
+            <div className="border-primary-green mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"></div>
+            <p className="text-lg">Loading your profile...</p>
+            <p className="text-muted mt-2 text-sm">Please wait while we fetch your information</p>
+          </div>
         </div>
       </div>
     );
@@ -329,7 +333,12 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             />
             <ErrorMessage message={errors.resume?.message} />
             {watchedResume && (watchedResume as File).name && (
-              <p className="text-muted mt-2 text-sm">Uploaded: {getResumeDisplayText()}</p>
+              <div className="mt-2 flex items-center gap-2">
+                <p className="text-muted text-sm">Uploaded: {getResumeDisplayText()}</p>
+                {!isLoading && (
+                  <span className="text-primary-green text-xs">(From your profile)</span>
+                )}
+              </div>
             )}
           </div>
 
@@ -337,6 +346,9 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           <div className="space-y-3">
             <Label className="flex items-center text-sm">
               <span>Soft Skills</span>
+              {isLoading && (
+                <span className="text-primary-green ml-2 text-xs">(Loading from profile...)</span>
+              )}
             </Label>
             <div className="flex flex-col">
               <div className="flex flex-wrap gap-2">
@@ -364,8 +376,9 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 onChange={(e) => setSkillInput(e.target.value)}
                 onKeyDown={onSkillKeyDown}
                 onBlur={() => addSkill()}
-                placeholder="Type a skill and press Enter"
-                className="border-border bg-muted mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none"
+                placeholder={isLoading ? 'Loading skills...' : 'Type a skill and press Enter'}
+                disabled={isLoading}
+                className="border-border bg-muted mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none disabled:opacity-50"
               />
             </div>
           </div>
