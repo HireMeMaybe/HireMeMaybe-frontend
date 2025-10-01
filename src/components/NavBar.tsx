@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Search, User } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { UserPen, History, LogOut } from 'lucide-react';

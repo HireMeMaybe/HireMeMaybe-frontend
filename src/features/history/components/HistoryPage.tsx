@@ -3,6 +3,13 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+
+// Extend the Session type to include isRegistered
+declare module 'next-auth' {
+  interface Session {
+    isRegistered?: boolean;
+  }
+}
 import { useRouter } from 'next/navigation';
 import { useJobHistory } from '../hooks/useJobHistory';
 import HistoryCard, { HistoryDetails } from './HistoryCard';
@@ -38,7 +45,7 @@ export default function HistoryPage() {
     }
 
     // If authenticated but not registered, redirect to registration
-    const isRegistered = (session as any)?.isRegistered;
+    const isRegistered = session?.isRegistered;
     if (status === 'authenticated' && isRegistered === false) {
       router.push('/cpsk-register');
     }
@@ -118,7 +125,7 @@ export default function HistoryPage() {
                 <div className="mb-4">
                   <h3 className="mb-2 text-lg font-medium text-white">No Applications Yet</h3>
                   <p className="text-sm">
-                    You haven't applied to any jobs yet. Start exploring opportunities!
+                    You haven&apos;t applied to any jobs yet. Start exploring opportunities!
                   </p>
                 </div>
                 {error && (

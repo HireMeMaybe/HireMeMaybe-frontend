@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { JobApplicationHistory } from '@/types/history';
 import { Button } from '@/components/ui/button';
 
