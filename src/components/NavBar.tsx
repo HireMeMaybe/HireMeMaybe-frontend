@@ -82,7 +82,7 @@ export default function Navbar() {
         </button>
 
         {open && (
-          <div className="absolute right-0 mt-2 w-56 rounded-lg bg-[rgb(33,33,33)] p-4 text-white shadow-lg">
+          <div className="absolute right-0 mt-2 min-w-56 rounded-lg bg-[rgb(33,33,33)] p-4 text-white shadow-lg">
             {isLoading ? (
               <div className="py-4">Loading...</div>
             ) : !isRegistered ? (
@@ -107,13 +107,15 @@ export default function Navbar() {
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-emerald-500" />
                   )}
-                  <div>
-                    <div className="font-bold">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-bold">
                       {session?.backendUser?.role === 'Company'
                         ? session?.backendUser?.name || 'Company'
                         : session?.backendUser?.first_name || 'U'}
                     </div>
-                    <div className="text-sm text-zinc-400">{session?.user?.email}</div>
+                    <div className="overflow-wrap-anywhere text-sm break-all text-zinc-400">
+                      {session?.user?.email}
+                    </div>
                   </div>
                 </div>
                 <a

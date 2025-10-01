@@ -111,8 +111,9 @@ export default function CPSKRegisterForm({
       setSkills([]);
 
       // Redirect to profile page after successful submission
+      // Reload the window to force NextAuth to fetch updated session data from backend
       setTimeout(() => {
-        router.push('/profile');
+        window.location.href = '/profile'; // Use window.location instead of router.push to force session refresh
       }, 2000);
     }
   }, [status, reset, setSkills, router]);

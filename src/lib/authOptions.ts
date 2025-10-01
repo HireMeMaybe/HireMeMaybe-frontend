@@ -53,38 +53,63 @@ function getCodeFromAccount(acct: unknown): string | null {
 }
 
 // Helper: Normalize backend user data structure
-function normalizeBackendUser(dataUser: any): BackendUser {
+function normalizeBackendUser(dataUser: unknown): BackendUser {
+  const user =
+    dataUser && typeof dataUser === 'object' ? (dataUser as Record<string, unknown>) : null;
+  const userObj = user as Record<string, unknown> | null;
+  const UserField = userObj?.['User'] as Record<string, unknown> | undefined;
+
   return {
-    id: dataUser?.id ?? dataUser?.User?.id,
-    email: dataUser?.User?.email ?? dataUser?.email ?? null,
+    id:
+      (userObj?.['id'] as string | number | undefined) ??
+      (UserField?.['id'] as string | number | undefined) ??
+      undefined,
+    email:
+      (UserField?.['email'] as string | undefined) ??
+      (userObj?.['email'] as string | undefined) ??
+      null,
     // CPSK fields
-    first_name: dataUser?.first_name ?? null,
-    last_name: dataUser?.last_name ?? null,
-    program: dataUser?.program ?? null,
-    year: dataUser?.year ?? null,
-    soft_skill: Array.isArray(dataUser?.soft_skill) ? dataUser.soft_skill : [],
-    resume_id: dataUser?.resume_id ?? null,
-    profile_picture: dataUser?.User?.profile_picture ?? null,
+    first_name: (userObj?.['first_name'] as string | undefined) ?? null,
+    last_name: (userObj?.['last_name'] as string | undefined) ?? null,
+    program: (userObj?.['program'] as string | undefined) ?? null,
+    year: (userObj?.['year'] as number | undefined) ?? null,
+    soft_skill: Array.isArray(userObj?.['soft_skill']) ? (userObj['soft_skill'] as string[]) : [],
+    resume_id: (userObj?.['resume_id'] as number | undefined) ?? null,
+    profile_picture: (UserField?.['profile_picture'] as string | undefined) ?? null,
     // Company fields
-    name: dataUser?.name ?? null,
-    overview: dataUser?.overview ?? null,
-    industry: dataUser?.industry ?? null,
-    size: dataUser?.size ?? null,
-    verified_status: dataUser?.verified_status ?? null,
+    name: (userObj?.['name'] as string | undefined) ?? null,
+    overview: (userObj?.['overview'] as string | undefined) ?? null,
+    industry: (userObj?.['industry'] as string | undefined) ?? null,
+    size: (userObj?.['size'] as string | undefined) ?? null,
+    verified_status:
+      (userObj?.['verified_status'] as 'Unverified' | 'Pending' | 'Verified' | undefined) ?? null,
     // Determine role based on data structure or explicit role
     role:
-      dataUser?.role ??
-      (dataUser?.name !== undefined ? 'Company' : dataUser?.program ? 'CPSK' : 'Visitor'),
+      (userObj?.['role'] as 'Company' | 'CPSK' | 'Visitor' | undefined) ??
+      (userObj?.['name'] !== undefined ? 'Company' : userObj?.['program'] ? 'CPSK' : 'Visitor'),
     raw: dataUser,
-    User: dataUser?.User,
+    User: UserField
+      ? {
+          ID: UserField['ID'] as number | undefined,
+          CreatedAt: UserField['CreatedAt'] as string | undefined,
+          UpdatedAt: UserField['UpdatedAt'] as string | undefined,
+          DeletedAt: UserField['DeletedAt'] as string | null | undefined,
+          tel: UserField['tel'] as string | undefined,
+          email: UserField['email'] as string | undefined,
+          id: UserField['id'] as string | undefined,
+          username: UserField['username'] as string | undefined,
+          profile_picture: UserField['profile_picture'] as string | undefined,
+        }
+      : undefined,
   };
 }
 
 // Helper: Store backend data in user session object
-function storeUserDataInSession(user: any, data: any, normalized: BackendUser): void {
+function storeUserDataInSession(user: unknown, data: unknown, normalized: BackendUser): void {
   if (user && typeof user === 'object') {
-    const u = user as unknown as Record<string, unknown>;
-    u['backendToken'] = data.access_token || data.accessToken || data.token;
+    const u = user as Record<string, unknown>;
+    const d = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+    u['backendToken'] = d['access_token'] || d['accessToken'] || d['token'];
     u['backendUser'] = normalized;
     u['isRegistered'] = !!(normalized.program || normalized.size);
   }

@@ -77,18 +77,23 @@ export default function AuthCallbackPage() {
         }
 
         // Check if user is registered and redirect accordingly
-        if (backendUser?.program) {
-          // CPSK user with program
-          router.push('/profile');
-        } else if (backendUser?.size) {
-          // Company user with name
-          router.push(`/company/${backendUser.id}`); // or wherever companies should go
-        } else if (selectedRole === 'Company') {
-          // New company user needs to complete registration
-          router.push('/company-register');
+        // A user is considered registered if they have filled their profile (program for CPSK, size for Company)
+        const isRegistered = !!(backendUser?.program || backendUser?.size || backendUser?.name);
+
+        if (isRegistered) {
+          // User has completed registration - redirect to their profile/dashboard
+          if (selectedRole === 'Company' || backendUser?.name) {
+            router.push(`/company/${backendUser.id}`);
+          } else {
+            router.push('/profile');
+          }
         } else {
-          // New CPSK user needs to complete registration
-          router.push('/cpsk-register');
+          // User needs to complete registration
+          if (selectedRole === 'Company') {
+            router.push('/company-register');
+          } else {
+            router.push('/cpsk-register');
+          }
         }
       } catch (err) {
         console.error('Error in auth callback handler:', err);
