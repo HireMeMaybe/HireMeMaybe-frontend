@@ -22,11 +22,12 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useJobs } from '@/features/search/hooks/useJobs';
 import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from '@/types/application';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ConfirmModal, SuccessModal } from '@/components/modals';
 import { useSession } from 'next-auth/react';
 import { useSoftSkills } from '@/features/cpsk-register/hooks/useSoftSkills';
 import { useResumeUpload } from '@/features/cpsk-register/hooks/useResumeUpload';
+import { useProfileData, useApplicationSubmit } from '@/features/applications/hooks';
 
 interface ApplicationFormProps {
   readonly jobId: string;
@@ -40,7 +41,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const getInitialQuestions = () => {
     if (!job) return [];
@@ -91,44 +91,17 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     watchedResume: watchedResume as File | undefined,
   });
 
+  // Fetch profile data and populate form
+  const { isLoading, error: profileError } = useProfileData({
+    session,
+    setValue,
+    setSkills,
+  });
+
+  // Application submission hook
+  const { isSubmitting, submitError, submitApplication } = useApplicationSubmit();
+
   const formData = watch();
-
-  // Fetch and populate profile data
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!session?.backendToken) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/cpsk/profile', {
-          method: 'GET',
-        });
-
-        if (response.ok) {
-          const profileData = await response.json();
-          
-          // Populate form with profile data
-          if (profileData.first_name) setValue('name', profileData.first_name);
-          if (profileData.last_name) setValue('surname', profileData.last_name);
-          if (profileData.User?.email) setValue('email', profileData.User.email);
-          if (profileData.User?.tel) setValue('phone', profileData.User.tel);
-          if (profileData.program) setValue('major', profileData.program);
-          if (profileData.year) setValue('educationLevel', profileData.year);
-          if (profileData.soft_skill && Array.isArray(profileData.soft_skill)) {
-            setSkills(profileData.soft_skill);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [session, setValue, setSkills]);
 
   const handleQuestionChange = (id: string, value: string) => {
     const updatedQuestions = formData.questions.map((q) =>
@@ -151,7 +124,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     setValue('questions', updatedQuestions);
   };
 
-  const onSubmit = (data: ApplicationFormData) => {
+  const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitted(true);
 
     // Validate required questions
@@ -166,13 +139,20 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       }
     }
 
-    console.log('Application submitted:', data);
-    setIsSuccessOpen(true);
+    // Submit the application
+    const success = await submitApplication(data);
     
-    // Redirect after success
-    setTimeout(() => {
-      router.push('/search');
-    }, 2000);
+    if (success) {
+      setIsSuccessOpen(true);
+      
+      // Redirect after success
+      setTimeout(() => {
+        router.push('/search');
+      }, 2000);
+    } else {
+      // Handle submission error
+      alert(submitError || 'Failed to submit application. Please try again.');
+    }
   };
 
   const handleModalConfirm = () => {
@@ -200,10 +180,15 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center text-white">
-          <p>Loading...</p>
+          <p>Loading your profile...</p>
         </div>
       </div>
     );
+  }
+
+  if (profileError) {
+    console.warn('Profile fetch error:', profileError);
+    // Continue to show form even if profile fetch fails
   }
 
   return (
@@ -525,9 +510,10 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             <Button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200"
+              disabled={isSubmitting}
+              className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Submit
+              {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
         </form>
