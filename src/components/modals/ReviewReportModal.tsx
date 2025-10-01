@@ -96,7 +96,7 @@ export default function ReviewReportModal({
           <div className="flex justify-end gap-3 pt-2">
             <Button
               onClick={handleReject}
-              className="bg-red-reject rounded-md px-4 py-2 text-white hover:bg-red-700"
+              className="bg-red-reject cursor-pointer rounded-md px-4 py-2 text-white hover:bg-red-700"
               disabled={!report}
             >
               Reject
@@ -104,7 +104,7 @@ export default function ReviewReportModal({
 
             <Button
               onClick={handleReview}
-              className="bg-primary-green rounded-md px-4 py-2 text-white hover:bg-green-700"
+              className="bg-primary-green cursor-pointer rounded-md px-4 py-2 text-white hover:bg-green-700"
               disabled={!report}
             >
               Mark Reviewed

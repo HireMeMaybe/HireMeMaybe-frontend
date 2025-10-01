@@ -73,11 +73,11 @@ export function ReportPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => openModal(r)}
-                            className="bg-primary-green rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
+                            className="bg-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
                           >
                             Review
                           </button>
-                          <button className="bg-red-reject rounded-full px-4 py-2 text-sm text-gray-200 hover:bg-red-700">
+                          <button className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-gray-200 hover:bg-red-700">
                             Reject
                           </button>
                         </div>
