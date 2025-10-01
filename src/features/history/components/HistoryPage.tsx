@@ -3,16 +3,19 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useJobHistory } from '../hooks/useJobHistory';
 import HistoryCard, { HistoryDetails } from './HistoryCard';
 import { Button } from '@/components/ui/button';
 import Pagination from '@/features/search/components/Pagination';
+import Loading from '@/app/loading';
 
 const ITEMS_PER_PAGE = 8;
 
 export default function HistoryPage() {
   const { data: session, status } = useSession();
   const { history, loading, error, filters, setFilters, refetch } = useJobHistory();
+  const router = useRouter();
   const [selectedApplication, setSelectedApplication] = useState(history[0]);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -22,6 +25,24 @@ export default function HistoryPage() {
       setSelectedApplication(history[0]);
     }
   }, [history, selectedApplication]);
+
+  // Protect page: redirect unauthenticated users to sign-in and unregistered users to registration
+  useEffect(() => {
+    // While session is loading, don't redirect yet
+    if (status === 'loading') return;
+
+    // If user is not authenticated, send to sign-in (root page handles sign-in)
+    if (status === 'unauthenticated') {
+      router.push('/');
+      return;
+    }
+
+    // If authenticated but not registered, redirect to registration
+    const isRegistered = (session as any)?.isRegistered;
+    if (status === 'authenticated' && isRegistered === false) {
+      router.push('/cpsk-register');
+    }
+  }, [status, session, router]);
 
   const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -42,11 +63,7 @@ export default function HistoryPage() {
 
   // Show loading state
   if (status === 'loading' || loading) {
-    return (
-      <div className="bg-background text-foreground flex min-h-screen items-center justify-center">
-        <div className="text-gray-400">Loading your application history...</div>
-      </div>
-    );
+    return <Loading />;
   }
 
   // Show auth required state
