@@ -2,10 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
-import { Upload, ExternalLink } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { ExternalLink } from 'lucide-react';
+import {
+  Input,
+  Label,
+  Button,
+  FileUpload,
+  RadioGroup,
+  RadioGroupItem,
+  ErrorMessage,
+} from '@/components/ui';
 import {
   Select,
   SelectContent,
@@ -16,8 +22,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useJobs } from '@/features/search/hooks/useJobs';
 import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from '@/types/application';
-import { useState } from 'react';
-import ConfirmationModal from '@/components/modals/ConfirmModal'; // Import the modal
+import { useState, useEffect } from 'react';
+import { ConfirmModal, SuccessModal } from '@/components/modals';
+import { useSession } from 'next-auth/react';
+import { useSoftSkills } from '@/features/cpsk-register/hooks/useSoftSkills';
+import { useResumeUpload } from '@/features/cpsk-register/hooks/useResumeUpload';
 
 interface ApplicationFormProps {
   readonly jobId: string;
@@ -25,10 +34,13 @@ interface ApplicationFormProps {
 
 export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const { jobs } = useJobs();
   const job = jobs.find((j) => j.id.toString() === jobId);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false); // State to manage modal visibility
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const getInitialQuestions = () => {
     if (!job) return [];
@@ -45,6 +57,8 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     control,
     setValue,
     watch,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<ApplicationFormData>({
     defaultValues: {
@@ -60,26 +74,61 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     },
   });
 
-  const softSkills = watch('softSkills');
+  const watchedResume = watch('resume');
+
+  // Use soft skills hook
+  const { skillInput, skills, setSkillInput, setSkills, addSkill, removeSkill, onSkillKeyDown } =
+    useSoftSkills({
+      setValue,
+      initialSkills: [],
+    });
+
+  // Use resume upload hook
+  const { handleResumeChange, getResumeDisplayText } = useResumeUpload({
+    setValue,
+    setError,
+    clearErrors,
+    watchedResume: watchedResume as File | undefined,
+  });
+
   const formData = watch();
 
-  const handleAddSoftSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && e.currentTarget.value.trim() !== '') {
-      e.preventDefault();
-      const newSkill = e.currentTarget.value.trim();
-      if (!softSkills.includes(newSkill)) {
-        setValue('softSkills', [...softSkills, newSkill]);
+  // Fetch and populate profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!session?.backendToken) {
+        setIsLoading(false);
+        return;
       }
-      e.currentTarget.value = '';
-    }
-  };
 
-  const handleRemoveSoftSkill = (skill: string) => {
-    setValue(
-      'softSkills',
-      softSkills.filter((s) => s !== skill)
-    );
-  };
+      try {
+        const response = await fetch('/api/cpsk/profile', {
+          method: 'GET',
+        });
+
+        if (response.ok) {
+          const profileData = await response.json();
+          
+          // Populate form with profile data
+          if (profileData.first_name) setValue('name', profileData.first_name);
+          if (profileData.last_name) setValue('surname', profileData.last_name);
+          if (profileData.User?.email) setValue('email', profileData.User.email);
+          if (profileData.User?.tel) setValue('phone', profileData.User.tel);
+          if (profileData.program) setValue('major', profileData.program);
+          if (profileData.year) setValue('educationLevel', profileData.year);
+          if (profileData.soft_skill && Array.isArray(profileData.soft_skill)) {
+            setSkills(profileData.soft_skill);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [session, setValue, setSkills]);
 
   const handleQuestionChange = (id: string, value: string) => {
     const updatedQuestions = formData.questions.map((q) =>
@@ -118,12 +167,17 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     }
 
     console.log('Application submitted:', data);
-    router.push('/search');
+    setIsSuccessOpen(true);
+    
+    // Redirect after success
+    setTimeout(() => {
+      router.push('/search');
+    }, 2000);
   };
 
   const handleModalConfirm = () => {
-    handleSubmit(onSubmit)(); // Trigger form submission
-    setIsModalOpen(false); // Close the modal
+    setIsModalOpen(false);
+    handleSubmit(onSubmit)();
   };
 
   if (!job) {
@@ -133,7 +187,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           <h1 className="mb-4 text-2xl font-bold">Job not found</h1>
           <Button
             onClick={() => router.push('/search')}
-            className="bg-primary-green hover:bg-green-600"
+            className="bg-primary-green hover:bg-green-600 cursor-pointer"
           >
             Back to Search
           </Button>
@@ -142,65 +196,61 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-white">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="mb-8 text-2xl font-bold text-white">Application form</h1>
+      <div className="mx-auto max-w-4xl">
+        <h1 className="mb-8 text-4xl font-bold text-white">Application form</h1>
 
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
           {/* Name and Surname */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-3">
-              <Label htmlFor="name" className="text-white">
-                Name <span className="text-red-reject">*</span>{' '}
+              <Label htmlFor="name" className="flex items-center text-sm">
+                <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a4 4 0 100 8 4 4 0 000-8zM2 18a8 8 0 0116 0H2z" />
+                </svg>
+                <span>Name*</span>
               </Label>
               <Input
                 id="name"
                 {...register('name', { required: 'Name is required' })}
                 className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
               />
-              {errors.name && (
-                <p className="text-red-reject flex items-center gap-2 text-sm">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.name.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.name?.message} />
             </div>
+
             <div className="space-y-3">
-              <Label htmlFor="surname" className="text-white">
-                Surname <span className="text-red-reject">*</span>{' '}
+              <Label htmlFor="surname" className="flex items-center text-sm">
+                <span>Surname*</span>
               </Label>
               <Input
                 id="surname"
                 {...register('surname', { required: 'Surname is required' })}
                 className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
               />
-              {errors.surname && (
-                <p className="text-red-reject flex items-center gap-2 text-sm">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.surname.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.surname?.message} />
             </div>
           </div>
 
           {/* Email and Phone */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-3">
-              <Label htmlFor="email" className="text-white">
-                Email <span className="text-red-reject">*</span>{' '}
+              <Label htmlFor="email" className="flex items-center text-sm">
+                <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2.94 6.34L10 10.882l7.06-4.543A2 2 0 0016.882 4H3.118a2 2 0 00-.178 2.34z" />
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+                <span>Email*</span>
               </Label>
               <Input
                 id="email"
@@ -208,182 +258,154 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 {...register('email', { required: 'Email is required' })}
                 className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
               />
-              {errors.email && (
-                <p className="text-red-reject flex items-center gap-2 text-sm">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.email.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.email?.message} />
             </div>
+
             <div className="space-y-3">
-              <Label htmlFor="phone" className="text-white">
-                Phone <span className="text-red-reject">*</span>{' '}
+              <Label htmlFor="phone" className="flex items-center text-sm">
+                <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                </svg>
+                <span>Phone*</span>
               </Label>
               <Input
                 id="phone"
+                type="tel"
                 {...register('phone', { required: 'Phone number is required' })}
                 className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
               />
-              {errors.phone && (
-                <p className="text-red-reject flex items-center gap-2 text-sm">
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.phone.message}
-                </p>
-              )}
+              <ErrorMessage message={errors.phone?.message} />
             </div>
           </div>
 
           {/* Major */}
-          <div className="space-y-2">
-            <Label className="text-white">
-              Major <span className="text-red-reject">*</span>{' '}
+          <div className="space-y-3">
+            <Label className="flex items-center text-sm">
+              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2l3 6H7l3-6zM4 14l6 4 6-4V6H4v8z" />
+              </svg>
+              <span>Major*</span>
             </Label>
-            <div className="flex gap-4">
-              <label className="flex cursor-pointer items-center gap-2 text-white">
-                <input
-                  type="radio"
-                  value="CPE"
-                  {...register('major', { required: 'Major is required' })}
-                />CPE
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 text-white">
-                <input
-                  type="radio"
-                  value="SKE"
-                  {...register('major', { required: 'Major is required' })}
-                />SKE
-              </label>
-            </div>
-            {errors.major && (
-              <p className="text-red-reject flex items-center gap-2 text-sm">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {errors.major.message}
-              </p>
-            )}
+            <Controller
+              control={control}
+              name="major"
+              rules={{ required: 'Major is required' }}
+              render={({ field }) => (
+                <RadioGroup value={field.value} onValueChange={field.onChange}>
+                  <div className="flex items-center gap-8">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem id="major-cpe" value="CPE" />
+                      <Label htmlFor="major-cpe">CPE</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem id="major-ske" value="SKE" />
+                      <Label htmlFor="major-ske">SKE</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              )}
+            />
+            <ErrorMessage message={errors.major?.message} />
           </div>
 
           {/* Education Level */}
-          <div className="space-y-2">
-            <Label className="text-white">
-              Education Level <span className="text-red-reject">*</span>{' '}
+          <div className="space-y-3">
+            <Label className="flex items-center text-sm">
+              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 00-1-1H6zM7 9h6v2H7V9z" />
+              </svg>
+              <span>Education Level*</span>
             </Label>
-            <div className="flex flex-col gap-4">
-              {EDUCATION_LEVELS.map((level) => (
-                <label key={level} className="flex cursor-pointer items-center gap-2 text-white">
-                  <input
-                    type="radio"
-                    value={level}
-                    {...register('educationLevel', { required: 'Education level is required' })}
-                  />
-                  {level}
-                </label>
-              ))}
-            </div>
-            {errors.educationLevel && (
-              <p className="text-red-reject flex items-center gap-2 text-sm">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {errors.educationLevel.message}
-              </p>
-            )}
+            <Controller
+              control={control}
+              name="educationLevel"
+              rules={{ required: 'Education level is required' }}
+              render={({ field }) => (
+                <RadioGroup value={field.value} onValueChange={field.onChange}>
+                  <div className="flex flex-col gap-4">
+                    {EDUCATION_LEVELS.map((level) => (
+                      <div key={level} className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          id={`education-${level.replace(/\s+/g, '-').toLowerCase()}`}
+                          value={level}
+                        />
+                        <Label htmlFor={`education-${level.replace(/\s+/g, '-').toLowerCase()}`}>
+                          {level}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              )}
+            />
+            <ErrorMessage message={errors.educationLevel?.message} />
           </div>
 
           {/* Resume Upload */}
-          <div className="space-y-2">
-            <Label className="text-white">
-              Resume <span className="text-red-reject">*</span>
+          <div className="space-y-3">
+            <Label className="flex items-center text-sm font-semibold">
+              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+              </svg>
+              <span>Resume*</span>
             </Label>
             <Controller
               name="resume"
               control={control}
               rules={{ required: 'Resume is required' }}
               render={({ field }) => (
-                <div className="bg-darker-gray rounded-lg border-2 border-dashed border-gray-600 p-6 text-center">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => field.onChange(e.target.files?.[0])}
-                    className="hidden"
-                    id="resume-upload"
-                  />
-                  <label htmlFor="resume-upload" className="cursor-pointer">
-                    <Upload className="text-lighter-gray-text mx-auto mb-2 h-8 w-8" />
-                    <p className="text-lighter-gray-text">
-                      {field.value ? field.value.name : 'Upload File (PDF)'}
-                    </p>
-                    <p className="text-muted-foreground text-lighter-gray-text mt-1 text-sm">
-                      PDF files up to 10MB
-                    </p>
-                  </label>
-                </div>
+                <FileUpload
+                  className="w-full"
+                  file={field.value as File | undefined}
+                  accept=".pdf,application/pdf"
+                  description="PDF up to 10 MB"
+                  onFileChange={(file) => handleResumeChange(file || undefined)}
+                />
               )}
             />
-            {errors.resume && (
-              <p className="text-red-reject flex items-center gap-2 text-sm">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {errors.resume.message}
-              </p>
+            <ErrorMessage message={errors.resume?.message} />
+            {watchedResume && (watchedResume as File).name && (
+              <p className="text-muted mt-2 text-sm">Uploaded: {getResumeDisplayText()}</p>
             )}
           </div>
 
           {/* Soft Skills */}
-          <div className="space-y-2">
-            <Label htmlFor="soft-skills" className="text-white">
-              Soft Skills
+          <div className="space-y-3">
+            <Label className="flex items-center text-sm">
+              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2H2V5zm0 4h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9z" />
+              </svg>
+              <span>Soft Skills (Optional)</span>
             </Label>
-            <div className="bg-darker-gray rounded-lg border border-gray-600 p-4">
-              <input
-                type="text"
-                placeholder="Type a skill and press Enter"
-                className="bg-darker-gray w-full rounded border-gray-600 p-2 text-white"
-                onKeyDown={handleAddSoftSkill}
-              />
-              <div className="mt-2 flex flex-wrap gap-2">
-                {softSkills.map((skill) => (
+            <div className="flex flex-col">
+              <div className="flex flex-wrap gap-2">
+                {skills.map((s) => (
                   <span
-                    key={skill}
-                    className="bg-primary-green flex items-center gap-2 rounded-full px-3 py-1 text-white"
+                    key={s}
+                    className="inline-flex items-center rounded-full bg-gray-500/60 px-2 pb-1 pl-3 text-sm"
                   >
-                    {skill}
+                    <span>{s}</span>
                     <button
                       type="button"
-                      onClick={() => handleRemoveSoftSkill(skill)}
-                      className="text-white hover:text-red-500"
+                      onClick={() => removeSkill(s)}
+                      className="text-gray-text ml-1 rounded-full hover:text-gray-500"
+                      aria-label={`Remove ${s}`}
                     >
-                      &times;
+                      ×
                     </button>
                   </span>
                 ))}
               </div>
+
+              <input
+                id="soft-skill-input"
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={onSkillKeyDown}
+                onBlur={() => addSkill()}
+                placeholder="Type a skill and press Enter"
+                className="border-border bg-muted mt-2 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none"
+              />
             </div>
           </div>
 
@@ -398,119 +420,80 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                   (!question.answer || question.answer.trim() === '');
 
                 return (
-                  <div key={question.id} className="space-y-2">
-                    <Label className="text-white">
+                  <div key={question.id} className="space-y-3">
+                    <Label className="text-sm">
                       {question.question}
                       {question.required && <span className="text-red-reject ml-1">*</span>}
                     </Label>
 
-                    {(() => {
-                      if (question.type === 'select') {
-                        return (
-                          <>
-                            <Select
-                              value={question.answer}
-                              onValueChange={(value) => handleQuestionChange(question.id, value)}
-                            >
-                              <SelectTrigger className="bg-darker-gray cursor-pointer border-gray-600 text-white">
-                                <SelectValue placeholder="Select an option" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-darker-gray border-gray-600">
-                                {question.options?.map((option) => (
-                                  <SelectItem
-                                    key={option}
-                                    value={option}
-                                    className="cursor-pointer text-white hover:bg-gray-700"
-                                  >
-                                    {option}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {questionError && (
-                              <p className="text-red-reject flex items-center gap-2 text-sm">
-                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                This question is required
-                              </p>
-                            )}
-                          </>
-                        );
-                      } else if (question.type === 'multiselect') {
-                        return (
-                          <>
-                            <div className="space-y-2">
-                              {question.options?.map((option) => {
-                                const currentAnswers = question.answer
-                                  ? question.answer.split(', ')
-                                  : [];
-                                const isChecked = currentAnswers.includes(option);
-                                return (
-                                  <label
-                                    key={option}
-                                    className="flex cursor-pointer items-center gap-2 text-white"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={(e) =>
-                                        handleMultiselectChange(
-                                          question.id,
-                                          option,
-                                          e.target.checked
-                                        )
-                                      }
-                                      className="text-primary-green"
-                                    />
-                                    {option}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                            {questionError && (
-                              <p className="text-red-reject flex items-center gap-2 text-sm">
-                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                This question is required
-                              </p>
-                            )}
-                          </>
-                        );
-                      } else {
-                        return (
-                          <>
-                            <Textarea
-                              value={question.answer}
-                              onChange={(e) => handleQuestionChange(question.id, e.target.value)}
-                              className="bg-darker-gray border-gray-600 text-white"
-                              rows={3}
-                            />
-                            {questionError && (
-                              <p className="text-red-reject flex items-center gap-2 text-sm">
-                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                This question is required
-                              </p>
-                            )}
-                          </>
-                        );
-                      }
-                    })()}
+                    {question.type === 'select' ? (
+                      <>
+                        <Select
+                          value={question.answer}
+                          onValueChange={(value) => handleQuestionChange(question.id, value)}
+                        >
+                          <SelectTrigger className="bg-muted border-border h-12 cursor-pointer rounded-lg">
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-muted border-border">
+                            {question.options?.map((option) => (
+                              <SelectItem
+                                key={option}
+                                value={option}
+                                className="cursor-pointer hover:bg-gray-700"
+                              >
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {questionError && (
+                          <ErrorMessage message="This question is required" />
+                        )}
+                      </>
+                    ) : question.type === 'multiselect' ? (
+                      <>
+                        <div className="space-y-2">
+                          {question.options?.map((option) => {
+                            const currentAnswers = question.answer
+                              ? question.answer.split(', ')
+                              : [];
+                            const isChecked = currentAnswers.includes(option);
+                            return (
+                              <label
+                                key={option}
+                                className="flex cursor-pointer items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) =>
+                                    handleMultiselectChange(question.id, option, e.target.checked)
+                                  }
+                                  className="text-primary-green"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {questionError && (
+                          <ErrorMessage message="This question is required" />
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Textarea
+                          value={question.answer}
+                          onChange={(e) => handleQuestionChange(question.id, e.target.value)}
+                          className="bg-muted border-border min-h-[100px] rounded-lg"
+                          rows={3}
+                        />
+                        {questionError && (
+                          <ErrorMessage message="This question is required" />
+                        )}
+                      </>
+                    )}
                   </div>
                 );
               })}
@@ -521,7 +504,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           {job.includeCustomQuestions && job.customQuestionsLink && (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Additional Questions</h3>
-              <div className="bg-darker-gray rounded-lg border border-gray-600 p-4">
+              <div className="bg-muted rounded-lg border border-gray-600 p-4">
                 <p className="mb-3 text-white">
                   Please complete the additional questions for this position:
                 </p>
@@ -538,24 +521,35 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           )}
 
           {/* Submit Button */}
-          <Button
-            type="button"
-            onClick={() => setIsModalOpen(true)} // Open the modal on click
-            className="bg-primary-green w-full cursor-pointer rounded-lg py-3 font-semibold text-white hover:bg-green-600"
-          >
-            Submit
-          </Button>
+          <div className="pt-4">
+            <Button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200"
+            >
+              Submit
+            </Button>
+          </div>
         </form>
       </div>
 
       {/* Confirmation Modal */}
-      <ConfirmationModal
+      <ConfirmModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleModalConfirm}
         title="Submit Application?"
         message="Please confirm your choice"
         description="Are you ready to submit your application?"
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={isSuccessOpen}
+        onClose={() => setIsSuccessOpen(false)}
+        title="Submitted"
+        message="Application submitted successfully!"
+        buttonText="Close"
       />
     </div>
   );
