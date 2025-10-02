@@ -4,7 +4,6 @@
  */
 
 import { apiClient, ApiError } from './api-client';
-import type { JobPostFormData } from '@/types/JobPost';
 
 interface JobPost {
   id: string;
@@ -126,7 +125,16 @@ export class JobService {
   /**
    * Get applications for a job post (company only)
    */
-  static async getJobApplications(jobId: string): Promise<any[]> {
+  static async getJobApplications(jobId: string): Promise<
+    Array<{
+      id: string;
+      applicantName: string;
+      email: string;
+      status: string;
+      submittedAt: string;
+      resumeUrl?: string;
+    }>
+  > {
     try {
       return await apiClient.get(`/jobs/${jobId}/applications`);
     } catch (error) {

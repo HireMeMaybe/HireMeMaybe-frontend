@@ -110,7 +110,12 @@ export class CompanyService {
   /**
    * Get company's statistics
    */
-  static async getCompanyStats(companyId: string): Promise<any> {
+  static async getCompanyStats(companyId: string): Promise<{
+    totalJobs: number;
+    activeJobs: number;
+    totalApplications: number;
+    pendingApplications: number;
+  }> {
     try {
       return await apiClient.get(`/companies/${companyId}/stats`);
     } catch (error) {

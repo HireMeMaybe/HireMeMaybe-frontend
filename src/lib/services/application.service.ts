@@ -61,7 +61,13 @@ export class ApplicationService {
   /**
    * Get application details
    */
-  static async getApplication(applicationId: string): Promise<any> {
+  static async getApplication(applicationId: string): Promise<{
+    id: string;
+    jobId: string;
+    jobTitle: string;
+    status: string;
+    submittedAt: string;
+  }> {
     try {
       return await apiClient.get(`/applications/${applicationId}`);
     } catch (error) {
@@ -75,7 +81,16 @@ export class ApplicationService {
   /**
    * Get user's application history
    */
-  static async getApplicationHistory(): Promise<any[]> {
+  static async getApplicationHistory(): Promise<
+    Array<{
+      id: string;
+      jobId: string;
+      jobTitle: string;
+      company: string;
+      status: string;
+      submittedAt: string;
+    }>
+  > {
     try {
       return await apiClient.get('/applications/history');
     } catch (error) {

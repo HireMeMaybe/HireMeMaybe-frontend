@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 
 interface LoadingModalProps {
   isOpen: boolean;

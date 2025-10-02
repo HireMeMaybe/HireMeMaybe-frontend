@@ -258,7 +258,14 @@ export default function Profile(): React.JSX.Element {
       handleTokenExpiration();
       return;
     }
-  }, [session, status, router]);
+  }, [session, status]);
+
+  // Handle auth errors (token expiration)
+  React.useEffect(() => {
+    if (error && isAuthError(error)) {
+      handleTokenExpiration();
+    }
+  }, [error]);
 
   // Handle edit button click
   const handleEditClick = () => {
@@ -313,11 +320,8 @@ export default function Profile(): React.JSX.Element {
   }
 
   if (error) {
-    // If error indicates auth issue (token expired), logout immediately
+    // If error indicates auth issue (token expired), show redirecting message
     if (isAuthError(error)) {
-      React.useEffect(() => {
-        handleTokenExpiration();
-      }, []);
       return (
         <div className="flex min-h-screen items-center justify-center text-white">
           Session expired. Redirecting...

@@ -176,7 +176,15 @@ export class AdminService {
   /**
    * Get all job posts (for admin management)
    */
-  static async getAllJobPosts(): Promise<any[]> {
+  static async getAllJobPosts(): Promise<
+    Array<{
+      id: string;
+      title: string;
+      company: string;
+      status: string;
+      createdAt: string;
+    }>
+  > {
     try {
       return await apiClient.get('/admin/jobs');
     } catch (error) {

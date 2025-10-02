@@ -66,7 +66,7 @@ export class CpskService {
   static async register(
     data: CpskRegistrationData,
     resume?: File
-  ): Promise<{ message: string; data: any }> {
+  ): Promise<{ message: string; data: unknown }> {
     try {
       // Validate data
       const validatedData = cpskRegistrationSchema.parse(data);
@@ -140,44 +140,87 @@ export class CpskService {
   }
 
   /**
+   * Get authenticated session with backend token
+   */
+  private static async getAuthSession() {
+    const { getSession } = await import('next-auth/react');
+    const session = await getSession();
+
+    if (!session?.backendToken) {
+      throw new Error('No authentication token found. Please sign in again.');
+    }
+
+    return session;
+  }
+
+  /**
+   * Fetch resume ID from user profile if not provided
+   */
+  private static async fetchResumeIdFromProfile(
+    backendUrl: string,
+    token: string,
+    providedFileId?: number
+  ): Promise<number> {
+    if (providedFileId) {
+      return providedFileId;
+    }
+
+    const profileResponse = await fetch(`${backendUrl}/cpsk/myprofile`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (profileResponse.ok) {
+      const profileData = await profileResponse.json();
+      if (profileData.resume_id) {
+        return profileData.resume_id;
+      }
+    }
+
+    throw new Error('No resume file ID available. Please upload a resume first.');
+  }
+
+  /**
+   * Extract error message from failed response
+   */
+  private static async extractErrorMessage(response: Response): Promise<string> {
+    let errorMessage = `HTTP ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+      return errorData.error || errorData.message || errorMessage;
+    } catch {
+      try {
+        const errorText = await response.text();
+        if (errorText) return errorText;
+      } catch {
+        // Ignore
+      }
+    }
+
+    return errorMessage;
+  }
+
+  /**
    * Preview/download resume by file ID
    * @param fileId - The resume file ID to preview/download
    */
   static async previewResume(fileId?: number): Promise<Blob> {
     try {
-      // Import getSession dynamically to get auth token
-      const { getSession } = await import('next-auth/react');
-      const session = await getSession();
-
-      if (!session?.backendToken) {
-        throw new Error('No authentication token found. Please sign in again.');
-      }
+      const session = await this.getAuthSession();
 
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       if (!backendUrl) {
         throw new Error('Backend URL is not configured');
       }
 
-      // If no fileId provided, try to get from session/profile
-      let resumeFileId = fileId;
-      if (!resumeFileId) {
-        // Try to get profile data to extract resume_id
-        const profileResponse = await fetch(`${backendUrl}/cpsk/myprofile`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${session.backendToken}`,
-          },
-        });
-
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          resumeFileId = profileData.resume_id;
-        }
-      }
-
-      if (!resumeFileId) {
-        throw new Error('No resume file ID available. Please upload a resume first.');
-      }
+      const resumeFileId = await this.fetchResumeIdFromProfile(
+        backendUrl,
+        session.backendToken as string,
+        fileId
+      );
 
       console.log('Fetching resume for preview from:', `${backendUrl}/file/${resumeFileId}`);
 
@@ -191,20 +234,7 @@ export class CpskService {
       console.log('Resume fetch response status:', response.status);
 
       if (!response.ok) {
-        // Try to get detailed error message from backend
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          // If not JSON, try text
-          try {
-            const errorText = await response.text();
-            if (errorText) errorMessage = errorText;
-          } catch {
-            // Ignore
-          }
-        }
+        const errorMessage = await this.extractErrorMessage(response);
         throw new Error(`Failed to preview resume: ${errorMessage}`);
       }
 
@@ -214,7 +244,7 @@ export class CpskService {
     } catch (error) {
       console.error('Error in previewResume:', error);
       if (error instanceof Error) {
-        throw error; // Re-throw with original message
+        throw error;
       }
       throw new Error('Failed to preview resume: Unknown error');
     }

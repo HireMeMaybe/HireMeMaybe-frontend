@@ -9,6 +9,53 @@ export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
+    function parseRoleFromState(state: string | null): 'Company' | 'CPSK' | 'Visitor' | null {
+      if (!state) return null;
+      try {
+        const stateData = JSON.parse(state);
+        return stateData.role;
+      } catch (err) {
+        console.warn('Could not parse state parameter:', err);
+        return null;
+      }
+    }
+
+    async function exchangeCodeForToken(code: string, selectedRole: string | null) {
+      const res = await fetch('/api/auth/forward-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, selectedRole }),
+      });
+
+      const payload = await res.json();
+      if (!res.ok || !payload?.success) {
+        throw new Error('backend_exchange');
+      }
+
+      const data = payload.data;
+      const token = data.access_token || data.accessToken || data.token;
+      const backendUser = data.user || null;
+
+      if (!token) {
+        throw new Error('no_token');
+      }
+
+      return { token, backendUser };
+    }
+
+    function getRedirectPath(
+      isRegistered: boolean,
+      selectedRole: string | null,
+      backendUser: any
+    ): string {
+      if (isRegistered) {
+        return selectedRole === 'Company' || backendUser?.name
+          ? `/company/${backendUser.id}`
+          : '/profile';
+      }
+      return selectedRole === 'Company' ? '/company-register' : '/cpsk-register';
+    }
+
     async function run() {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
@@ -26,48 +73,15 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      // Parse role from state parameter
-      let selectedRole: 'Company' | 'CPSK' | 'Visitor' | null = null;
-      if (state) {
-        try {
-          const stateData = JSON.parse(state);
-          selectedRole = stateData.role;
-        } catch (err) {
-          console.warn('Could not parse state parameter:', err);
-        }
-      }
+      const selectedRole = parseRoleFromState(state);
 
       try {
-        // Forward the code to our server route which forwards to the backend
-        const res = await fetch('/api/auth/forward-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, selectedRole }),
-        });
+        const { token, backendUser } = await exchangeCodeForToken(code, selectedRole);
 
-        const payload = await res.json();
-        if (!res.ok || !payload?.success) {
-          console.error('Backend exchange failed:', payload);
-          router.push('/?error=backend_exchange');
-          return;
-        }
-
-        const data = payload.data;
-        // data should contain access_token and user
-        const token = data.access_token || data.accessToken || data.token;
-        const backendUser = data.user || null;
-
-        if (!token) {
-          console.error('Backend did not return access token');
-          router.push('/?error=no_token');
-          return;
-        }
-
-        // Use NextAuth's signIn with credentials to create session
         const result = await signIn('credentials', {
           token,
           user: JSON.stringify({ ...backendUser, role: selectedRole || backendUser?.role }),
-          redirect: false, // We handle redirect manually
+          redirect: false,
         });
 
         if (result?.error) {
@@ -76,28 +90,13 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        // Check if user is registered and redirect accordingly
-        // A user is considered registered if they have filled their profile (program for CPSK, size for Company)
         const isRegistered = !!(backendUser?.program || backendUser?.size || backendUser?.name);
-
-        if (isRegistered) {
-          // User has completed registration - redirect to their profile/dashboard
-          if (selectedRole === 'Company' || backendUser?.name) {
-            router.push(`/company/${backendUser.id}`);
-          } else {
-            router.push('/profile');
-          }
-        } else {
-          // User needs to complete registration
-          if (selectedRole === 'Company') {
-            router.push('/company-register');
-          } else {
-            router.push('/cpsk-register');
-          }
-        }
+        const redirectPath = getRedirectPath(isRegistered, selectedRole, backendUser);
+        router.push(redirectPath);
       } catch (err) {
+        const errorCode = err instanceof Error ? err.message : 'unexpected';
         console.error('Error in auth callback handler:', err);
-        router.push('/?error=unexpected');
+        router.push(`/?error=${errorCode}`);
       }
     }
 

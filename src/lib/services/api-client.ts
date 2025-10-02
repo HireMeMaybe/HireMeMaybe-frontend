@@ -20,7 +20,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public data?: any
+    public data?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -102,10 +102,11 @@ class ApiClient {
     }
   }
 
-  async request<T = any>(endpoint: string, config: RequestConfig = {}): Promise<T> {
+  async request<T = unknown>(endpoint: string, config: RequestConfig = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers = await this.buildHeaders(config);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { requireAuth, useFormData, ...fetchConfig } = config;
 
     const response = await fetch(url, {
@@ -116,26 +117,34 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
-  async get<T = any>(endpoint: string, config: RequestConfig = {}): Promise<T> {
+  async get<T = unknown>(endpoint: string, config: RequestConfig = {}): Promise<T> {
     return this.request<T>(endpoint, { ...config, method: 'GET' });
   }
 
-  async post<T = any>(endpoint: string, data?: any, config: RequestConfig = {}): Promise<T> {
-    const body = config.useFormData ? data : JSON.stringify(data);
+  async post<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    config: RequestConfig = {}
+  ): Promise<T> {
+    const body = config.useFormData ? (data as BodyInit) : JSON.stringify(data);
     return this.request<T>(endpoint, { ...config, method: 'POST', body });
   }
 
-  async put<T = any>(endpoint: string, data?: any, config: RequestConfig = {}): Promise<T> {
-    const body = config.useFormData ? data : JSON.stringify(data);
+  async put<T = unknown>(endpoint: string, data?: unknown, config: RequestConfig = {}): Promise<T> {
+    const body = config.useFormData ? (data as BodyInit) : JSON.stringify(data);
     return this.request<T>(endpoint, { ...config, method: 'PUT', body });
   }
 
-  async patch<T = any>(endpoint: string, data?: any, config: RequestConfig = {}): Promise<T> {
-    const body = config.useFormData ? data : JSON.stringify(data);
+  async patch<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    config: RequestConfig = {}
+  ): Promise<T> {
+    const body = config.useFormData ? (data as BodyInit) : JSON.stringify(data);
     return this.request<T>(endpoint, { ...config, method: 'PATCH', body });
   }
 
-  async delete<T = any>(endpoint: string, config: RequestConfig = {}): Promise<T> {
+  async delete<T = unknown>(endpoint: string, config: RequestConfig = {}): Promise<T> {
     return this.request<T>(endpoint, { ...config, method: 'DELETE' });
   }
 }
