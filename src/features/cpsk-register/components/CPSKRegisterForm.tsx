@@ -5,6 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye } from 'lucide-react';
 import type { Session } from 'next-auth';
 import type { ProfileData } from '@/types/cpsk';
 import {
@@ -16,9 +17,9 @@ import {
   RadioGroupItem,
   ErrorMessage,
 } from '@/components/ui';
-import { SuccessModal, ConfirmModal } from '@/components/modals';
+import { SuccessModal, ConfirmModal, ResumePreviewModal, LoadingModal } from '@/components/modals';
 import { cpskSchema } from '@/lib/validations/cpsk';
-import { useDownloadResume } from '@/features/profile/hooks/useDownloadResume';
+import { CpskService } from '@/lib/services/cpsk.service';
 import { useSoftSkills } from '../hooks/useSoftSkills';
 import { useResumeUpload } from '../hooks/useResumeUpload';
 import { useFormPopulation } from '../hooks/useFormPopulation';
@@ -33,7 +34,12 @@ export default function CPSKRegisterForm({
 }): React.JSX.Element {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const router = useRouter();
-  const { downloadResume } = useDownloadResume();
+
+  // Resume preview state
+  const [isResumePreviewOpen, setIsResumePreviewOpen] = useState(false);
+  const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
+  const [resumePreviewLoading, setResumePreviewLoading] = useState(false);
+  const [resumePreviewError, setResumePreviewError] = useState<string | null>(null);
 
   type FormInput = {
     first_name: string;
@@ -97,6 +103,61 @@ export default function CPSKRegisterForm({
     initialProfile,
     setSkills,
   });
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (resumePreviewUrl) {
+        URL.revokeObjectURL(resumePreviewUrl);
+      }
+    };
+  }, [resumePreviewUrl]);
+
+  const openResumePreview = async () => {
+    // If user has just selected a new file (not yet uploaded), preview it locally
+    if (watchedResume instanceof File) {
+      if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+      const localUrl = URL.createObjectURL(watchedResume);
+      setResumePreviewUrl(localUrl);
+      setResumePreviewError(null);
+      setIsResumePreviewOpen(true);
+      return;
+    }
+
+    // Otherwise fetch existing resume from server using CpskService
+    if (!initialProfile?.resume_id) return;
+    setResumePreviewLoading(true);
+    setResumePreviewError(null);
+
+    try {
+      if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+
+      // Use CpskService to preview resume directly from backend
+      const blob = await CpskService.previewResume(initialProfile.resume_id);
+
+      if (blob.size === 0) {
+        setResumePreviewError('Empty file received.');
+        setIsResumePreviewOpen(true);
+        setResumePreviewLoading(false);
+        return;
+      }
+
+      // Force PDF MIME type for iframe rendering
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const url = URL.createObjectURL(pdfBlob);
+
+      setResumePreviewUrl(url);
+      setIsResumePreviewOpen(true);
+    } catch (e) {
+      console.error('Error previewing resume:', e);
+      const errorMessage = e instanceof Error ? e.message : 'Error while loading resume preview.';
+      setResumePreviewError(errorMessage);
+      setIsResumePreviewOpen(true);
+    } finally {
+      setResumePreviewLoading(false);
+    }
+  };
+
   const onSubmit = async (data: FormInput) => {
     await submitForm(data);
   };
@@ -271,19 +332,16 @@ export default function CPSKRegisterForm({
             <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
             </svg>
-            <span>
-              Resume{' '}
-              {initialProfile?.resume_id ? '(Current resume will be replaced)' : '(Optional)'}
-            </span>
+            <span>Resume (Optional)</span>
           </Label>
 
-          {/* Display existing resume if available */}
-          {initialProfile?.resume_id && !watchedResume ? (
-            <div className="mb-4 rounded-lg border border-gray-600 bg-gray-800/50 p-4">
+          {/* Show existing resume if available */}
+          {initialProfile?.resume_id && (
+            <div className="bg-muted mb-4 rounded-lg border border-gray-600 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="rounded bg-[var(--color-primary-green)] p-2">
-                    <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="bg-primary-green/20 text-primary-green rounded-lg p-2">
+                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fillRule="evenodd"
                         d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
@@ -292,47 +350,48 @@ export default function CPSKRegisterForm({
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-white">resume_{initialProfile.resume_id}.pdf</p>
-                    <p className="text-sm text-gray-400">Current resume</p>
+                    <p className="font-medium text-white">Existing Resume</p>
+                    <p className="text-muted text-sm">Resume from your profile</p>
                   </div>
                 </div>
                 <Button
                   type="button"
-                  onClick={() => downloadResume(initialProfile.resume_id!)}
-                  variant="outline"
-                  size="sm"
-                  className="border-[var(--color-primary-green)] bg-transparent text-[var(--color-primary-green)] hover:bg-[var(--color-primary-green)] hover:text-white"
+                  onClick={openResumePreview}
+                  disabled={resumePreviewLoading}
+                  className="bg-primary-green/70 hover:bg-primary-green/60 flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-white"
                 >
-                  <svg className="mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Download
+                  <Eye className="h-4 w-4" />
+                  {resumePreviewLoading ? 'Loading...' : 'Preview'}
                 </Button>
               </div>
+              <div className="mt-3 border-t border-gray-600 pt-3">
+                <p className="text-muted text-xs">
+                  You can upload a new resume below to replace your existing one.
+                </p>
+              </div>
             </div>
-          ) : null}
+          )}
 
           <FileUpload
             className="w-full"
             file={watchedResume as File | undefined}
             accept=".pdf,application/pdf"
-            description={
-              initialProfile?.resume_id
-                ? 'Upload new resume to replace current one'
-                : 'PDF up to 10 MB'
-            }
+            description="PDF up to 10 MB"
             onFileChange={(file) => handleResumeChange(file || undefined)}
           />
           <ErrorMessage message={errors.resume?.message} />
           {watchedResume && (watchedResume as File).name && (
-            <p className="text-muted mt-2 text-sm">
-              {initialProfile?.resume_id ? 'New resume: ' : 'Uploaded: '}
-              {getResumeDisplayText()}
-            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <p className="text-muted text-sm">New upload: {getResumeDisplayText()}</p>
+              <span className="text-xs text-blue-400">(Will replace existing resume)</span>
+            </div>
+          )}
+          {initialProfile?.resume_id && !watchedResume && (
+            <div className="mt-2">
+              <p className="text-primary-green text-sm">
+                ✓ Using existing resume from your profile
+              </p>
+            </div>
           )}
         </div>
 
@@ -403,6 +462,27 @@ export default function CPSKRegisterForm({
         title="Submitted"
         message={status?.message || 'Submitted successfully'}
         buttonText="Close"
+      />
+
+      {/* Resume Preview Modal */}
+      <ResumePreviewModal
+        isOpen={isResumePreviewOpen}
+        onClose={() => {
+          if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+          setResumePreviewUrl(null);
+          setIsResumePreviewOpen(false);
+          setResumePreviewError(null);
+        }}
+        resumeUrl={resumePreviewUrl}
+        error={resumePreviewError}
+        isLoading={resumePreviewLoading}
+      />
+
+      {/* Loading Modal */}
+      <LoadingModal
+        isOpen={isPending}
+        title="Submitting Profile"
+        message="Please wait while we upload your information..."
       />
     </form>
   );

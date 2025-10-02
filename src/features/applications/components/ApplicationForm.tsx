@@ -23,7 +23,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useJobs } from '@/features/search/hooks/useJobs';
 import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from '@/types/application';
 import { useState, useEffect } from 'react';
-import { ConfirmModal, SuccessModal } from '@/components/modals';
+import { ConfirmModal, SuccessModal, ResumePreviewModal, LoadingModal } from '@/components/modals';
+import { CpskService } from '@/lib/services/cpsk.service';
 import { useSoftSkills } from '@/features/cpsk-register/hooks/useSoftSkills';
 import { useResumeUpload } from '@/features/cpsk-register/hooks/useResumeUpload';
 import { useProfile } from '@/features/profile/hooks/useProfile';
@@ -160,7 +161,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       return;
     }
 
-    // Otherwise fetch existing resume from server
+    // Otherwise fetch existing resume from server using CpskService
     if (!profileData?.resume_id) return;
     setResumePreviewLoading(true);
     setResumePreviewError(null);
@@ -168,40 +169,27 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     try {
       if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
 
-      const response = await fetch(`/api/file/resume/${profileData.resume_id}?preview=1`, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/pdf',
-        },
-      });
-
-      if (!response.ok) {
-        setResumePreviewError('Failed to load resume preview.');
-        return;
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-
-      // Force PDF MIME so iframe can render even if server sends octet-stream
-      let blobType = 'application/pdf';
-      const ct = response.headers.get('content-type');
-      if (ct?.includes('image/')) {
-        blobType = ct; // allow image if backend actually returns one
-      }
-
-      const blob = new Blob([arrayBuffer], { type: blobType });
+      // Use CpskService to preview resume directly from backend
+      const blob = await CpskService.previewResume(profileData.resume_id);
 
       if (blob.size === 0) {
         setResumePreviewError('Empty file received.');
+        setIsResumePreviewOpen(true);
+        setResumePreviewLoading(false);
         return;
       }
 
-      const url = URL.createObjectURL(blob);
+      // Force PDF MIME type for iframe rendering
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const url = URL.createObjectURL(pdfBlob);
+
       setResumePreviewUrl(url);
       setIsResumePreviewOpen(true);
     } catch (e) {
       console.error('Error previewing resume:', e);
-      setResumePreviewError('Error while loading resume preview.');
+      const errorMessage = e instanceof Error ? e.message : 'Error while loading resume preview.';
+      setResumePreviewError(errorMessage);
+      setIsResumePreviewOpen(true);
     } finally {
       setResumePreviewLoading(false);
     }
@@ -241,7 +229,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       }
     }
 
-    const success = await submitApplication(data);
+    const success = await submitApplication(jobId, data);
 
     if (success) {
       setMissingRequiredQuestions([]);
@@ -678,79 +666,28 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       />
 
       {/* Resume Preview Modal */}
-      {isResumePreviewOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="relative flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-gray-700 bg-[#1f1f23] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-700 px-4 py-3">
-              <h2 className="text-lg font-semibold text-white">Resume Preview</h2>
-              <button
-                onClick={() => {
-                  if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
-                  setResumePreviewUrl(null);
-                  setIsResumePreviewOpen(false);
-                }}
-                className="cursor-pointer rounded p-1 text-gray-400 hover:bg-gray-700 hover:text-white"
-                aria-label="Close preview"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-auto bg-neutral-900">
-              {resumePreviewError && (
-                <div className="flex h-full items-center justify-center p-6">
-                  <p className="text-sm text-red-400">{resumePreviewError}</p>
-                </div>
-              )}
-
-              {!resumePreviewError && !resumePreviewUrl && (
-                <div className="flex h-full items-center justify-center p-6">
-                  <p className="text-sm text-gray-300">Loading...</p>
-                </div>
-              )}
-
-              {resumePreviewUrl && (
-                <div className="h-full w-full">
-                  <iframe
-                    title="Resume Preview"
-                    src={resumePreviewUrl}
-                    className="h-full w-full"
-                    style={{ border: 'none' }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 border-t border-gray-700 bg-[#18181b] px-4 py-3">
-              <Button
-                type="button"
-                onClick={() => {
-                  if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
-                  setResumePreviewUrl(null);
-                  setIsResumePreviewOpen(false);
-                }}
-                className="cursor-pointer bg-gray-600 text-white hover:bg-gray-700"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ResumePreviewModal
+        isOpen={isResumePreviewOpen}
+        onClose={() => {
+          if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+          setResumePreviewUrl(null);
+          setIsResumePreviewOpen(false);
+          setResumePreviewError(null);
+        }}
+        resumeUrl={resumePreviewUrl}
+        error={resumePreviewError}
+        isLoading={resumePreviewLoading}
+      />
 
       {/* Validation / Error Modal */}
       {isValidationOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
+          className="bg-background fixed inset-0 z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md overflow-hidden rounded-xl border border-gray-700 bg-background shadow-2xl">
-            <div className="flex items-center gap-3 border-b border-gray-700 bg-background px-5 py-4">
+          <div className="bg-background w-full max-w-md overflow-hidden rounded-xl border border-gray-700 shadow-2xl">
+            <div className="bg-background flex items-center gap-3 border-b border-gray-700 px-5 py-4">
               <div className="rounded-md bg-red-600/15 p-2 text-red-400">
                 <AlertTriangle className="h-5 w-5" />
               </div>
@@ -774,7 +711,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 </div>
               )}
             </div>
-            <div className="flex justify-end gap-3 border-t border-gray-700 bg-background px-5 py-3">
+            <div className="bg-background flex justify-end gap-3 border-t border-gray-700 px-5 py-3">
               <Button
                 type="button"
                 onClick={() => {
@@ -789,6 +726,13 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           </div>
         </div>
       )}
+
+      {/* Loading Modal */}
+      <LoadingModal
+        isOpen={isSubmitting}
+        title="Submitting Application"
+        message="Please wait while we upload your application..."
+      />
     </div>
   );
 }

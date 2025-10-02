@@ -6,21 +6,36 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Phone, Mail, Download, Edit } from 'lucide-react';
+import { Phone, Mail, Eye, Edit } from 'lucide-react';
+import { ResumePreviewModal } from '@/components/modals';
 import type { ProfileData } from '@/types/cpsk';
 import { useProfile } from '../hooks/useProfile';
-import { useDownloadResume } from '../hooks/useDownloadResume';
 import { getProfileImageUrl } from '@/lib/utils';
+import { handleTokenExpiration, isAuthError } from '@/lib/utils/auth-helpers';
 import Loading from '@/app/loading';
 import ErrorPage from '@/app/error';
 
 interface ProfileViewProps {
   profileData: ProfileData;
   onEditClick: () => void;
-  onDownloadResume: (resumeId: number) => void;
+  onPreviewResume: () => void;
+  isDownloading?: boolean;
+  isResumePreviewOpen: boolean;
+  resumePreviewUrl: string | null;
+  resumePreviewError: string | null;
+  onClosePreview: () => void;
 }
 
-function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileViewProps) {
+function ProfileView({
+  profileData,
+  onEditClick,
+  onPreviewResume,
+  isDownloading,
+  isResumePreviewOpen,
+  resumePreviewUrl,
+  resumePreviewError,
+  onClosePreview,
+}: ProfileViewProps) {
   const fullName = profileData
     ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim()
     : 'Unknown User';
@@ -53,7 +68,7 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
         <Button
           onClick={onEditClick}
           variant="outline"
-          className="flex items-center gap-2 border-gray-600 bg-transparent text-white hover:bg-white hover:text-black"
+          className="flex cursor-pointer items-center gap-2 border-gray-600 bg-transparent text-white hover:bg-white hover:text-black"
         >
           <Edit className="h-4 w-4" />
           Edit Profile
@@ -157,13 +172,14 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
                 </div>
               </div>
               <Button
-                onClick={() => onDownloadResume(profileData.resume_id!)}
+                onClick={onPreviewResume}
                 variant="outline"
                 size="sm"
-                className="border-[var(--color-primary-green)] bg-[var(--color-primary-green)] text-white hover:bg-[var(--color-darker-green)]"
+                disabled={isDownloading}
+                className="flex items-center border-[var(--color-primary-green)] bg-[var(--color-primary-green)] text-white hover:bg-[var(--color-darker-green)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Download className="mr-1 h-4 w-4" />
-                Download
+                <Eye className="mr-1 h-4 w-4" />
+                {isDownloading ? 'Loading...' : 'Preview'}
               </Button>
             </div>
           ) : (
@@ -182,29 +198,33 @@ function ProfileView({ profileData, onEditClick, onDownloadResume }: ProfileView
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {profileData?.soft_skill && profileData.soft_skill.length > 0
-              ? profileData.soft_skill.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="rounded-full border border-[#C4BEBE] bg-[var(--color-light-gray)] px-3 pb-1 text-sm font-medium text-[var(--color-primary-green)]"
-                  >
-                    {skill}
-                  </span>
-                ))
-              : ['Communication', 'Teamwork', 'Leadership', 'Time Management'].map(
-                  (skill, index) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-[var(--color-primary-green)] px-3 py-1 text-sm font-medium text-white"
-                    >
-                      {skill}
-                    </span>
-                  )
-                )}
-          </div>
+          {profileData?.soft_skill && profileData.soft_skill.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {profileData.soft_skill.map((skill, index) => (
+                <span
+                  key={index}
+                  className="rounded-full border border-[#C4BEBE] bg-[var(--color-light-gray)] px-3 pb-1 text-sm font-medium text-[var(--color-primary-green)]"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border-2 border-dashed border-gray-600 p-4 text-center">
+              <p className="text-gray-400">No soft skills added</p>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Resume Preview Modal */}
+      <ResumePreviewModal
+        isOpen={isResumePreviewOpen}
+        onClose={onClosePreview}
+        resumeUrl={resumePreviewUrl}
+        error={resumePreviewError}
+        isLoading={false}
+      />
     </div>
   );
 }
@@ -213,14 +233,29 @@ export default function Profile(): React.JSX.Element {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { profileData, loading, error, refetch } = useProfile();
-  const { downloadResume } = useDownloadResume();
 
-  // Handle authentication checks
+  // Resume preview modal state
+  const [isResumePreviewOpen, setIsResumePreviewOpen] = React.useState(false);
+  const [resumePreviewUrl, setResumePreviewUrl] = React.useState<string | null>(null);
+  const [resumePreviewLoading, setResumePreviewLoading] = React.useState(false);
+  const [resumePreviewError, setResumePreviewError] = React.useState<string | null>(null);
+
+  // Cleanup preview URL on unmount
+  React.useEffect(() => {
+    return () => {
+      if (resumePreviewUrl) {
+        URL.revokeObjectURL(resumePreviewUrl);
+      }
+    };
+  }, [resumePreviewUrl]);
+
+  // Handle authentication checks and token expiration
   React.useEffect(() => {
     if (status === 'loading') return;
 
     if (status === 'unauthenticated' || !session?.backendToken || !session?.backendUser?.program) {
-      router.push('/');
+      // Force logout and redirect to landing page
+      handleTokenExpiration();
       return;
     }
   }, [session, status, router]);
@@ -230,11 +265,66 @@ export default function Profile(): React.JSX.Element {
     router.push('/profile/edit');
   };
 
+  // Handle resume preview
+  const handlePreviewResume = async () => {
+    if (!profileData?.resume_id) return;
+    setResumePreviewLoading(true);
+    setResumePreviewError(null);
+
+    try {
+      if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+
+      // Use CpskService to preview resume directly from backend
+      const { CpskService } = await import('@/lib/services/cpsk.service');
+      const blob = await CpskService.previewResume(profileData.resume_id);
+
+      if (blob.size === 0) {
+        setResumePreviewError('Empty file received.');
+        setIsResumePreviewOpen(true);
+        setResumePreviewLoading(false);
+        return;
+      }
+
+      // Force PDF MIME type for iframe rendering
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const url = URL.createObjectURL(pdfBlob);
+
+      setResumePreviewUrl(url);
+      setIsResumePreviewOpen(true);
+    } catch (e) {
+      console.error('Error previewing resume:', e);
+      const errorMessage = e instanceof Error ? e.message : 'Error while loading resume preview.';
+      setResumePreviewError(errorMessage);
+      setIsResumePreviewOpen(true);
+    } finally {
+      setResumePreviewLoading(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (resumePreviewUrl) URL.revokeObjectURL(resumePreviewUrl);
+    setResumePreviewUrl(null);
+    setIsResumePreviewOpen(false);
+    setResumePreviewError(null);
+  };
+
   if (loading) {
     return <Loading />;
   }
 
   if (error) {
+    // If error indicates auth issue (token expired), logout immediately
+    if (isAuthError(error)) {
+      React.useEffect(() => {
+        handleTokenExpiration();
+      }, []);
+      return (
+        <div className="flex min-h-screen items-center justify-center text-white">
+          Session expired. Redirecting...
+        </div>
+      );
+    }
+
     return (
       <ErrorPage
         error={new Error(error)}
@@ -260,7 +350,12 @@ export default function Profile(): React.JSX.Element {
         <ProfileView
           profileData={profileData}
           onEditClick={handleEditClick}
-          onDownloadResume={downloadResume}
+          onPreviewResume={handlePreviewResume}
+          isDownloading={resumePreviewLoading}
+          isResumePreviewOpen={isResumePreviewOpen}
+          resumePreviewUrl={resumePreviewUrl}
+          resumePreviewError={resumePreviewError}
+          onClosePreview={handleClosePreview}
         />
       </div>
     </div>
