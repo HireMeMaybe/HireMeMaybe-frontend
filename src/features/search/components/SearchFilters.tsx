@@ -11,7 +11,7 @@ import {
 const filterOptions = {
   "Job Type": ["Onsite", "Hybrid", "Remote"],
   "Tag": ["Finance", "Technology", "Banking", "Healthcare", "Education", "Marketing"],
-  "Salary": ["Lessthan 15,000", "15,000-30,000", "30,000-50,000", "50,000-80,000", "80,000-120,000", "More than 120,000"],
+  "Salary": ["Less than 15,000", "15,000-30,000", "30,000-50,000", "50,000-80,000", "80,000-120,000", "More than 120,000"],
   "Experience Level": ["Internship", "Junior", "Mid-Level", "Senior", "Lead/Principal", "Executive"],
   "Company": ["OCS", "AIS Innovation Lab", "LINE Thailand", "SCB TechX", "Grab", "True Digital Group"],
   "Company Size": ["1-50", "51-500", "501-5,000", "5,000+"],

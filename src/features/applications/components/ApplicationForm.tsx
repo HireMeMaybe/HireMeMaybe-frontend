@@ -369,11 +369,11 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 <RadioGroup value={field.value} onValueChange={field.onChange}>
                   <div className="flex items-center gap-8">
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem id="major-cpe" value="CPE" />
+                      <RadioGroupItem id="major-cpe" value="CPE" className='cursor-pointer'/>
                       <Label htmlFor="major-cpe">CPE</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem id="major-ske" value="SKE" />
+                      <RadioGroupItem id="major-ske" value="SKE" className='cursor-pointer'/>
                       <Label htmlFor="major-ske">SKE</Label>
                     </div>
                   </div>
@@ -400,6 +400,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                         <RadioGroupItem
                           id={`education-${level.replace(/\s+/g, '-').toLowerCase()}`}
                           value={level}
+                          className='cursor-pointer'
                         />
                         <Label htmlFor={`education-${level.replace(/\s+/g, '-').toLowerCase()}`}>
                           {level}
@@ -508,7 +509,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                     <button
                       type="button"
                       onClick={() => removeSkill(s)}
-                      className="text-gray-text ml-1 rounded-full hover:text-gray-500"
+                      className="text-gray-text ml-1 rounded-full hover:text-gray-500 cursor-pointer"
                       aria-label={`Remove ${s}`}
                     >
                       ×
@@ -684,7 +685,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                   setResumePreviewUrl(null);
                   setIsResumePreviewOpen(false);
                 }}
-                className="rounded p-1 text-gray-400 hover:bg-gray-700 hover:text-white"
+                className="rounded p-1 text-gray-400 hover:bg-gray-700 hover:text-white cursor-pointer"
                 aria-label="Close preview"
               >
                 ✕
@@ -724,7 +725,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                   setResumePreviewUrl(null);
                   setIsResumePreviewOpen(false);
                 }}
-                className="bg-gray-600 hover:bg-gray-700"
+                className="bg-gray-600 hover:bg-gray-700 cursor-pointer text-white"
               >
                 Close
               </Button>
