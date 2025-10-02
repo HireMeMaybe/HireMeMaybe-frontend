@@ -46,11 +46,11 @@ export default function AuthCallbackPage() {
     function getRedirectPath(
       isRegistered: boolean,
       selectedRole: string | null,
-      backendUser: any
+      backendUser: { id?: string | number; name?: string } | null
     ): string {
       if (isRegistered) {
         return selectedRole === 'Company' || backendUser?.name
-          ? `/company/${backendUser.id}`
+          ? `/company/${backendUser?.id ?? ''}`
           : '/profile';
       }
       return selectedRole === 'Company' ? '/company-register' : '/cpsk-register';
