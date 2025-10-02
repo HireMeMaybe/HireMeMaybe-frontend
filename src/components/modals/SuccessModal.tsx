@@ -64,7 +64,7 @@ export default function SuccessModal({
           <div className="flex justify-center pt-4">
             <Button
               onClick={handleConfirm}
-              className="bg-primary-green rounded-md px-6 py-2 text-white hover:bg-green-700"
+              className="bg-primary-green rounded-md px-6 py-2 text-white hover:bg-green-700 cursor-pointer"
             >
               {buttonText}
             </Button>

@@ -28,3 +28,12 @@ export interface AdminNavItem {
   href: string;
   isActive: boolean;
 }
+
+export type JobPostItem = {
+  id: number;
+  title: string;
+  company: string;
+  type: 'Internship' | 'Full-time' | 'Part-time' | 'Contract';
+  posted: string;
+  reports: number;
+};

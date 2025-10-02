@@ -72,13 +72,13 @@ export default function ApproveModal({
           <div className="flex justify-end gap-3 pt-4">
             <Button 
               onClick={handleReject}
-              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md"
+              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md cursor-pointer"
             >
               Reject
             </Button>
             <Button 
               onClick={handleApprove}
-              className="bg-primary-green hover:bg-green-700 text-white px-6 py-2 rounded-md"
+              className="bg-primary-green hover:bg-green-700 text-white px-6 py-2 rounded-md cursor-pointer"
             >
               Approve
             </Button>

@@ -73,13 +73,13 @@ export default function WarningModal({
           <div className="flex justify-end gap-3 pt-4">
             <Button 
               onClick={handleLeave}
-              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md"
+              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md cursor-pointer"
             >
               Leave Anyway
             </Button>
             <Button 
               onClick={handleSave}
-              className="bg-yellow-warning hover:bg-yellow-600 text-white px-6 py-2 rounded-md"
+              className="bg-yellow-warning hover:bg-yellow-600 text-white px-6 py-2 rounded-md cursor-pointer"
             >
               Keep Editing
             </Button>

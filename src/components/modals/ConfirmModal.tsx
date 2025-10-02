@@ -67,13 +67,13 @@ export default function ConfirmationModal({
             <Button 
               variant="outline" 
               onClick={onClose} 
-              className="border-none bg-gray-cancel text-white hover:bg-gray-800 px-6 py-2 rounded-md"
+              className="border-none bg-gray-cancel text-white hover:bg-gray-800 px-6 py-2 rounded-md cursor-pointer"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleConfirm}
-              className="bg-sky-blue hover:bg-blue-800 text-white px-6 py-2 rounded-md"
+              className="bg-sky-blue hover:bg-blue-800 text-white px-6 py-2 rounded-md cursor-pointer"
             >
               Submit
             </Button>
