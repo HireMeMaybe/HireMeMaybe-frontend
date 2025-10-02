@@ -1,3 +1,4 @@
+// src/features/search/components/SearchPage.tsx
 "use client";
 
 import { useState } from "react";

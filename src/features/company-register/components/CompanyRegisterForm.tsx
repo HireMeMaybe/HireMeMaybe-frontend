@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useTransition } from 'react';
@@ -64,7 +63,7 @@ export function CompanyRegisterForm(): React.JSX.Element {
         // Helper to conditionally append non-empty values
         const appendIfPresent = (key: string, value: string | File | undefined) => {
           if (value && value !== '') {
-            formData.append(key, value as string | File);
+            formData.append(key, value);
           }
         };
 

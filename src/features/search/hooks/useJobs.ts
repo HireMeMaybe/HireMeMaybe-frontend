@@ -1,7 +1,10 @@
+// src/features/search/hooks/useJobs.ts
+import { JobWithQuestions } from "@/types/application";
+
 export function useJobs() {
-  const jobs = [
+  const jobs: JobWithQuestions[] = [
     {
-      id: 1, // Matches jobId in useJobApplications
+      id: 1,
       title: "Full Stack Developer",
       company: "OCS",
       location: "Bangkok, Thailand (Hybrid)",
@@ -22,11 +25,15 @@ Qualifications:
       tags: ["Finance"],
       postedDate: "2025-09-01",
       logoPath: "/placeholder-logo.png",
+      // This job includes both default questions and custom questions
+      includeDefaultQuestions: true,
+      includeCustomQuestions: true,
+      customQuestionsLink: "https://forms.google.com/custom-ocs-questions",
     },
     {
-      id: 2, // Matches jobId in useJobApplications
+      id: 2,
       title: "Data Scientist",
-      company: "AIS Innovation Lab",
+      company: "AIS Innovation Lab", 
       location: "Bangkok, Thailand",
       description: `We are hiring a Data Scientist to join our advanced analytics team. You will be working on projects involving customer behavior analysis, predictive modeling, and AI-driven recommendations.
 
@@ -45,9 +52,12 @@ Qualifications:
       tags: ["Telecom"],
       postedDate: "2025-09-02",
       logoPath: "/placeholder-logo.png",
+      // This job only includes default questions
+      includeDefaultQuestions: true,
+      includeCustomQuestions: false,
     },
     {
-      id: 3, // Matches jobId in useJobApplications
+      id: 3,
       title: "UI/UX Designer",
       company: "LINE Thailand",
       location: "Bangkok, Thailand",
@@ -68,6 +78,62 @@ Qualifications:
       tags: ["Technology"],
       postedDate: "2025-09-03",
       logoPath: "/placeholder-logo.png",
+      // This job only includes custom questions (with link)
+      includeDefaultQuestions: false,
+      includeCustomQuestions: true,
+      customQuestionsLink: "https://forms.google.com/line-thailand-design-questions",
+    },
+    {
+      id: 4,
+      title: "Cloud Engineer",
+      company: "SCB TechX",
+      location: "Bangkok, Thailand (Remote-Friendly)",
+      description: `We are seeking a Cloud Engineer to design, build, and maintain our cloud infrastructure. You will play a key role in ensuring the scalability, reliability, and security of our cloud-native applications.
+
+Responsibilities:
+- Design and implement cloud infrastructure on AWS and GCP.
+- Automate infrastructure deployment with Terraform and Ansible.
+- Monitor and optimize system performance and cost efficiency.
+- Implement best practices for cloud security and compliance.
+- Collaborate with developers to ensure smooth CI/CD pipelines.
+
+Qualifications:
+- Bachelor's degree in Computer Science, Engineering, or related field.
+- Strong knowledge of AWS/GCP cloud services.
+- Experience with Docker, Kubernetes, and serverless architecture.
+- Familiarity with DevOps practices and tools (Jenkins, GitHub Actions).`,
+      tags: ["Banking"],
+      postedDate: "2025-09-04",
+      logoPath: "/placeholder-logo.png",
+      // This job has no questions at all
+      includeDefaultQuestions: false,
+      includeCustomQuestions: false,
+    },
+    {
+      id: 5,
+      title: "Mobile App Developer",
+      company: "Grab",
+      location: "Bangkok, Thailand",
+      description: `Grab is looking for a Mobile App Developer who is passionate about creating high-performance applications. You will join our engineering team to build new features and improve existing ones for millions of users.
+
+Responsibilities:
+- Develop and maintain native iOS (Swift) or Android (Kotlin) applications.
+- Collaborate with product managers and designers to deliver seamless user experiences.
+- Optimize applications for maximum speed and scalability.
+- Implement security best practices to protect user data.
+- Troubleshoot and debug complex issues.
+
+Qualifications:
+- 2+ years of experience in mobile development.
+- Strong knowledge of Swift (iOS) or Kotlin (Android).
+- Familiarity with mobile architecture patterns (MVVM, Clean Architecture).
+- Experience with REST APIs and Firebase services.`,
+      tags: ["Ride-hailing"],
+      postedDate: "2025-09-05",
+      logoPath: "/placeholder-logo.png",
+      // This job has custom questions without link (embedded questions)
+      includeDefaultQuestions: false,
+      includeCustomQuestions: true,
     },
   ];
 
