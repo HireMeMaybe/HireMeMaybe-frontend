@@ -1,7 +1,10 @@
-export { default as ApproveModal } from "./ApproveModal";
-export { default as ConfirmModal } from "./ConfirmModal";
-export { default as DeleteModal } from "./DeleteModal";
-export { default as ReportModal } from "./ReportModal";
-export { default as SuccessModal } from "./SuccessModal";
-export { default as UnsuccessModal } from "./UnsuccessModal";
-export { default as WarningModal } from "./WarningModal";
+export { default as ApproveModal } from './ApproveModal';
+export { default as ConfirmModal } from './ConfirmModal';
+export { default as DeleteModal } from './DeleteModal';
+export { default as LoadingModal } from './LoadingModal';
+export { default as ReportModal } from './ReportModal';
+export { default as ReviewReportModal } from './ReviewReportModal';
+export { default as SuccessModal } from './SuccessModal';
+export { default as UnsuccessModal } from './UnsuccessModal';
+export { default as WarningModal } from './WarningModal';
+export { ResumePreviewModal } from './ResumePreviewModal';
