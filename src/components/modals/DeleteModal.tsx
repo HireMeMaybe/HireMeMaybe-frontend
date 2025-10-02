@@ -3,12 +3,13 @@
 import { Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ReactNode } from 'react';
 
 interface DeleteModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly title?: string;
-  readonly message?: string;
+  readonly message?: string | ReactNode;
   readonly description?: string;
   readonly onConfirm?: () => void;
 }
@@ -67,13 +68,13 @@ export default function DeleteModal({
             <Button 
               variant="outline" 
               onClick={onClose} 
-              className="border-none bg-gray-cancel text-white hover:bg-gray-800 px-6 py-2 rounded-md"
+              className="border-none bg-gray-cancel text-white hover:bg-gray-800 px-6 py-2 rounded-md cursor-pointer"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleConfirm}
-              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md"
+              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md cursor-pointer"
             >
               Delete
             </Button>

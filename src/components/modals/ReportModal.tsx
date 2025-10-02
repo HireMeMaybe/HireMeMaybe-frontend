@@ -66,11 +66,11 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
               type="button"
               variant="outline"
               onClick={onClose}
-              className="bg-gray-cancel flex-1 border-none text-white hover:bg-gray-800"
+              className="bg-gray-cancel flex-1 border-none text-white hover:bg-gray-800 cursor-pointer"
             >
               Cancel
             </Button>
-            <Button type="submit" className="bg-red-reject flex-1 text-white hover:bg-red-700">
+            <Button type="submit" className="bg-red-reject flex-1 text-white hover:bg-red-700 cursor-pointer">
               Submit Report
             </Button>
           </div>

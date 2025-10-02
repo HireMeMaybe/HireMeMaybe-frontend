@@ -72,13 +72,13 @@ export default function ErrorModal({
             <Button 
               variant="outline" 
               onClick={handleCancel} 
-              className="border-none text-white bg-gray-cancel px-6 py-2 rounded-md hover:bg-gray-800"
+              className="border-none text-white bg-gray-cancel px-6 py-2 rounded-md hover:bg-gray-800 cursor-pointer"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleRetry}
-              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md"
+              className="bg-red-reject hover:bg-red-700 text-white px-6 py-2 rounded-md cursor-pointer"
             >
               Try Again
             </Button>
