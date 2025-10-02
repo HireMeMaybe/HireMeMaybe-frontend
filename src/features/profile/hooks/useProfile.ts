@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { CpskService } from '@/lib/services';
 import type { ProfileData } from '@/types/cpsk';
 
 interface UseProfileReturn {
@@ -27,22 +28,11 @@ export function useProfile(): UseProfileReturn {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/cpsk/profile', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await CpskService.getProfile();
       setProfileData(data);
     } catch (err) {
       console.error('Error fetching profile data:', err);
-      setError('Failed to load profile data');
+      setError(err instanceof Error ? err.message : 'Failed to load profile data');
     } finally {
       setLoading(false);
     }

@@ -1,69 +1,70 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-
-type Report = {
-  reporter: string;
-  reporterRole: string;
-  reason: string;
-  submitted: string; // ISO date string or short date
-  link?: string;
-};
-
-const initialMock: Report[] = [
-  {
-    reporter: 'Jane Smith (SKE-2022)',
-    reporterRole: 'CPSK',
-    reason: 'Unpaid internship — promised payment not received',
-    submitted: '2025-09-30',
-    link: 'https://www.youtube.com/watch?v=xvFZjo5PgG0',
-  },
-  {
-    reporter: 'Mark Lee (CPE-2023)',
-    reporterRole: 'CPSK',
-    reason: 'No physical office; fraudulent job offer',
-    submitted: '2025-09-28',
-    link: 'https://www.youtube.com/watch?v=xvFZjo5PgG0',
-  },
-  {
-    reporter: 'Alvin Tran (SKE-2021)',
-    reporterRole: 'Student',
-    reason: 'Misleading job description; hours not as advertised',
-    submitted: '2025-09-29',
-    link: 'https://www.youtube.com/watch?v=xvFZjo5PgG0',
-  },
-  {
-    reporter: 'Maria Gonzales (CPE-2024)',
-    reporterRole: 'Company',
-    reason: 'Inaccurate company profile reported by user',
-    submitted: '2025-09-26',
-    link: 'https://www.youtube.com/watch?v=xvFZjo5PgG0',
-  },
-];
+import { AdminService, type Report } from '@/lib/services';
 
 export function useReport() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchReports = useCallback(async () => {
+  const fetchReports = useCallback(async (status?: 'pending' | 'reviewed' | 'resolved') => {
     setIsLoading(true);
+    setError(null);
 
-    // simulate network latency
-    await new Promise((res) => setTimeout(res, 700));
-
-    // In a real app you'd fetch from your API here
-    setReports(initialMock);
-    setIsLoading(false);
+    try {
+      const data = await AdminService.getReports(status);
+      setReports(data);
+    } catch (err) {
+      console.error('Error fetching reports:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch reports');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
 
+  const submitReport = async (data: {
+    reportedEntityId: string;
+    reportedEntityType: 'job' | 'company';
+    reason: string;
+    details?: string;
+  }) => {
+    try {
+      await AdminService.submitReport(data);
+      await fetchReports(); // Refresh list
+      return true;
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      throw err;
+    }
+  };
+
+  const updateReportStatus = async (
+    reportId: string,
+    status: 'reviewed' | 'resolved',
+    notes?: string
+  ) => {
+    try {
+      await AdminService.updateReportStatus(reportId, status, notes);
+      await fetchReports(); // Refresh list
+      return true;
+    } catch (err) {
+      console.error('Error updating report:', err);
+      throw err;
+    }
+  };
+
   return {
     reports,
     isLoading,
+    error,
     refetch: fetchReports,
+    submitReport,
+    updateReportStatus,
   } as const;
 }
 

@@ -1,56 +1,23 @@
 import { useState } from 'react';
+import { ApplicationService } from '@/lib/services';
 import type { ApplicationFormData } from '@/types/application';
 
 interface UseApplicationSubmitReturn {
   isSubmitting: boolean;
   submitError: string | null;
-  submitApplication: (data: ApplicationFormData) => Promise<boolean>;
+  submitApplication: (jobId: string, data: ApplicationFormData) => Promise<boolean>;
 }
 
 export function useApplicationSubmit(): UseApplicationSubmitReturn {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const submitApplication = async (data: ApplicationFormData): Promise<boolean> => {
+  const submitApplication = async (jobId: string, data: ApplicationFormData): Promise<boolean> => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      
-      formData.append('name', data.name);
-      formData.append('surname', data.surname);
-      formData.append('email', data.email);
-      formData.append('phone', data.phone);
-      formData.append('major', data.major);
-      formData.append('educationLevel', data.educationLevel);
-      
-      if (data.resume) {
-        formData.append('resume', data.resume);
-      }
-
-      if (data.soft_skill && data.soft_skill.length > 0) {
-        data.soft_skill.forEach((skill) => {
-          formData.append('softSkills', skill);
-        });
-      }
-      
-      if (data.questions && data.questions.length > 0) {
-        formData.append('questions', JSON.stringify(data.questions));
-      }
-
-      // Replace with actual API endpoint when backend is ready
-      const response = await fetch('/api/applications/submit', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit application');
-      }
-
+      await ApplicationService.submitApplication(jobId, data);
       return true;
     } catch (err) {
       console.error('Error submitting application:', err);

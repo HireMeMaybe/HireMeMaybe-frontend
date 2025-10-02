@@ -60,12 +60,8 @@ export function useSoftSkills<
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       addSkill();
-    } else if (e.key === 'Backspace' && skillInput === '' && skills.length) {
-      // remove last and place it into input for quick edit
-      const last = skills[skills.length - 1];
-      setSkills((s) => s.slice(0, -1));
-      setSkillInput(last);
     }
+    // Removed Backspace handler to prevent accidental deletion of skills
   };
 
   return {
