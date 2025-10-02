@@ -3,32 +3,41 @@
 import React, { useState } from 'react';
 import { useJobPosts } from '@/features/admin';
 import type { JobPostItem } from '@/types/admin';
+import DeleteModal from '@/components/modals/DeleteModal';
 
 export function ManageJobPostsPage() {
   const { jobPosts, isLoading, refetch } = useJobPosts();
   const [selectedPost, setSelectedPost] = useState<JobPostItem | null>(null);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const handleView = (post: JobPostItem) => {
     console.log('View post:', post);
     window.open(`/jobs/${post.id}`, '_blank');
   };
 
-  const handleDelete = async (post: JobPostItem) => {
-    if (!confirm(`Are you sure you want to delete "${post.title}"?`)) {
-      return;
-    }
-    
+  const handleDelete = (post: JobPostItem) => {
+    setSelectedPost(post);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedPost) return;
+
     try {
-      console.log('Delete post:', post);
+      console.log('Delete post:', selectedPost);
+      // Add your delete logic here (e.g., API call)
       refetch();
     } catch (error) {
       console.error('Failed to delete job post:', error);
+    } finally {
+      setDeleteModalOpen(false);
+      setSelectedPost(null);
     }
   };
 
   const getReportColor = (count: number) => {
     if (count === 0) return 'text-primary-green';
-    if (count === 1) return 'text-yellow-warning';
+    if (count >= 1 && count < 4) return 'text-yellow-warning';
     return 'text-red-reject';
   };
 
@@ -55,20 +64,26 @@ export function ManageJobPostsPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
-                      Loading job posts...
-                    </td>
-                  </tr>
-                ) : jobPosts.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
-                      No job posts found
-                    </td>
-                  </tr>
-                ) : (
-                  jobPosts.map((post) => (
+                {(() => {
+                  if (isLoading) {
+                    return (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                          Loading job posts...
+                        </td>
+                      </tr>
+                    );
+                  }
+                  if (jobPosts.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                          No job posts found
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return jobPosts.map((post) => (
                     <tr key={post.id} className="border-b border-zinc-800 hover:bg-zinc-800">
                       <td className="px-6 py-4 align-top">
                         <div className="font-medium text-white">{post.title}</div>
@@ -98,13 +113,21 @@ export function ManageJobPostsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
         </section>
       </div>
+
+      {/* Delete Modal */}
+      <DeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title={`Delete Job Post?`}
+      />
     </div>
   );
 }
