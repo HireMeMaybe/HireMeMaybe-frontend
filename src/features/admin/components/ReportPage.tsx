@@ -3,6 +3,7 @@
 import React from 'react';
 import { useReport, type Report } from '@/features/admin/hooks/useReport';
 import ReviewReportModal from '@/components/modals/ReviewReportModal';
+import DeleteModal from '@/components/modals/DeleteModal';
 import { useState } from 'react';
 
 export function ReportPage() {
@@ -13,6 +14,13 @@ export function ReportPage() {
   const openModal = (r: Report) => {
     setSelected(r);
     setIsModalOpen(true);
+  };
+
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const openDeleteModal = (r: Report) => {
+    setSelected(r);
+    setIsDeleteOpen(true);
   };
 
   const closeModal = () => {
@@ -30,6 +38,13 @@ export function ReportPage() {
   const handleReject = (r: Report) => {
     console.log('Rejected', r);
     refetch();
+  };
+
+  const handleConfirmReject = () => {
+    if (!selected) return;
+    handleReject(selected);
+    setIsDeleteOpen(false);
+    setSelected(null);
   };
 
   return (
@@ -77,7 +92,10 @@ export function ReportPage() {
                           >
                             Review
                           </button>
-                          <button className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-gray-200 hover:bg-red-700">
+                          <button
+                            onClick={() => openDeleteModal(r)}
+                            className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-gray-200 hover:bg-red-700"
+                          >
                             Reject
                           </button>
                         </div>
@@ -95,6 +113,14 @@ export function ReportPage() {
           report={selected}
           onReview={handleReview}
           onReject={handleReject}
+        />
+        <DeleteModal
+          isOpen={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          title="Reject Report?"
+          message="Are you sure you want to reject this report?"
+          description="Rejecting a report will delete this report."
+          onConfirm={handleConfirmReject}
         />
       </div>
     </div>
