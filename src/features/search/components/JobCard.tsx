@@ -94,7 +94,6 @@ export function JobDetails({ job }: { readonly job: JobWithQuestions }) {
               job.tags?.[0] === tag ? 'bg-primary-green text-white' : 'bg-gray-700 text-gray-300'
             }`}
           >
-            <Calendar className="h-3 w-3" />
             {tag}
           </span>
         ))}
