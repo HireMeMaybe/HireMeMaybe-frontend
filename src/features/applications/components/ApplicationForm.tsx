@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
-import { ExternalLink, Eye } from 'lucide-react';
+import { ExternalLink, Eye, AlertTriangle } from 'lucide-react';
 import {
   Input,
   Label,
@@ -212,6 +212,11 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
   const [resumePreviewLoading, setResumePreviewLoading] = useState(false);
   const [resumePreviewError, setResumePreviewError] = useState<string | null>(null);
+  // ADD: validation modal state
+  const [isValidationOpen, setIsValidationOpen] = useState(false);
+  const [validationMessage, setValidationMessage] = useState('');
+  // ADD: track missing required question texts
+  const [missingRequiredQuestions, setMissingRequiredQuestions] = useState<string[]>([]);
 
   useEffect(() => {
     return () => {
@@ -224,31 +229,30 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitted(true);
 
-    // Validate required questions
     if (job?.includeDefaultQuestions) {
       const unansweredRequired = data.questions.filter(
         (q) => q.required && (!q.answer || q.answer.trim() === '')
       );
-
       if (unansweredRequired.length > 0) {
-        alert('Please answer all required questions');
+        setMissingRequiredQuestions(unansweredRequired.map((q) => q.question));
+        setValidationMessage('Please answer all required questions.');
+        setIsValidationOpen(true);
         return;
       }
     }
 
-    // Submit the application
     const success = await submitApplication(data);
 
     if (success) {
+      setMissingRequiredQuestions([]);
       setIsSuccessOpen(true);
-
-      // Redirect after success
       setTimeout(() => {
         router.push('/search');
       }, 2000);
     } else {
-      // Handle submission error
-      alert(submitError || 'Failed to submit application. Please try again.');
+      setMissingRequiredQuestions([]);
+      setValidationMessage(submitError || 'Failed to submit application. Please try again.');
+      setIsValidationOpen(true);
     }
   };
 
@@ -369,11 +373,11 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 <RadioGroup value={field.value} onValueChange={field.onChange}>
                   <div className="flex items-center gap-8">
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem id="major-cpe" value="CPE" className='cursor-pointer'/>
+                      <RadioGroupItem id="major-cpe" value="CPE" className="cursor-pointer" />
                       <Label htmlFor="major-cpe">CPE</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem id="major-ske" value="SKE" className='cursor-pointer'/>
+                      <RadioGroupItem id="major-ske" value="SKE" className="cursor-pointer" />
                       <Label htmlFor="major-ske">SKE</Label>
                     </div>
                   </div>
@@ -400,7 +404,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                         <RadioGroupItem
                           id={`education-${level.replace(/\s+/g, '-').toLowerCase()}`}
                           value={level}
-                          className='cursor-pointer'
+                          className="cursor-pointer"
                         />
                         <Label htmlFor={`education-${level.replace(/\s+/g, '-').toLowerCase()}`}>
                           {level}
@@ -444,7 +448,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                       type="button"
                       onClick={openResumePreview}
                       disabled={resumePreviewLoading}
-                      className="flex items-center gap-2 bg-primary-green/70 px-3 py-2 text-sm text-white hover:bg-primary-green/60 cursor-pointer"
+                      className="bg-primary-green/70 hover:bg-primary-green/60 flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-white"
                     >
                       <Eye className="h-4 w-4" />
                       {resumePreviewLoading ? 'Loading...' : 'Preview'}
@@ -509,7 +513,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                     <button
                       type="button"
                       onClick={() => removeSkill(s)}
-                      className="text-gray-text ml-1 rounded-full hover:text-gray-500 cursor-pointer"
+                      className="text-gray-text ml-1 cursor-pointer rounded-full hover:text-gray-500"
                       aria-label={`Remove ${s}`}
                     >
                       ×
@@ -542,7 +546,11 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                   (!question.answer || question.answer.trim() === '');
 
                 return (
-                  <div key={question.id} className="space-y-3">
+                  <div
+                    key={question.id}
+                    // Removed red highlight classes
+                    className="space-y-3"
+                  >
                     <Label className="text-sm">
                       {question.question}
                       {question.required && <span className="text-red-reject ml-1">*</span>}
@@ -627,7 +635,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                 <Button
                   type="button"
                   onClick={() => window.open(job.customQuestionsLink, '_blank')}
-                  className="inline-flex cursor-pointer items-center gap-2 bg-primary-green/70 text-white hover:bg-primary-green/60"
+                  className="bg-primary-green/70 hover:bg-primary-green/60 inline-flex cursor-pointer items-center gap-2 text-white"
                 >
                   Complete Custom Questions
                   <ExternalLink className="h-4 w-4" />
@@ -685,7 +693,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                   setResumePreviewUrl(null);
                   setIsResumePreviewOpen(false);
                 }}
-                className="rounded p-1 text-gray-400 hover:bg-gray-700 hover:text-white cursor-pointer"
+                className="cursor-pointer rounded p-1 text-gray-400 hover:bg-gray-700 hover:text-white"
                 aria-label="Close preview"
               >
                 ✕
@@ -725,9 +733,57 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                   setResumePreviewUrl(null);
                   setIsResumePreviewOpen(false);
                 }}
-                className="bg-gray-600 hover:bg-gray-700 cursor-pointer text-white"
+                className="cursor-pointer bg-gray-600 text-white hover:bg-gray-700"
               >
                 Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Validation / Error Modal */}
+      {isValidationOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md overflow-hidden rounded-xl border border-gray-700 bg-background shadow-2xl">
+            <div className="flex items-center gap-3 border-b border-gray-700 bg-background px-5 py-4">
+              <div className="rounded-md bg-red-600/15 p-2 text-red-400">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Submission Needs Attention</h2>
+            </div>
+            <div className="px-5 py-5">
+              <p className="text-sm text-gray-300">{validationMessage}</p>
+              {missingRequiredQuestions.length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-medium tracking-wide text-gray-400 uppercase">
+                    Unanswered Required Questions
+                  </p>
+                  <ul className="list-disc space-y-1 pl-5 text-xs text-gray-300">
+                    {missingRequiredQuestions.map((q) => (
+                      <li key={q}>{q}</li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-[11px] text-gray-400">
+                    Please scroll back and fill them in before submitting again.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 border-t border-gray-700 bg-background px-5 py-3">
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsValidationOpen(false);
+                  setMissingRequiredQuestions([]);
+                }}
+                className="cursor-pointer bg-gray-600 text-white hover:bg-gray-500"
+              >
+                OK
               </Button>
             </div>
           </div>
