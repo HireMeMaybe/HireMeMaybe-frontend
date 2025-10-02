@@ -32,6 +32,12 @@ const menuItems = [
     isActive: false,
   },
   {
+    icon: Building2,
+    label: 'Manage Company',
+    href: '/admin/manage-company',
+    isActive: false,
+  },
+  {
     icon: Users,
     label: 'Manage CPSK',
     href: '/admin/manage-cpsk',
