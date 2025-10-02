@@ -186,7 +186,7 @@ export class CpskService {
    * Extract error message from failed response
    */
   private static async extractErrorMessage(response: Response): Promise<string> {
-    let errorMessage = `HTTP ${response.status}`;
+    const errorMessage = `HTTP ${response.status}`;
 
     try {
       const errorData = await response.json();
