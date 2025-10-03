@@ -176,7 +176,7 @@ function ProfileView({
                 variant="outline"
                 size="sm"
                 disabled={isDownloading}
-                className="flex items-center border-[var(--color-primary-green)] bg-[var(--color-primary-green)] text-white hover:bg-[var(--color-darker-green)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex cursor-pointer items-center border-[var(--color-primary-green)] bg-[var(--color-primary-green)] text-white hover:bg-[var(--color-darker-green)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Eye className="mr-1 h-4 w-4" />
                 {isDownloading ? 'Loading...' : 'Preview'}
