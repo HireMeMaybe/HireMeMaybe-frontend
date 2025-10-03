@@ -1,5 +1,6 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { CpskService } from '@/lib/services';
 import type { Session } from 'next-auth';
 
 interface UseFormSubmissionProps {
@@ -38,7 +39,7 @@ export function useFormSubmission({ session }: UseFormSubmissionProps): UseFormS
           return;
         }
 
-        // Step 1: Submit profile data (PUT /api/cpsk/profile)
+        // Prepare profile data
         const profileData = {
           first_name: data.first_name,
           last_name: data.last_name,
@@ -54,32 +55,15 @@ export function useFormSubmission({ session }: UseFormSubmissionProps): UseFormS
           year: data.year,
         };
 
-        const profileRes = await fetch('/api/cpsk/profile', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(profileData),
-        });
+        // Update profile using service
+        await CpskService.updateProfile(profileData);
 
-        if (!profileRes.ok) {
-          const profileJson = await profileRes.json();
-          throw new Error(profileJson.error || `Profile submission failed (${profileRes.status})`);
-        }
-
-        // Step 2: Upload resume if provided (POST /api/cpsk/profile/resume)
+        // Upload resume if provided
         if (data.resume) {
-          const resumeFormData = new FormData();
-          resumeFormData.append('resume', data.resume);
-
-          const resumeRes = await fetch('/api/cpsk/profile/resume', {
-            method: 'POST',
-            body: resumeFormData,
-          });
-
-          if (!resumeRes.ok) {
-            const resumeJson = await resumeRes.json();
-            console.warn('Resume upload failed:', resumeJson.error);
+          try {
+            await CpskService.uploadResume(data.resume);
+          } catch (error) {
+            console.warn('Resume upload failed:', error);
             setStatus({
               ok: true,
               message:

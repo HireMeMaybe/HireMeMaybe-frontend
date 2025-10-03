@@ -188,6 +188,39 @@ export function useJobHistory(): UseJobHistoryReturn {
   // Transform and filter applications - using mock data directly
   const [transformedHistory, setTransformedHistory] = useState<JobApplicationHistory[]>([]);
 
+  // Helper function to normalize values for comparison
+  const normalizeValue = (value: unknown, sortBy: string): unknown => {
+    if (typeof value !== 'string') return value;
+
+    const isDateField = sortBy === 'appliedDate' || sortBy === 'lastUpdated';
+    return isDateField ? new Date(value).getTime() : value.toLowerCase();
+  };
+
+  // Helper function to compare two values of the same type
+  const compareValues = (x: unknown, y: unknown): number => {
+    if (x === y) return 0;
+
+    if (typeof x === 'number' && typeof y === 'number') {
+      return x > y ? 1 : -1;
+    }
+
+    if (typeof x === 'string' && typeof y === 'string') {
+      return x > y ? 1 : -1;
+    }
+
+    if (x instanceof Date && y instanceof Date) {
+      return x.getTime() > y.getTime() ? 1 : -1;
+    }
+
+    return 0;
+  };
+
+  // Helper function to apply sort order
+  const applySortOrder = (comparison: number, order: 'asc' | 'desc'): number => {
+    if (comparison === 0) return 0;
+    return order === 'desc' ? -comparison : comparison;
+  };
+
   const filteredAndSortedHistory = transformedHistory
     .filter((item) => {
       if (filters.status && filters.status.length > 0) {
@@ -199,39 +232,11 @@ export function useJobHistory(): UseJobHistoryReturn {
       const sortBy = filters.sortBy || 'appliedDate';
       const sortOrder = filters.sortOrder || 'desc';
 
-      let aValue: unknown = a[sortBy as keyof JobApplicationHistory];
-      let bValue: unknown = b[sortBy as keyof JobApplicationHistory];
+      const aValue = normalizeValue(a[sortBy as keyof JobApplicationHistory], sortBy);
+      const bValue = normalizeValue(b[sortBy as keyof JobApplicationHistory], sortBy);
 
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        if (sortBy === 'appliedDate' || sortBy === 'lastUpdated') {
-          aValue = new Date(aValue).getTime();
-          bValue = new Date(bValue).getTime();
-        } else {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
-      }
-
-      const compareValues = (x: unknown, y: unknown) => {
-        // numbers
-        if (typeof x === 'number' && typeof y === 'number') {
-          return x === y ? 0 : x > y ? 1 : -1;
-        }
-        // strings
-        if (typeof x === 'string' && typeof y === 'string') {
-          return x === y ? 0 : x > y ? 1 : -1;
-        }
-        // dates (numbers already handled above after conversion)
-        if (x instanceof Date && y instanceof Date) {
-          return x.getTime() === y.getTime() ? 0 : x.getTime() > y.getTime() ? 1 : -1;
-        }
-        // fallback: treat as equal
-        return 0;
-      };
-
-      const cmp = compareValues(aValue, bValue);
-      if (sortOrder === 'desc') return cmp === 0 ? 0 : cmp > 0 ? -1 : 1;
-      return cmp === 0 ? 0 : cmp < 0 ? -1 : 1;
+      const comparison = compareValues(aValue, bValue);
+      return applySortOrder(comparison, sortOrder);
     });
 
   return {

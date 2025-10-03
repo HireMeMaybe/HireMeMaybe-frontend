@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MayBeIcon } from '@/components/icons';
@@ -29,6 +28,12 @@ const menuItems = [
     icon: Briefcase,
     label: 'Manage Job Posts',
     href: '/admin/manage-job-posts',
+    isActive: false,
+  },
+  {
+    icon: Building2,
+    label: 'Manage Company',
+    href: '/admin/manage-company',
     isActive: false,
   },
   {

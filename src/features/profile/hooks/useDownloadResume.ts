@@ -1,54 +1,45 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { CpskService } from '@/lib/services/cpsk.service';
 
-interface UseDownloadResumeReturn {
-  downloadResume: (resumeId: number) => Promise<void>;
-  loading: boolean;
-  error: string | null;
+interface UsePreviewResumeReturn {
+  previewResume: () => Promise<void>;
+  isDownloading: boolean;
+  downloadError: string | null;
 }
 
-export function useDownloadResume(): UseDownloadResumeReturn {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function useDownloadResume(): UsePreviewResumeReturn {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
-  const downloadResume = async (resumeId: number) => {
-    setLoading(true);
-    setError(null);
+  const previewResume = useCallback(async () => {
+    setIsDownloading(true);
+    setDownloadError(null);
 
     try {
-      const response = await fetch(`/api/file/resume/${resumeId}`, {
-        method: 'GET',
-      });
+      // Preview uses previewResume which will try to fetch the resume file id from profile if needed
+      const blob = await CpskService.previewResume();
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Resume file not found.');
-        } else {
-          throw new Error('Failed to download resume. Please try again.');
-        }
-      }
+      // Force PDF MIME type so browsers render inline instead of forcing download
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `resume_${resumeId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Open preview in new tab using object URL
+      const url = window.URL.createObjectURL(pdfBlob);
+      window.open(url, '_blank');
+      // Do not revoke immediately - let browser load it. Revoke after a short timeout.
+      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'An error occurred while downloading the resume.';
-      setError(errorMessage);
+        err instanceof Error ? err.message : 'An error occurred while previewing the resume.';
+      setDownloadError(errorMessage);
       alert(errorMessage);
     } finally {
-      setLoading(false);
+      setIsDownloading(false);
     }
-  };
+  }, []);
 
   return {
-    downloadResume,
-    loading,
-    error,
+    previewResume,
+    isDownloading,
+    downloadError,
   };
 }
