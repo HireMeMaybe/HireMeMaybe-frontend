@@ -12,10 +12,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const backendUrl = process.env.BACKEND_URL;
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     if (!backendUrl) {
       return NextResponse.json(
-        { success: false, message: 'server misconfiguration: BACKEND_URL not set' },
+        { success: false, message: 'server misconfiguration: NEXT_PUBLIC_BACKEND_URL not set' },
         { status: 500 }
       );
     }
