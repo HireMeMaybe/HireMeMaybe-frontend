@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCompanyVerification } from '@/features/admin/hooks/useCompanyVerification';
-import type { CompanyVerification } from '@/features/admin/hooks/useCompanyVerification';
+import type { CompanyVerification } from '@/lib/services';
 import ReconsiderModal from '@/components/modals/ReconsiderModal';
 
 export function CompanyVerificationPage() {
@@ -31,7 +31,7 @@ export function CompanyVerificationPage() {
 
     try {
       await reconsiderCompany(selected.id);
-      refetch('rejected');
+      refetch();
     } catch (error) {
       console.error('Failed to reconsider company:', error);
     } finally {
