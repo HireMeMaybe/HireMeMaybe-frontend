@@ -4,11 +4,13 @@ import React, { useState } from 'react';
 import { useCompanyVerification } from '@/features/admin/hooks/useCompanyVerification';
 import type { CompanyVerification } from '@/lib/services';
 import ReconsiderModal from '@/components/modals/ReconsiderModal';
+import SuccessModal from '@/components/modals/SuccessModal'; // Import the success modal component
 
 export function CompanyVerificationPage() {
   const { companies, isLoading, refetch, reconsiderCompany } = useCompanyVerification();
   const [selected, setSelected] = useState<CompanyVerification | null>(null);
   const [isReconsiderOpen, setIsReconsiderOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false); // State for success modal
 
   const openReconsiderModal = (company: CompanyVerification) => {
     setSelected(company);
@@ -32,6 +34,7 @@ export function CompanyVerificationPage() {
     try {
       await reconsiderCompany(selected.id);
       refetch();
+      setIsSuccessOpen(true); // Open success modal on success
     } catch (error) {
       console.error('Failed to reconsider company:', error);
     } finally {
@@ -39,12 +42,16 @@ export function CompanyVerificationPage() {
     }
   };
 
+  const closeSuccessModal = () => {
+    setIsSuccessOpen(false);
+  };
+
   return (
     <div className="ml-64 flex-1">
       <div className="p-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-white">Company Verification</h1>
-          <p className="text-gray-400">Review and verify company registrations</p>
+          <p className="text-gray-400">Review and reconsider company registrations</p>
         </div>
 
         <section className="rounded-lg bg-zinc-900/40 p-4">
@@ -120,6 +127,13 @@ export function CompanyVerificationPage() {
           onClose={closeModal}
           onConfirm={handleReconsider}
           companyName={selected?.name}
+        />
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={isSuccessOpen}
+          onClose={closeSuccessModal}
+          message="Company approved successfully"
         />
       </div>
     </div>

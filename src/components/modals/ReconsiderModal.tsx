@@ -18,8 +18,8 @@ export default function ReconsiderModal({
   isOpen,
   onClose,
   title = 'Reconsider Company?',
-  message = 'Company will be reconsidered',
-  description = 'This will move the company back to pending verification status for review. The company will be notified of this change.',
+  message = 'Company will be approved for verification',
+  description = 'This will change the company status from rejected to approved. The company will be notified of this change.',
   companyName = '',
   onConfirm,
 }: ReconsiderModalProps) {
@@ -83,7 +83,7 @@ export default function ReconsiderModal({
               onClick={handleConfirm}
               className="bg-primary-green cursor-pointer rounded-md px-6 py-2 text-white hover:bg-green-700"
             >
-              Reconsider
+              Approve
             </Button>
           </div>
         </div>
