@@ -32,7 +32,9 @@ export function CompanyVerificationPage() {
     if (!selected) return;
 
     try {
-      await reconsiderCompany(selected.id);
+      // implement review logic here (API call etc.)
+      // For now just refetch or log
+      // await reconsiderCompany(selected.id);
       refetch();
       setIsSuccessOpen(true); // Open success modal on success
     } catch (error) {

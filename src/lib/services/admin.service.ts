@@ -221,7 +221,7 @@ export class AdminService {
       throw new Error(`Failed to ${action} job post`);
     }
   }
-  /**
+    /**
    * Get rejected companies for verification
    */
   static async getRejectedCompanies(): Promise<CompanyVerification[]> {
@@ -301,9 +301,7 @@ export class AdminService {
    */
   static async reconsiderCompany(companyId: number): Promise<{ message: string }> {
     try {
-      // Replace with actual API call when backend is ready
-      // await apiClient.post(`/admin/companies/${companyId}/reconsider`);
-      return { message: 'Company reconsidered successfully' };
+      return await apiClient.post(`/admin/companies/${companyId}/reconsider`);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to reconsider company: ${error.message}`);
