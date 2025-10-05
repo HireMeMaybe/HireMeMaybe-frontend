@@ -3,8 +3,6 @@
  * Handles admin login and session management
  */
 
-import { apiClient, ApiError } from './api-client';
-
 interface AdminUser {
   ID: number;
   CreatedAt: string;
@@ -33,25 +31,47 @@ export class AdminAuthService {
 
   /**
    * Login admin user
+   * Uses native fetch to avoid API client's automatic redirect on 401
    */
   static async login(credentials: AdminLoginCredentials): Promise<AdminLoginResponse> {
     try {
-      const response = await apiClient.post<AdminLoginResponse>(
-        '/auth/login',
-        credentials,
-        { requireAuth: false }
-      );
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+      
+      const response = await fetch(`${backendUrl}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Login failed';
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+
+        // Don't trigger automatic logout/redirect for admin login failures
+        throw new Error(errorMessage);
+      }
+
+      const data: AdminLoginResponse = await response.json();
 
       // Store token and user data
       if (typeof window !== 'undefined') {
-        localStorage.setItem(this.ADMIN_TOKEN_KEY, response.access_token);
-        localStorage.setItem(this.ADMIN_USER_KEY, JSON.stringify(response.user));
+        localStorage.setItem(this.ADMIN_TOKEN_KEY, data.access_token);
+        localStorage.setItem(this.ADMIN_USER_KEY, JSON.stringify(data.user));
       }
 
-      return response;
+      return data;
     } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error(`Login failed: ${error.message}`);
+      if (error instanceof Error) {
+        throw error;
       }
       throw new Error('Login failed');
     }
