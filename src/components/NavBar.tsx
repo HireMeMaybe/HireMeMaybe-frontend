@@ -1,13 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { Search, User } from 'lucide-react';
+import { Search, User, UserPen, History, LogOut, Shield } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { UserPen, History, LogOut } from 'lucide-react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function Navbar() {
   const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ?? '/';
@@ -16,12 +16,16 @@ export default function Navbar() {
   const pathname = usePathname();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
-  // Type guard for app-extended session property
+  
+  const isAdminRoute = pathname?.startsWith('/admin');
+  const { user: adminUser, isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
+
   function hasIsRegistered(obj: unknown): obj is { isRegistered?: boolean } {
     return typeof obj === 'object' && obj !== null && 'isRegistered' in obj;
   }
 
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
+  
   const scrollToLoginSection = () => {
     setOpen(false);
     const el = typeof document !== 'undefined' ? document.getElementById('login-section') : null;
@@ -36,8 +40,11 @@ export default function Navbar() {
   const handleUserClick = () => {
     if (isLoading) return;
 
-    // If user is unauthenticated or authenticated-but-not-registered, send them to login section
-    if (!isAuthenticated || (isAuthenticated && !isRegistered)) {
+    if (isAdminRoute && !isAdminAuthenticated) {
+      return;
+    }
+
+    if (!isAdminRoute && (!isAuthenticated || (isAuthenticated && !isRegistered))) {
       scrollToLoginSection();
       return;
     }
@@ -45,9 +52,31 @@ export default function Navbar() {
     setOpen((o) => !o);
   };
 
+  const handleLogout = () => {
+    if (isAdminRoute && isAdminAuthenticated) {
+      adminLogout();
+      window.location.href = '/admin/login';
+    } else {
+      signOut();
+    }
+    setOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (open && !target.closest('.user-dropdown-container')) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
   return (
     <nav className="border-border sticky top-0 z-50 flex w-full items-center justify-between border-b bg-[var(--background)] px-15 py-3 text-white shadow-[0px_1px_10px_rgba(2,188,119,255)]">
-      {/* Left side - Brand with green indicator */}
+      {/* Left side - Brand */}
       <a href={frontendUrl} className="flex items-center gap-3" aria-label="Go to frontend home">
         <PrimaryIcon width={12} height={12} />
         <div className="h-6 w-32 justify-start text-lg leading-snug font-bold text-white">
@@ -55,8 +84,8 @@ export default function Navbar() {
         </div>
       </a>
 
-      {/* Center - Search bar (hidden on the dedicated search page) */}
-      {!(pathname && pathname.startsWith('/search')) && (
+      {/* Center - Search bar */}
+      {!(pathname && (pathname.startsWith('/search') || pathname.startsWith('/admin'))) && (
         <div className="mx-8 max-w-md flex-1">
           <div className="relative">
             <Input
@@ -72,7 +101,7 @@ export default function Navbar() {
       )}
 
       {/* Right side - User icon and dropdown */}
-      <div className="relative ml-auto">
+      <div className="relative ml-auto user-dropdown-container">
         <button
           onClick={handleUserClick}
           aria-label="User menu"
@@ -85,17 +114,41 @@ export default function Navbar() {
           <div className="absolute right-0 mt-2 min-w-56 rounded-lg bg-[rgb(33,33,33)] p-4 text-white shadow-lg">
             {isLoading ? (
               <div className="py-4">Loading...</div>
+            ) : isAdminRoute && isAdminAuthenticated ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 border-b pb-3">
+                  <div className="h-10 w-10 rounded-full bg-primary-green flex items-center justify-center">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-bold">{adminUser?.username || 'Admin'}</div>
+                    <div className="text-sm text-zinc-400">Administrator</div>
+                  </div>
+                </div>
+
+                <a
+                  href="/admin/dashboard"
+                  className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin Dashboard
+                </a>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/5"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
+              </div>
             ) : !isRegistered ? (
-              // If user is authenticated but not registered, we do not show the usual
-              // dropdown actions. Clicking the user icon will already scroll the
-              // page to the login/registration section. Show a subtle message here.
               <div className="py-3 text-sm text-gray-400">
                 Complete your registration to see account actions.
               </div>
             ) : (
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3 border-b pb-3">
-                  {/* User avatar: prefer backendUser.User.profile_picture, fall back to a colored circle */}
                   {session?.backendUser?.User?.profile_picture ? (
                     <Image
                       src={session.backendUser.User.profile_picture as string}
@@ -118,6 +171,7 @@ export default function Navbar() {
                     </div>
                   </div>
                 </div>
+
                 <a
                   href="/profile"
                   className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
@@ -125,6 +179,7 @@ export default function Navbar() {
                   <UserPen className="h-4 w-4" />
                   View profile
                 </a>
+
                 <a
                   href="/history"
                   className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
@@ -132,11 +187,9 @@ export default function Navbar() {
                   <History className="h-4 w-4" />
                   History
                 </a>
+
                 <button
-                  onClick={() => {
-                    signOut();
-                    setOpen(false);
-                  }}
+                  onClick={handleLogout}
                   className="flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/5"
                 >
                   <LogOut className="h-4 w-4" />
