@@ -27,6 +27,7 @@ interface AdminAuthProviderProps {
 
 export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
           const storedUser = AdminAuthService.getUser();
           if (storedUser) {
             setUser(storedUser);
+            setIsAuthenticated(true);
           }
         }
       } catch (error) {
@@ -48,12 +50,25 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     };
 
     checkAuth();
+
+    // Listen for authentication state changes
+    const handleAuthChange = (authState: boolean) => {
+      setIsAuthenticated(authState);
+      setUser(authState ? AdminAuthService.getUser() : null);
+    };
+
+    AdminAuthService.onAuthChange(handleAuthChange);
+
+    return () => {
+      AdminAuthService.offAuthChange(handleAuthChange);
+    };
   }, []);
 
   const login = async (username: string, password: string) => {
     try {
       const response = await AdminAuthService.login({ username, password });
       setUser(response.user);
+      setIsAuthenticated(true);
     } catch (error) {
       throw error;
     }
@@ -62,11 +77,12 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
   const logout = () => {
     AdminAuthService.logout();
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   const value: AdminAuthContextType = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated,
     isLoading,
     login,
     logout,

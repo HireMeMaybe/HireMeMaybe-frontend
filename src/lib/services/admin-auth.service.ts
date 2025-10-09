@@ -1,3 +1,5 @@
+import { EventEmitter } from 'events';
+
 /**
  * Admin Authentication Service
  * Handles admin login and session management
@@ -28,6 +30,7 @@ interface AdminLoginCredentials {
 export class AdminAuthService {
   private static readonly ADMIN_TOKEN_KEY = 'admin_access_token';
   private static readonly ADMIN_USER_KEY = 'admin_user';
+  private static authEventEmitter = new EventEmitter();
 
   /**
    * Login admin user
@@ -36,7 +39,7 @@ export class AdminAuthService {
   static async login(credentials: AdminLoginCredentials): Promise<AdminLoginResponse> {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
-      
+
       const response = await fetch(`${backendUrl}/auth/login`, {
         method: 'POST',
         headers: {
@@ -47,7 +50,7 @@ export class AdminAuthService {
 
       if (!response.ok) {
         let errorMessage = 'Login failed';
-        
+
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
@@ -68,6 +71,9 @@ export class AdminAuthService {
         localStorage.setItem(this.ADMIN_USER_KEY, JSON.stringify(data.user));
       }
 
+      // Notify listeners about authentication state change
+      this.authEventEmitter.emit('authChange', true);
+
       return data;
     } catch (error) {
       if (error instanceof Error) {
@@ -85,6 +91,23 @@ export class AdminAuthService {
       localStorage.removeItem(this.ADMIN_TOKEN_KEY);
       localStorage.removeItem(this.ADMIN_USER_KEY);
     }
+
+    // Notify listeners about authentication state change
+    this.authEventEmitter.emit('authChange', false);
+  }
+
+  /**
+   * Subscribe to authentication state changes
+   */
+  static onAuthChange(listener: (isAuthenticated: boolean) => void): void {
+    this.authEventEmitter.on('authChange', listener);
+  }
+
+  /**
+   * Unsubscribe from authentication state changes
+   */
+  static offAuthChange(listener: (isAuthenticated: boolean) => void): void {
+    this.authEventEmitter.off('authChange', listener);
   }
 
   /**
@@ -100,7 +123,7 @@ export class AdminAuthService {
    */
   static getUser(): AdminUser | null {
     if (typeof window === 'undefined') return null;
-    
+
     const userStr = localStorage.getItem(this.ADMIN_USER_KEY);
     if (!userStr) return null;
 
