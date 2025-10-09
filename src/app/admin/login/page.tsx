@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
           {/* Error Message */}
           {error && (
             <div className="mb-6 rounded-md bg-red-500/10 border border-red-500/50 p-3">
-              <p className="text-sm text-red-500">{error}</p>
+              <p className="text-sm text-red-reject">{error}</p>
             </div>
           )}
 
@@ -101,7 +101,7 @@ export default function AdminLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
                   disabled={isLoading}
                 >
                   {showPassword ? (
@@ -116,7 +116,7 @@ export default function AdminLoginPage() {
             {/* Sign In Button */}
             <Button
               type="submit"
-              className="w-full rounded-md bg-primary-green py-3 text-white font-semibold hover:bg-green-600 focus:ring-2 focus:ring-primary-green focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-md bg-primary-green py-3 text-white font-semibold hover:bg-green-600 focus:ring-2 focus:ring-primary-green focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Sign In"}
