@@ -22,7 +22,7 @@ interface AdminAuthContextType {
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 interface AdminAuthProviderProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
@@ -65,13 +65,9 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
   }, []);
 
   const login = async (username: string, password: string) => {
-    try {
-      const response = await AdminAuthService.login({ username, password });
-      setUser(response.user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      throw error;
-    }
+    const response = await AdminAuthService.login({ username, password });
+    setUser(response.user);
+    setIsAuthenticated(true);
   };
 
   const logout = () => {
@@ -80,13 +76,13 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     setIsAuthenticated(false);
   };
 
-  const value: AdminAuthContextType = {
+  const value: AdminAuthContextType = React.useMemo(() => ({
     user,
     isAuthenticated,
     isLoading,
     login,
     logout,
-  };
+  }), [user, isAuthenticated, isLoading, login, logout]);
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;
 }

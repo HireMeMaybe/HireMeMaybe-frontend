@@ -30,7 +30,7 @@ interface AdminLoginCredentials {
 export class AdminAuthService {
   private static readonly ADMIN_TOKEN_KEY = 'admin_access_token';
   private static readonly ADMIN_USER_KEY = 'admin_user';
-  private static authEventEmitter = new EventEmitter();
+  private static readonly authEventEmitter = new EventEmitter();
 
   /**
    * Login admin user
@@ -148,13 +148,8 @@ export class AdminAuthService {
     const token = this.getToken();
     if (!token) return false;
 
-    try {
-      // You can add an API call here to verify token with backend
-      // For now, we'll just check if token exists
-      return true;
-    } catch {
-      this.logout();
-      return false;
-    }
+    // You can add an API call here to verify token with backend
+    // For now, we'll just check if token exists
+    return true;
   }
 }
