@@ -40,11 +40,14 @@ export default function Navbar() {
   const handleUserClick = () => {
     if (isLoading) return;
 
-    if (isAdminRoute && !isAdminAuthenticated) {
+    // If admin is authenticated (regardless of route), allow dropdown
+    if (isAdminAuthenticated) {
+      setOpen((o) => !o);
       return;
     }
 
-    if (!isAdminRoute && (!isAuthenticated || (isAuthenticated && !isRegistered))) {
+    // For regular users, check authentication and registration
+    if (!isAuthenticated || (isAuthenticated && !isRegistered)) {
       scrollToLoginSection();
       return;
     }
@@ -53,7 +56,7 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    if (isAdminRoute && isAdminAuthenticated) {
+    if (isAdminAuthenticated) {
       adminLogout();
       window.location.href = '/admin/login';
     } else {
@@ -74,11 +77,13 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
-  // Extract dropdown content logic to a variable
+  // Determine what content to show in dropdown
   let dropdownContent: React.ReactNode = null;
+  
   if (isLoading) {
     dropdownContent = <div className="py-4">Loading...</div>;
-  } else if (isAdminRoute && isAdminAuthenticated) {
+  } else if (isAdminAuthenticated) {
+    // Show admin dropdown content (works on any page now)
     dropdownContent = (
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3 border-b pb-3">
@@ -90,6 +95,15 @@ export default function Navbar() {
             <div className="text-sm text-zinc-400">Administrator</div>
           </div>
         </div>
+        {!isAdminRoute && (
+          <a
+            href="/admin/dashboard"
+            className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+          >
+            <Shield className="h-4 w-4" />
+            Admin Dashboard
+          </a>
+        )}
         <button
           onClick={handleLogout}
           className="flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/5"
