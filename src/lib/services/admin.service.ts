@@ -17,6 +17,15 @@ export interface Report {
   link?: string;
 }
 
+export interface CompanyVerification {
+  id: number;
+  name: string;
+  location: string;
+  industry: string;
+  contact: string;
+  submitted: string;
+}
+
 interface DashboardStats {
   totalUsers: number;
   totalCompanies: number;
@@ -210,6 +219,94 @@ export class AdminService {
         throw new Error(`Failed to ${action} job post: ${error.message}`);
       }
       throw new Error(`Failed to ${action} job post`);
+    }
+  }
+    /**
+   * Get rejected companies for verification
+   */
+  static async getRejectedCompanies(): Promise<CompanyVerification[]> {
+    // Mock data for rejected companies
+    const mockRejectedCompanies: CompanyVerification[] = [
+      {
+        id: 1,
+        name: 'Tech Solutions Co.',
+        location: 'Bangkok, Thailand',
+        industry: 'Software Development',
+        contact: 'contact@techsolutions.com',
+        submitted: '2025-09-30',
+      },
+      {
+        id: 2,
+        name: 'Digital Marketing Hub',
+        location: 'Chiang Mai, Thailand',
+        industry: 'Marketing',
+        contact: 'hr@digitalhub.co.th',
+        submitted: '2025-09-30',
+      },
+      {
+        id: 3,
+        name: 'Tech Solutions Co.',
+        location: 'Bangkok, Thailand',
+        industry: 'Software Development',
+        contact: 'contact@techsolutions.com',
+        submitted: '2025-09-30',
+      },
+      {
+        id: 4,
+        name: 'Digital Marketing Hub',
+        location: 'Chiang Mai, Thailand',
+        industry: 'Marketing',
+        contact: 'hr@digitalhub.co.th',
+        submitted: '2025-09-30',
+      },
+      {
+        id: 5,
+        name: 'Tech Solutions Co.',
+        location: 'Bangkok, Thailand',
+        industry: 'Software Development',
+        contact: 'contact@techsolutions.com',
+        submitted: '2025-09-30',
+      },
+      {
+        id: 6,
+        name: 'Digital Marketing Hub',
+        location: 'Chiang Mai, Thailand',
+        industry: 'Marketing',
+        contact: 'hr@digitalhub.co.th',
+        submitted: '2025-09-30',
+      },
+      {
+        id: 7,
+        name: 'Tech Solutions Co.',
+        location: 'Bangkok, Thailand',
+        industry: 'Software Development',
+        contact: 'contact@techsolutions.com',
+        submitted: '2025-09-30',
+      },
+    ];
+
+    try {
+      return await apiClient.get<CompanyVerification[]>('/admin/companies/rejected');
+    } catch (error) {
+      console.warn(
+        'AdminService.getRejectedCompanies: backend unavailable, returning mock data',
+        error
+      );
+      return mockRejectedCompanies;
+    }
+  }
+
+  /**
+   * Reconsider a rejected company
+   */
+  static async reconsiderCompany(companyId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/companies/${companyId}/reconsider`);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to reconsider company: ${error.message}`);
+      }
+      throw new Error('Failed to reconsider company');
     }
   }
 }

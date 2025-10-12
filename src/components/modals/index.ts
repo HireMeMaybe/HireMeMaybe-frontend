@@ -8,3 +8,4 @@ export { default as SuccessModal } from './SuccessModal';
 export { default as UnsuccessModal } from './UnsuccessModal';
 export { default as WarningModal } from './WarningModal';
 export { ResumePreviewModal } from './ResumePreviewModal';
+export { default as ReconsiderModal } from './ReconsiderModal';
