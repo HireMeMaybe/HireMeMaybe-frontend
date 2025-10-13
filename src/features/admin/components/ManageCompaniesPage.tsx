@@ -23,15 +23,10 @@ export function ManageCompaniesPage() {
   const confirmDelete = async () => {
     if (!selectedCompany) return;
 
-    try {
-      await deleteCompany(selectedCompany.id);
-      refetch();
-    } catch (error) {
-      console.error('Failed to delete company:', error);
-    } finally {
-      setDeleteModalOpen(false);
-      setSelectedCompany(null);
-    }
+    console.log(`Company to delete: ${selectedCompany.id}`);
+    refetch();
+    setDeleteModalOpen(false);
+    setSelectedCompany(null);
   };
 
   const getReportColor = (count: number) => {
@@ -53,7 +48,7 @@ export function ManageCompaniesPage() {
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-800 text-primary-green">
+              <thead className="text-primary-green bg-zinc-800">
                 <tr>
                   <th className="px-6 py-3">Company</th>
                   <th className="px-6 py-3">Industry</th>
