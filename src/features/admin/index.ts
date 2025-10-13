@@ -4,6 +4,7 @@ export { useAdminData } from "./hooks/useAdminData";
 export type { DashboardStats as DashboardStatsType, AdminNavItem } from "@/types/admin";
 export { ManageJobPostsPage } from "./components/ManageJobPostsPage";
 export { useJobPosts } from "./hooks/useJobPosts";
+export { AdminAuthGuard } from "./components/AdminAuthGuard";
 export { CompanyVerificationPage } from './components/CompanyVerificationPage';
 export { useCompanyVerification } from './hooks/useCompanyVerification';
 export type { CompanyVerification } from './hooks/useCompanyVerification';

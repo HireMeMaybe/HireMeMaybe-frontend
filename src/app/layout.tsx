@@ -4,6 +4,7 @@ import Navbar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import NextAuthProvider from '@/components/NextAuthProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AdminAuthProvider } from '@/contexts/AdminAuthContext';
 import './globals.css';
 
 const inter = Inter({
@@ -31,9 +32,11 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased`}>
         <AuthProvider>
           <NextAuthProvider>
-            <Navbar />
-            {children}
-            <Footer />
+            <AdminAuthProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </AdminAuthProvider>
           </NextAuthProvider>
         </AuthProvider>
       </body>

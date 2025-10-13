@@ -1,18 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const router = useRouter();
+  const { login, isAuthenticated } = useAdminAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/admin/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", { email, password});
+    setError("");
+    setIsLoading(true);
+
+    try {
+      await login(username, password);
+      // Router will handle redirect via useEffect above
+    } catch (err) {
+      // Stay on login page and show error
+      setError(err instanceof Error ? err.message : "Login failed. Please check your credentials.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -28,25 +52,33 @@ export default function AdminLoginPage() {
               <span className="text-primary-green">BE</span>
               <span className="text-white">?</span>
             </h1>
-            <h2 className="text-2xl font-semibold text-white">Welcome Back</h2>
-            <p className="mt-2 text-gray-400">Sign in to your account</p>
+            <h2 className="text-2xl font-semibold text-white">Admin Portal</h2>
+            <p className="mt-2 text-gray-400">Sign in to your admin account</p>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 rounded-md bg-red-500/10 border border-red-500/50 p-3">
+              <p className="text-sm text-red-reject">{error}</p>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
+            {/* Username Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                Email
+              <label htmlFor="username" className="block text-sm font-medium text-gray-300">
+                Username
               </label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full rounded-md border border-gray-600 bg-darker-gray px-4 py-3 text-white placeholder-gray-400 focus:border-primary-green focus:ring-1 focus:ring-primary-green"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -64,11 +96,13 @@ export default function AdminLoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-md border border-gray-600 bg-darker-gray px-4 py-3 pr-12 text-white placeholder-gray-400 focus:border-primary-green focus:ring-1 focus:ring-primary-green"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-300" />
@@ -82,9 +116,10 @@ export default function AdminLoginPage() {
             {/* Sign In Button */}
             <Button
               type="submit"
-              className="w-full rounded-md bg-primary-green py-3 text-white font-semibold hover:bg-green-600 focus:ring-2 focus:ring-primary-green focus:ring-offset-2 focus:ring-offset-gray-900"
+              className="w-full rounded-md bg-primary-green py-3 text-white font-semibold hover:bg-green-600 focus:ring-2 focus:ring-primary-green focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </div>

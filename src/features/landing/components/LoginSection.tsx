@@ -2,14 +2,15 @@
 
 import React, { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Building, GraduationCap, Eye, Check } from 'lucide-react';
+import GoogleLogin from '@/features/landing/components/GoogleLogin';
 
 // Type guard to safely detect custom `isRegistered` property on session
 function hasIsRegistered(obj: unknown): obj is { isRegistered?: boolean } {
   return typeof obj === 'object' && obj !== null && 'isRegistered' in obj;
 }
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Building, GraduationCap, Eye, Check } from 'lucide-react';
-import GoogleLogin from '@/features/landing/components/GoogleLogin';
 
 type RoleCardProps = Readonly<{
   title: string;
@@ -38,11 +39,9 @@ function RoleCard({
     if (title === 'CPSK') {
       try {
         console.log('🔄 Starting Google authentication for CPSK...');
-        // Build Google OAuth2 URL and redirect user to Google
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID_CPSK;
         const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/auth/callback`;
         const state = JSON.stringify({ role: title, random: Math.random().toString(36).slice(2) });
-        // Store state to validate on callback if desired
         sessionStorage.setItem('oauth_state', state);
 
         const params = new URLSearchParams({
@@ -64,11 +63,9 @@ function RoleCard({
     } else if (title === 'Company') {
       try {
         console.log('🔄 Starting Google authentication for Company...');
-        // Build Google OAuth2 URL and redirect user to Google
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID_CPSK;
         const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/auth/callback`;
         const state = JSON.stringify({ role: title, random: Math.random().toString(36).slice(2) });
-        // Store state to validate on callback if desired
         sessionStorage.setItem('oauth_state', state);
 
         const params = new URLSearchParams({
@@ -88,12 +85,9 @@ function RoleCard({
         alert('Error starting Company authentication. Please try again.');
       }
     } else if (title === 'Visitor') {
-      // Visitors don't need authentication, just set role and close modal
       console.log('Setting Visitor role...');
-      // You might want to set a cookie or localStorage to remember visitor role
       localStorage.setItem('visitorRole', 'Visitor');
       onCloseModal?.();
-      // Redirect to a visitor-specific page or just close the modal
       alert('Welcome as a Visitor! You can browse the platform without logging in.');
     } else {
       console.log('Google login for', title, '- not implemented yet');
@@ -102,7 +96,6 @@ function RoleCard({
 
   return (
     <Card
-      // Support pointer (mouse & touch), with a guard to avoid double-invocation
       onPointerUp={(() => {
         const handler: React.PointerEventHandler<HTMLButtonElement | HTMLDivElement> = () => {
           if (isDisabled) return;
@@ -115,7 +108,6 @@ function RoleCard({
       })()}
       onClick={(() => {
         const handler: React.MouseEventHandler<HTMLButtonElement | HTMLDivElement> = () => {
-          // If pointer already handled the activation, swallow the click.
           if (isDisabled) return;
           if (pointerActivated.current) {
             pointerActivated.current = false;
@@ -187,6 +179,8 @@ function RoleCard({
 export default function LoginSection() {
   const [active, setActive] = useState<string | null>(null);
   const { data: session } = useSession();
+  const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
+  
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
 
   React.useEffect(() => {
@@ -197,6 +191,9 @@ export default function LoginSection() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Disable cards if user is registered OR if admin is authenticated
+  const shouldDisableCards = isRegistered || isAdminAuthenticated;
+
   return (
     <section
       id="login-section"
@@ -204,7 +201,13 @@ export default function LoginSection() {
     >
       <div className="container mx-auto text-center">
         <h2 className="text-3xl font-bold md:text-4xl">Ready to join?</h2>
-        <p className="mt-3 text-lg text-white/80">Select your role below</p>
+        <p className="mt-3 text-lg text-white/80">
+          {isAdminAuthenticated 
+            ? "You're logged in as an administrator" 
+            : isRegistered 
+            ? "You're already registered" 
+            : "Select your role below"}
+        </p>
 
         <div className="mt-12 flex flex-col items-stretch justify-center md:flex-row">
           <RoleCard
@@ -215,7 +218,7 @@ export default function LoginSection() {
             onSelect={() => setActive((s) => (s === 'Company' ? null : 'Company'))}
             onCloseModal={() => setActive(null)}
             isActive={active === 'Company'}
-            isDisabled={isRegistered}
+            isDisabled={shouldDisableCards}
           />
 
           <RoleCard
@@ -226,7 +229,7 @@ export default function LoginSection() {
             onSelect={() => setActive((s) => (s === 'CPSK' ? null : 'CPSK'))}
             onCloseModal={() => setActive(null)}
             isActive={active === 'CPSK'}
-            isDisabled={isRegistered}
+            isDisabled={shouldDisableCards}
           />
 
           <RoleCard
@@ -237,12 +240,10 @@ export default function LoginSection() {
             onSelect={() => setActive((s) => (s === 'Visitor' ? null : 'Visitor'))}
             onCloseModal={() => setActive(null)}
             isActive={active === 'Visitor'}
-            isDisabled={isRegistered}
+            isDisabled={shouldDisableCards}
           />
         </div>
       </div>
-
-      {/* per-card overlay is rendered inside each RoleCard */}
     </section>
   );
 }

@@ -5,6 +5,7 @@
 
 import { getSession } from 'next-auth/react';
 import { handleTokenExpiration } from '@/lib/utils/auth-helpers';
+import { AdminAuthService } from './admin-auth.service';
 
 interface ApiClientConfig {
   baseUrl?: string;
@@ -36,11 +37,18 @@ class ApiClient {
     this.defaultHeaders = config.headers || {};
   }
 
+
   private async getAuthToken(): Promise<string | null> {
-    const session = await getSession();
-    return session?.backendToken || null;
+  // First check for admin token (for admin routes)
+  const adminToken = AdminAuthService.getToken();
+  if (adminToken) {
+    return adminToken;
   }
 
+  // Fall back to regular user session token
+  const session = await getSession();
+  return session?.backendToken || null;
+}
   private async buildHeaders(config: RequestConfig): Promise<HeadersInit> {
     const headers: Record<string, string> = { ...this.defaultHeaders } as Record<string, string>;
 
