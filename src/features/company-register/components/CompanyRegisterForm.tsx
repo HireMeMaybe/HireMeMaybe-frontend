@@ -2,7 +2,8 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Button,
   Input,
@@ -16,19 +17,24 @@ import {
   FileUpload,
 } from '@/components/ui/';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
+import { useSession } from 'next-auth/react';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
 import { registerCompany } from '@/features/company-register/server/actions.server';
+import { CompanyService } from '@/lib/services/company.service';
 import ConfirmationModal from '@/components/modals/ConfirmModal'; // Import ConfirmModal
 import SuccessModal from '@/components/modals/SuccessModal';
 
 export function CompanyRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
+  const { data: session } = useSession();
   const [submitMessage, setSubmitMessage] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // State to control ConfirmModal visibility
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const router = useRouter();
 
   const {
     register,
@@ -54,56 +60,72 @@ export function CompanyRegisterForm(): React.JSX.Element {
   const watchedLogo = watch('logo');
   const watchedBanner = watch('banner');
 
+  // Populate email from logged-in session and lock it
+  useEffect(() => {
+    const emailFromBackend =
+      (session?.backendUser as any)?.User?.email ?? (session?.user as any)?.email ?? null;
+    if (emailFromBackend) {
+      setValue('email', String(emailFromBackend));
+      clearErrors('email');
+    }
+  }, [session, setValue, clearErrors]);
+
   const onSubmit = async (data: CompanyRegisterFormData) => {
     startTransition(async () => {
       try {
-        // Create FormData for server action
-        const formData = new FormData();
-
-        // Helper to conditionally append non-empty values
-        const appendIfPresent = (key: string, value: string | File | undefined) => {
-          if (value && value !== '') {
-            formData.append(key, value);
-          }
+        // First, PATCH the company profile using CompanyService
+        const profilePayload = {
+          name: data.companyName || undefined,
+          industry: data.industry || undefined,
+          overview: data.overview || undefined,
+          size: data.companySize || undefined,
+          tel: data.phone || undefined,
         };
 
-        // Append all fields
-        appendIfPresent('companyName', data.companyName);
-        appendIfPresent('email', data.email);
-        appendIfPresent('phone', data.phone);
-        appendIfPresent('overview', data.overview);
-        appendIfPresent('industry', data.industry);
-        appendIfPresent('companySize', data.companySize);
-        appendIfPresent('logo', data.logo);
-        appendIfPresent('banner', data.banner);
+        const updatedProfile = await CompanyService.patchCompanyProfile(profilePayload);
+        // capture company id returned from backend for redirect after success
+        if (updatedProfile?.id) {
+          setCompanyId(String(updatedProfile.id));
+        }
 
-        const result = await registerCompany(formData);
-
-        if (result.success) {
-          setSubmitMessage({
-            type: 'success',
-            text: result.message,
-          });
-          setIsSuccessOpen(true);
-          // Reset form after success
-          reset();
-        } else {
-          setSubmitMessage({
-            type: 'error',
-            text: result.message,
-          });
-
-          // Set field-specific errors if they exist
-          if (result.errors) {
-            result.errors.forEach((error) => {
-              setError(error.field as keyof CompanyRegisterFormData, {
-                message: error.message,
-              });
-            });
+        // If logo file present, upload it using authenticated endpoint
+        if (data.logo instanceof File) {
+          try {
+            await CompanyService.uploadProfileLogo(data.logo);
+          } catch (e) {
+            console.error('Logo upload failed:', e);
+            setSubmitMessage({ type: 'error', text: 'Profile updated but logo upload failed.' });
+            return;
           }
         }
+
+        // If banner file present, upload it using authenticated endpoint
+        if (data.banner instanceof File) {
+          try {
+            await CompanyService.uploadProfileBanner(data.banner);
+          } catch (e) {
+            console.error('Banner upload failed:', e);
+            setSubmitMessage({ type: 'error', text: 'Profile updated but banner upload failed.' });
+            return;
+          }
+        }
+
+        setSubmitMessage({ type: 'success', text: 'Company profile updated successfully.' });
+        setIsSuccessOpen(true);
+        reset();
       } catch (error) {
         console.error('Error during company registration:', error); // Log the error for debugging
+        const errMsg = error instanceof Error ? error.message : String(error);
+        // If this looks like a size mapping/backend rejection, attach the message to the companySize field
+        if (
+          errMsg.toLowerCase().includes('company size') ||
+          errMsg.toLowerCase().includes('size is not accepted')
+        ) {
+          setError('companySize', { type: 'manual', message: errMsg });
+          setSubmitMessage({ type: 'error', text: 'Please fix the highlighted fields and retry.' });
+          return;
+        }
+
         setSubmitMessage({
           type: 'error',
           text: 'An unexpected error occurred. Please try again.',
@@ -251,7 +273,10 @@ export function CompanyRegisterForm(): React.JSX.Element {
               id="email"
               type="email"
               {...register('email')}
-              className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
+              readOnly
+              aria-readonly="true"
+              title="Email cannot be changed"
+              className="bg-muted h-12 cursor-not-allowed rounded-lg px-4 text-base opacity-80 transition-all duration-200"
             />
             {errors.email && (
               <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
@@ -473,7 +498,12 @@ export function CompanyRegisterForm(): React.JSX.Element {
       />
       <SuccessModal
         isOpen={isSuccessOpen}
-        onClose={() => setIsSuccessOpen(false)}
+        onClose={() => {
+          setIsSuccessOpen(false);
+          if (companyId) {
+            router.push(`/company/${companyId}`);
+          }
+        }}
         title="Registration submitted"
         message={submitMessage?.text || 'Submitted successfully'}
         buttonText="Close"
