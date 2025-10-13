@@ -20,7 +20,22 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('Forwarding code to backend:', { code, selectedRole });
+    // Validate backend URL format
+    try {
+      new URL(backendUrl);
+    } catch (err) {
+      console.error('Invalid NEXT_PUBLIC_BACKEND_URL:', backendUrl);
+      return NextResponse.json(
+        { success: false, message: 'invalid backend URL configuration' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Forwarding code to backend:', {
+      code: code.substring(0, 10) + '...',
+      selectedRole,
+      backendUrl,
+    });
 
     // Determine backend endpoint based on selected role
     const backendEndpoint =
@@ -30,11 +45,72 @@ export async function POST(request: Request) {
 
     console.log('Using backend endpoint:', backendEndpoint);
 
-    const res = await fetch(backendEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
-    });
+    // Helper: fetch with timeout
+    const fetchWithTimeout = async (
+      url: string,
+      options: RequestInit,
+      timeoutMs = 15000
+    ): Promise<Response> => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const resp = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return resp;
+      } catch (err) {
+        clearTimeout(id);
+        throw err;
+      }
+    };
+
+    // Try fetch with simple retry/backoff strategy
+    const maxRetries = 1; // Reduce retries to avoid long waits
+    let res: Response | null = null;
+    let lastError: unknown = null;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const startTime = Date.now();
+      try {
+        console.log(
+          `🔄 Attempt ${attempt + 1}/${maxRetries + 1}: Sending POST to ${backendEndpoint}...`
+        );
+
+        res = await fetchWithTimeout(
+          backendEndpoint,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code }),
+          },
+          30000 // 30s timeout for slow backends (increased from 20s)
+        );
+
+        const elapsed = Date.now() - startTime;
+        console.log(`✅ Backend responded in ${elapsed}ms with status ${res.status}`);
+        break; // success
+      } catch (err) {
+        lastError = err;
+        const elapsed = Date.now() - startTime;
+        console.error(
+          `❌ Attempt ${attempt + 1} failed after ${elapsed}ms:`,
+          err instanceof Error ? err.message : err
+        );
+        // small backoff before retrying
+        if (attempt < maxRetries) {
+          console.log(`⏳ Retrying in ${500 * (attempt + 1)}ms...`);
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        }
+      }
+    }
+
+    if (!res) {
+      console.error('All attempts to contact backend failed:', lastError);
+      const detail = lastError instanceof Error ? lastError.message : String(lastError);
+      return NextResponse.json(
+        { success: false, message: 'backend unreachable', detail },
+        { status: 502 }
+      );
+    }
 
     let data = null;
     let text = null;
