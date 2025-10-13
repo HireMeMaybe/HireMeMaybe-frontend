@@ -37,3 +37,22 @@ export type JobPostItem = {
   posted: string;
   reports: number;
 };
+
+export interface CPSKAccount {
+  id: number;
+  name: string;
+  email: string;
+  major: string;
+  year: string;
+  status: 'Active' | 'Suspended';
+}
+
+export interface ManagedCompany {
+  id: number;
+  name: string;
+  location: string;
+  industry: string;
+  verifiedDate: string;
+  activePosts: number;
+  reports: number;
+}
