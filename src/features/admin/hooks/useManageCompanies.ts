@@ -29,7 +29,7 @@ const initialMockData: ManagedCompany[] = [
     industry: 'Software Development',
     verifiedDate: '2024-01-15',
     activePosts: 5,
-    reports: 0,
+    reports: 3,
   },
   {
     id: 4,
@@ -38,7 +38,7 @@ const initialMockData: ManagedCompany[] = [
     industry: 'Marketing',
     verifiedDate: '2024-01-15',
     activePosts: 4,
-    reports: 5,
+    reports: 4,
   },
   {
     id: 5,
@@ -65,7 +65,7 @@ const initialMockData: ManagedCompany[] = [
     industry: 'Software Development',
     verifiedDate: '2024-01-15',
     activePosts: 5,
-    reports: 0,
+    reports: 2,
   },
   {
     id: 8,

@@ -29,6 +29,8 @@
   --color-gray-cancel: #333333;
   --color-darker-gray: #2a2a2a;
   --color-very-dark-gray: #1a1a1a;
+  --color-very-dark-green: #0d6b6d;
+  --color-bright-yellow: #ffd93d;
 }
 
 @media (prefers-color-scheme: dark) {

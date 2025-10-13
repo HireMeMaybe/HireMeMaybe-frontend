@@ -102,14 +102,14 @@ export function ManageCPSKPage() {
                           {account.status === 'Active' ? (
                             <button
                               onClick={() => handleSuspend(account)}
-                              className="bg-yellow-warning cursor-pointer rounded-full px-4 py-2 text-sm text-black hover:bg-yellow-600"
+                              className="bg-bright-yellow cursor-pointer rounded-full px-4 py-2 text-sm text-black hover:bg-bright-yellow/85"
                             >
                               Suspend
                             </button>
                           ) : (
                             <button
                               onClick={() => handleReactivate(account)}
-                              className="bg-sky-blue cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-blue-600"
+                              className="bg-very-dark-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-very-dark-green/85"
                             >
                               Reactivate
                             </button>
