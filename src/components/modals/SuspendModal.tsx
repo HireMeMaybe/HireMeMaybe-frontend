@@ -27,9 +27,8 @@ export default function SuspendModal({
 
   useEffect(() => {
     if (isOpen) {
-      // Set default start date to today
-      const today = new Date().toISOString().split('T')[0];
-      setStartDate(today);
+      const now = new Date().toISOString().slice(0, 16); // Current date and time in 'YYYY-MM-DDTHH:mm' format
+      setStartDate(now);
       setEndDate('');
     }
   }, [isOpen]);
@@ -41,7 +40,7 @@ export default function SuspendModal({
     const end = new Date(start);
     end.setDate(end.getDate() + days);
 
-    setEndDate(end.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().slice(0, 16)); // Format as 'YYYY-MM-DDTHH:mm'
   };
 
   const handleConfirm = () => {
@@ -62,76 +61,68 @@ export default function SuspendModal({
     onClose();
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString().slice(0, 16);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-background border-zinc-700 text-white sm:max-w-lg">
-        {/* Hidden accessibility components */}
         <DialogTitle className="sr-only">Suspend {entityType}</DialogTitle>
         <DialogDescription className="sr-only">
           Select suspension period for {entityName}
         </DialogDescription>
 
         <div className="flex flex-col space-y-6 p-8">
-          {/* Icon */}
           <div className="flex justify-center">
             <div className="border-bright-yellow flex h-16 w-16 items-center justify-center rounded-full border-2">
               <AlertTriangle className="text-bright-yellow h-8 w-8" />
             </div>
           </div>
 
-          {/* Title */}
           <div className="text-center">
             <h3 className="text-2xl font-semibold text-white">Suspend {entityType}</h3>
           </div>
 
-          {/* Message with warning icon */}
           <div className="flex items-center justify-center gap-2">
             <AlertTriangle className="text-bright-yellow h-4 w-4" />
             <p className="text-bright-yellow">Select suspension period</p>
           </div>
 
-          {/* Separator */}
           <div className="my-4 border-t border-zinc-600"></div>
 
-          {/* Description */}
           <div className="text-lighter-gray-text text-sm">
             You are about to suspend <span className="font-medium text-white">{entityName}</span>.
             Please select the suspension period below.
           </div>
 
-          {/* Date Inputs */}
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="relative space-y-2">
               <Label htmlFor="startDate" className="text-white">
                 Start Date
               </Label>
               <Input
                 id="startDate"
-                type="date"
+                type="datetime-local"
                 value={startDate}
-                min={today}
+                min={now}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="border-zinc-600 bg-zinc-800 text-white"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="relative space-y-2">
               <Label htmlFor="endDate" className="text-white">
                 End Date
               </Label>
               <Input
                 id="endDate"
-                type="date"
+                type="datetime-local"
                 value={endDate}
-                min={startDate || today}
+                min={startDate || now}
                 onChange={(e) => setEndDate(e.target.value)}
                 className="border-zinc-600 bg-zinc-800 text-white"
               />
             </div>
 
-            {/* Quick Select Buttons */}
             <div className="space-y-2">
               <Label className="text-white">Quick Select:</Label>
               <div className="flex gap-2">
@@ -163,7 +154,6 @@ export default function SuspendModal({
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <Button
               variant="outline"
