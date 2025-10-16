@@ -27,7 +27,7 @@ export default function SuspendModal({
 
   useEffect(() => {
     if (isOpen) {
-      const now = new Date().toISOString().slice(0, 16); // Current date and time in 'YYYY-MM-DDTHH:mm' format
+      const now = new Date().toISOString().slice(0, 10);
       setStartDate(now);
       setEndDate('');
     }
@@ -40,7 +40,7 @@ export default function SuspendModal({
     const end = new Date(start);
     end.setDate(end.getDate() + days);
 
-    setEndDate(end.toISOString().slice(0, 16)); // Format as 'YYYY-MM-DDTHH:mm'
+    setEndDate(end.toISOString().slice(0, 10));
   };
 
   const handleConfirm = () => {
@@ -61,7 +61,7 @@ export default function SuspendModal({
     onClose();
   };
 
-  const now = new Date().toISOString().slice(0, 16);
+  const now = new Date().toISOString().slice(0, 10);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -101,7 +101,7 @@ export default function SuspendModal({
               </Label>
               <Input
                 id="startDate"
-                type="datetime-local"
+                type="date"
                 value={startDate}
                 min={now}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -115,7 +115,7 @@ export default function SuspendModal({
               </Label>
               <Input
                 id="endDate"
-                type="datetime-local"
+                type="date"
                 value={endDate}
                 min={startDate || now}
                 onChange={(e) => setEndDate(e.target.value)}
