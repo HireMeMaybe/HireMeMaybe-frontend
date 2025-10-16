@@ -319,11 +319,11 @@ export class AdminService {
       },
       {
         id: 3,
-        name: 'Mike Johnson',
-        email: 'mike.j@ku.th',
+        name: 'John Doe',
+        email: 'john.d@ku.th',
         major: 'CPE',
-        year: 'Year 4',
-        status: 'Active',
+        year: 'Year 3',
+        status: 'Banned',
       },
     ];
     try {
@@ -369,6 +369,7 @@ export class AdminService {
         verifiedDate: '2024-01-15',
         activePosts: 5,
         reports: 0,
+        status: 'Active',
       },
       {
         id: 2,
@@ -378,24 +379,17 @@ export class AdminService {
         verifiedDate: '2024-01-15',
         activePosts: 4,
         reports: 5,
+        status: 'Suspended',
       },
       {
         id: 3,
-        name: 'Tech Solutions Co.',
+        name: 'Spam Corp',
         location: 'Bangkok, Thailand',
-        industry: 'Software Development',
-        verifiedDate: '2024-01-15',
-        activePosts: 5,
-        reports: 3,
-      },
-      {
-        id: 4,
-        name: 'Digital Marketing Hub',
-        location: 'Chiang Mai, Thailand',
-        industry: 'Marketing',
-        verifiedDate: '2024-01-15',
-        activePosts: 4,
-        reports: 4,
+        industry: 'Unknown',
+        verifiedDate: '2024-01-10',
+        activePosts: 0,
+        reports: 2,
+        status: 'Banned',
       },
     ];
     try {
@@ -414,6 +408,72 @@ export class AdminService {
       return await apiClient.delete(`/admin/companies/${companyId}`);
     } catch (error) {
       throw new Error(`Failed to delete company: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Ban a CPSK account
+   */
+  static async banCPSKAccount(accountId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/cpsk/${accountId}/ban`);
+    } catch (error) {
+      throw new Error(`Failed to ban account: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Unban a CPSK account
+   */
+  static async unbanCPSKAccount(accountId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/cpsk/${accountId}/unban`);
+    } catch (error) {
+      throw new Error(`Failed to unban account: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Suspend a managed company
+   */
+  static async suspendManagedCompany(companyId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/companies/${companyId}/suspend`);
+    } catch (error) {
+      throw new Error(`Failed to suspend company: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Cancel suspension of a managed company
+   */
+  static async cancelSuspendManagedCompany(companyId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/companies/${companyId}/cancel-suspend`);
+    } catch (error) {
+      throw new Error(`Failed to cancel suspension: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Ban a managed company
+   */
+  static async banManagedCompany(companyId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/companies/${companyId}/ban`);
+    } catch (error) {
+      throw new Error(`Failed to ban company: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Unban a managed company
+   */
+  static async unbanManagedCompany(companyId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/companies/${companyId}/unban`);
+    } catch (error) {
+      throw new Error(`Failed to unban company: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

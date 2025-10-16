@@ -35,6 +35,14 @@ export function useCPSK() {
     await AdminService.reactivateCPSKAccount(accountId);
   };
 
+  const banAccount = async (accountId: number) => {
+    await AdminService.banCPSKAccount(accountId);
+  };
+
+  const unbanAccount = async (accountId: number) => {
+    await AdminService.unbanCPSKAccount(accountId);
+  };
+
   return {
     accounts,
     isLoading,
@@ -42,5 +50,7 @@ export function useCPSK() {
     refetch: fetchAccounts,
     suspendAccount,
     reactivateAccount,
+    banAccount,
+    unbanAccount,
   } as const;
 }

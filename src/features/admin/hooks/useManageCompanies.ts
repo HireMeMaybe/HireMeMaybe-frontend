@@ -27,8 +27,20 @@ export function useManageCompanies() {
     fetchCompanies();
   }, [fetchCompanies]);
 
-  const deleteCompany = async (companyId: number) => {
-    await AdminService.deleteManagedCompany(companyId);
+  const suspendCompany = async (companyId: number) => {
+    await AdminService.suspendManagedCompany(companyId);
+  };
+
+  const cancelSuspendCompany = async (companyId: number) => {
+    await AdminService.cancelSuspendManagedCompany(companyId);
+  };
+
+  const banCompany = async (companyId: number) => {
+    await AdminService.banManagedCompany(companyId);
+  };
+
+  const unbanCompany = async (companyId: number) => {
+    await AdminService.unbanManagedCompany(companyId);
   };
 
   return {
@@ -36,6 +48,9 @@ export function useManageCompanies() {
     isLoading,
     error,
     refetch: fetchCompanies,
-    deleteCompany,
+    suspendCompany,
+    cancelSuspendCompany,
+    banCompany,
+    unbanCompany,
   } as const;
 }

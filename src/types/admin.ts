@@ -44,7 +44,7 @@ export interface CPSKAccount {
   email: string;
   major: string;
   year: string;
-  status: 'Active' | 'Suspended';
+  status: 'Active' | 'Suspended' | 'Banned';
 }
 
 export interface ManagedCompany {
@@ -55,4 +55,5 @@ export interface ManagedCompany {
   verifiedDate: string;
   activePosts: number;
   reports: number;
+  status: 'Active' | 'Suspended' | 'Banned';
 }

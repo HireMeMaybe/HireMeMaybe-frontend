@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useCPSK } from '@/features/admin/hooks/useCPSK';
 import type { CPSKAccount } from '@/types/admin';
 
 export function ManageCPSKPage() {
-  const { accounts, isLoading, refetch, suspendAccount, reactivateAccount } = useCPSK();
+  const { accounts, isLoading, refetch, suspendAccount, reactivateAccount, banAccount, unbanAccount } = useCPSK();
 
   const handleView = (account: CPSKAccount) => {
     console.log('View account:', account);
@@ -21,12 +21,107 @@ export function ManageCPSKPage() {
     }
   };
 
-  const handleReactivate = async (account: CPSKAccount) => {
+  const handleCancelSuspend = async (account: CPSKAccount) => {
     try {
       await reactivateAccount(account.id);
       refetch();
     } catch (error) {
-      console.error('Failed to reactivate account:', error);
+      console.error('Failed to cancel suspension:', error);
+    }
+  };
+
+  const handleBan = async (account: CPSKAccount) => {
+    try {
+      await banAccount(account.id);
+      refetch();
+    } catch (error) {
+      console.error('Failed to ban account:', error);
+    }
+  };
+
+  const handleUnban = async (account: CPSKAccount) => {
+    try {
+      await unbanAccount(account.id);
+      refetch();
+    } catch (error) {
+      console.error('Failed to unban account:', error);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active':
+        return 'bg-primary-green text-white';
+      case 'Suspended':
+        return 'bg-bright-yellow text-black';
+      case 'Banned':
+        return 'bg-red-reject text-white';
+      default:
+        return 'bg-gray-500 text-white';
+    }
+  };
+
+  const renderActions = (account: CPSKAccount) => {
+    switch (account.status) {
+      case 'Active':
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleView(account)}
+              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+            >
+              View
+            </button>
+            <button
+              onClick={() => handleSuspend(account)}
+              className="bg-bright-yellow cursor-pointer rounded-full px-4 py-2 text-sm text-black hover:bg-bright-yellow/85"
+            >
+              Suspend
+            </button>
+            <button
+              onClick={() => handleBan(account)}
+              className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-red-700"
+            >
+              Ban
+            </button>
+          </div>
+        );
+      case 'Suspended':
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleView(account)}
+              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+            >
+              View
+            </button>
+            <button
+              onClick={() => handleCancelSuspend(account)}
+              className="border border-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-primary-green hover:bg-background/85"
+            >
+              Cancel Suspend
+            </button>
+          </div>
+        );
+      case 'Banned':
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleView(account)}
+              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+            >
+              View
+            </button>
+            <button
+              onClick={() => handleUnban(account)}
+              className="border border-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-primary-green hover:bg-background/85"
+            >
+              Unban
+            </button>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -82,40 +177,14 @@ export function ManageCPSKPage() {
                       <td className="px-6 py-4 align-top text-gray-200">{account.year}</td>
                       <td className="px-6 py-4 align-top">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            account.status === 'Active'
-                              ? 'bg-primary-green text-white'
-                              : 'bg-red-reject text-white'
-                          }`}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
+                            account.status
+                          )}`}
                         >
                           {account.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 align-top">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleView(account)}
-                            className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-                          >
-                            View
-                          </button>
-                          {account.status === 'Active' ? (
-                            <button
-                              onClick={() => handleSuspend(account)}
-                              className="bg-bright-yellow cursor-pointer rounded-full px-4 py-2 text-sm text-black hover:bg-bright-yellow/85"
-                            >
-                              Suspend
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleReactivate(account)}
-                              className="bg-very-dark-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-very-dark-green/85"
-                            >
-                              Reactivate
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                      <td className="px-6 py-4 align-top">{renderActions(account)}</td>
                     </tr>
                   ));
                 })()}
