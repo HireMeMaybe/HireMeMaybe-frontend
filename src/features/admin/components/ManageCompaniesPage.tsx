@@ -1,47 +1,87 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useManageCompanies } from '@/features/admin/hooks/useManageCompanies';
 import type { ManagedCompany } from '@/types/admin';
+import { SuspendModal, BanModal, CancelSuspendModal, UnbanModal } from '@/components/modals';
 
 export function ManageCompaniesPage() {
-  const { companies, isLoading, refetch, suspendCompany, cancelSuspendCompany, banCompany, unbanCompany } = useManageCompanies();
+  const {
+    companies,
+    isLoading,
+    refetch,
+    suspendCompany,
+    cancelSuspendCompany,
+    banCompany,
+    unbanCompany,
+  } = useManageCompanies();
+
+  const [suspendModal, setSuspendModal] = useState<{
+    isOpen: boolean;
+    company: ManagedCompany | null;
+  }>({
+    isOpen: false,
+    company: null,
+  });
+  const [banModal, setBanModal] = useState<{ isOpen: boolean; company: ManagedCompany | null }>({
+    isOpen: false,
+    company: null,
+  });
+  const [cancelSuspendModal, setCancelSuspendModal] = useState<{
+    isOpen: boolean;
+    company: ManagedCompany | null;
+  }>({
+    isOpen: false,
+    company: null,
+  });
+  const [unbanModal, setUnbanModal] = useState<{ isOpen: boolean; company: ManagedCompany | null }>(
+    {
+      isOpen: false,
+      company: null,
+    }
+  );
 
   const handleView = (company: ManagedCompany) => {
     console.log('View company:', company);
     window.open(`/companies/${company.id}`, '_blank');
   };
 
-  const handleSuspend = async (company: ManagedCompany) => {
+  const handleSuspend = async (startDate: string, endDate: string) => {
+    if (!suspendModal.company) return;
     try {
-      await suspendCompany(company.id);
+      // Note: API call will be updated to include startDate and endDate when backend is ready
+      console.log('Suspending with dates:', { startDate, endDate });
+      await suspendCompany(suspendModal.company.id);
       refetch();
     } catch (error) {
       console.error('Failed to suspend company:', error);
     }
   };
 
-  const handleCancelSuspend = async (company: ManagedCompany) => {
+  const handleCancelSuspend = async () => {
+    if (!cancelSuspendModal.company) return;
     try {
-      await cancelSuspendCompany(company.id);
+      await cancelSuspendCompany(cancelSuspendModal.company.id);
       refetch();
     } catch (error) {
       console.error('Failed to cancel suspension:', error);
     }
   };
 
-  const handleBan = async (company: ManagedCompany) => {
+  const handleBan = async () => {
+    if (!banModal.company) return;
     try {
-      await banCompany(company.id);
+      await banCompany(banModal.company.id);
       refetch();
     } catch (error) {
       console.error('Failed to ban company:', error);
     }
   };
 
-  const handleUnban = async (company: ManagedCompany) => {
+  const handleUnban = async () => {
+    if (!unbanModal.company) return;
     try {
-      await unbanCompany(company.id);
+      await unbanCompany(unbanModal.company.id);
       refetch();
     } catch (error) {
       console.error('Failed to unban company:', error);
@@ -79,13 +119,13 @@ export function ManageCompaniesPage() {
               View
             </button>
             <button
-              onClick={() => handleSuspend(company)}
-              className="bg-bright-yellow cursor-pointer rounded-full px-4 py-2 text-sm text-black hover:bg-bright-yellow/85"
+              onClick={() => setSuspendModal({ isOpen: true, company })}
+              className="bg-bright-yellow hover:bg-bright-yellow/85 cursor-pointer rounded-full px-4 py-2 text-sm text-black"
             >
               Suspend
             </button>
             <button
-              onClick={() => handleBan(company)}
+              onClick={() => setBanModal({ isOpen: true, company })}
               className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-red-700"
             >
               Ban
@@ -102,8 +142,8 @@ export function ManageCompaniesPage() {
               View
             </button>
             <button
-              onClick={() => handleCancelSuspend(company)}
-              className="border border-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-primary-green hover:bg-background/85"
+              onClick={() => setCancelSuspendModal({ isOpen: true, company })}
+              className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
             >
               Cancel Suspend
             </button>
@@ -119,8 +159,8 @@ export function ManageCompaniesPage() {
               View
             </button>
             <button
-              onClick={() => handleUnban(company)}
-              className="border border-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-primary-green hover:bg-background/85"
+              onClick={() => setUnbanModal({ isOpen: true, company })}
+              className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
             >
               Unban
             </button>
@@ -207,6 +247,39 @@ export function ManageCompaniesPage() {
           </div>
         </section>
       </div>
+
+      {/* Modals */}
+      <SuspendModal
+        isOpen={suspendModal.isOpen}
+        onClose={() => setSuspendModal({ isOpen: false, company: null })}
+        onConfirm={handleSuspend}
+        entityName={suspendModal.company?.name}
+        entityType="Company"
+      />
+
+      <BanModal
+        isOpen={banModal.isOpen}
+        onClose={() => setBanModal({ isOpen: false, company: null })}
+        onConfirm={handleBan}
+        entityName={banModal.company?.name}
+        entityType="Company"
+      />
+
+      <CancelSuspendModal
+        isOpen={cancelSuspendModal.isOpen}
+        onClose={() => setCancelSuspendModal({ isOpen: false, company: null })}
+        onConfirm={handleCancelSuspend}
+        entityName={cancelSuspendModal.company?.name}
+        entityType="Company"
+      />
+
+      <UnbanModal
+        isOpen={unbanModal.isOpen}
+        onClose={() => setUnbanModal({ isOpen: false, company: null })}
+        onConfirm={handleUnban}
+        entityName={unbanModal.company?.name}
+        entityType="Company"
+      />
     </div>
   );
 }

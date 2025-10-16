@@ -1,47 +1,85 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useCPSK } from '@/features/admin/hooks/useCPSK';
 import type { CPSKAccount } from '@/types/admin';
+import { SuspendModal, BanModal, CancelSuspendModal, UnbanModal } from '@/components/modals';
 
 export function ManageCPSKPage() {
-  const { accounts, isLoading, refetch, suspendAccount, reactivateAccount, banAccount, unbanAccount } = useCPSK();
+  const {
+    accounts,
+    isLoading,
+    refetch,
+    suspendAccount,
+    reactivateAccount,
+    banAccount,
+    unbanAccount,
+  } = useCPSK();
+
+  const [suspendModal, setSuspendModal] = useState<{
+    isOpen: boolean;
+    account: CPSKAccount | null;
+  }>({
+    isOpen: false,
+    account: null,
+  });
+  const [banModal, setBanModal] = useState<{ isOpen: boolean; account: CPSKAccount | null }>({
+    isOpen: false,
+    account: null,
+  });
+  const [cancelSuspendModal, setCancelSuspendModal] = useState<{
+    isOpen: boolean;
+    account: CPSKAccount | null;
+  }>({
+    isOpen: false,
+    account: null,
+  });
+  const [unbanModal, setUnbanModal] = useState<{ isOpen: boolean; account: CPSKAccount | null }>({
+    isOpen: false,
+    account: null,
+  });
 
   const handleView = (account: CPSKAccount) => {
     console.log('View account:', account);
     window.open(`/student/${account.id}`, '_blank');
   };
 
-  const handleSuspend = async (account: CPSKAccount) => {
+  const handleSuspend = async (startDate: string, endDate: string) => {
+    if (!suspendModal.account) return;
     try {
-      await suspendAccount(account.id);
+      // Note: API call will be updated to include startDate and endDate when backend is ready
+      console.log('Suspending with dates:', { startDate, endDate });
+      await suspendAccount(suspendModal.account.id);
       refetch();
     } catch (error) {
       console.error('Failed to suspend account:', error);
     }
   };
 
-  const handleCancelSuspend = async (account: CPSKAccount) => {
+  const handleCancelSuspend = async () => {
+    if (!cancelSuspendModal.account) return;
     try {
-      await reactivateAccount(account.id);
+      await reactivateAccount(cancelSuspendModal.account.id);
       refetch();
     } catch (error) {
       console.error('Failed to cancel suspension:', error);
     }
   };
 
-  const handleBan = async (account: CPSKAccount) => {
+  const handleBan = async () => {
+    if (!banModal.account) return;
     try {
-      await banAccount(account.id);
+      await banAccount(banModal.account.id);
       refetch();
     } catch (error) {
       console.error('Failed to ban account:', error);
     }
   };
 
-  const handleUnban = async (account: CPSKAccount) => {
+  const handleUnban = async () => {
+    if (!unbanModal.account) return;
     try {
-      await unbanAccount(account.id);
+      await unbanAccount(unbanModal.account.id);
       refetch();
     } catch (error) {
       console.error('Failed to unban account:', error);
@@ -73,13 +111,13 @@ export function ManageCPSKPage() {
               View
             </button>
             <button
-              onClick={() => handleSuspend(account)}
-              className="bg-bright-yellow cursor-pointer rounded-full px-4 py-2 text-sm text-black hover:bg-bright-yellow/85"
+              onClick={() => setSuspendModal({ isOpen: true, account })}
+              className="bg-bright-yellow hover:bg-bright-yellow/85 cursor-pointer rounded-full px-4 py-2 text-sm text-black"
             >
               Suspend
             </button>
             <button
-              onClick={() => handleBan(account)}
+              onClick={() => setBanModal({ isOpen: true, account })}
               className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-red-700"
             >
               Ban
@@ -96,8 +134,8 @@ export function ManageCPSKPage() {
               View
             </button>
             <button
-              onClick={() => handleCancelSuspend(account)}
-              className="border border-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-primary-green hover:bg-background/85"
+              onClick={() => setCancelSuspendModal({ isOpen: true, account })}
+              className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
             >
               Cancel Suspend
             </button>
@@ -113,8 +151,8 @@ export function ManageCPSKPage() {
               View
             </button>
             <button
-              onClick={() => handleUnban(account)}
-              className="border border-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-primary-green hover:bg-background/85"
+              onClick={() => setUnbanModal({ isOpen: true, account })}
+              className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
             >
               Unban
             </button>
@@ -138,7 +176,7 @@ export function ManageCPSKPage() {
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-800 text-primary-green">
+              <thead className="text-primary-green bg-zinc-800">
                 <tr>
                   <th className="px-6 py-3">CPSK</th>
                   <th className="px-6 py-3">Major</th>
@@ -193,6 +231,39 @@ export function ManageCPSKPage() {
           </div>
         </section>
       </div>
+
+      {/* Modals */}
+      <SuspendModal
+        isOpen={suspendModal.isOpen}
+        onClose={() => setSuspendModal({ isOpen: false, account: null })}
+        onConfirm={handleSuspend}
+        entityName={suspendModal.account?.name}
+        entityType="CPSK"
+      />
+
+      <BanModal
+        isOpen={banModal.isOpen}
+        onClose={() => setBanModal({ isOpen: false, account: null })}
+        onConfirm={handleBan}
+        entityName={banModal.account?.name}
+        entityType="CPSK"
+      />
+
+      <CancelSuspendModal
+        isOpen={cancelSuspendModal.isOpen}
+        onClose={() => setCancelSuspendModal({ isOpen: false, account: null })}
+        onConfirm={handleCancelSuspend}
+        entityName={cancelSuspendModal.account?.name}
+        entityType="CPSK"
+      />
+
+      <UnbanModal
+        isOpen={unbanModal.isOpen}
+        onClose={() => setUnbanModal({ isOpen: false, account: null })}
+        onConfirm={handleUnban}
+        entityName={unbanModal.account?.name}
+        entityType="CPSK"
+      />
     </div>
   );
 }
