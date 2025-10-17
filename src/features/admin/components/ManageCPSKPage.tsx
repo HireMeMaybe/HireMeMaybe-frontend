@@ -176,7 +176,7 @@ export function ManageCPSKPage() {
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
-              <thead className="text-primary-green bg-zinc-800">
+              <thead className="text-gray-400 bg-zinc-800">
                 <tr>
                   <th className="px-6 py-3">CPSK</th>
                   <th className="px-6 py-3">Major</th>
