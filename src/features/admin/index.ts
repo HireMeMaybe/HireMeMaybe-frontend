@@ -13,3 +13,8 @@ export { ManageCompaniesPage } from './components/ManageCompaniesPage';
 export { useCPSK } from './hooks/useCPSK';
 export { useManageCompanies } from './hooks/useManageCompanies';
 export type { CPSKAccount, ManagedCompany } from '@/types/admin';
+export { ManageVisitorsPage } from './components/ManageVisitorsPage';
+export { VisitorReportsPage } from './components/VisitorReportsPage';
+export { useVisitors } from './hooks/useVisitors';
+export { useVisitorReports } from './hooks/useVisitorReports';
+export type { VisitorAccount, VisitorReport } from '@/types/admin';
