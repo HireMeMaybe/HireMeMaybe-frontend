@@ -40,6 +40,8 @@ export class AdminAuthService {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
+      console.log('Admin login attempt for username:', credentials.username);
+
       const response = await fetch(`${backendUrl}/auth/login`, {
         method: 'POST',
         headers: {
@@ -47,6 +49,8 @@ export class AdminAuthService {
         },
         body: JSON.stringify(credentials),
       });
+
+      console.log('Admin login response status:', response.status);
 
       if (!response.ok) {
         let errorMessage = 'Login failed';
@@ -64,6 +68,8 @@ export class AdminAuthService {
       }
 
       const data: AdminLoginResponse = await response.json();
+      console.log('Admin login successful for user:', data.user.username);
+      console.log('Received access token:', data.access_token);
 
       // Store token and user data
       if (typeof window !== 'undefined') {
@@ -76,6 +82,7 @@ export class AdminAuthService {
 
       return data;
     } catch (error) {
+      console.error('Error in admin login:', error);
       if (error instanceof Error) {
         throw error;
       }
