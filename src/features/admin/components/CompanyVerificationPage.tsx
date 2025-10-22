@@ -3,42 +3,46 @@
 import React, { useState } from 'react';
 import { useCompanyVerification } from '@/features/admin/hooks/useCompanyVerification';
 import type { CompanyVerification } from '@/lib/services';
-import ReconsiderModal from '@/components/modals/ReconsiderModal';
-import SuccessModal from '@/components/modals/SuccessModal'; // Import the success modal component
+import { ConfirmModal, SuccessModal, UnsuccessModal } from '@/components/modals';
 
 export function CompanyVerificationPage() {
-  const { companies, isLoading, refetch, reconsiderCompany } = useCompanyVerification();
+  const { companies, isLoading, statusFilter, setStatusFilter, verifyCompany } =
+    useCompanyVerification();
   const [selected, setSelected] = useState<CompanyVerification | null>(null);
-  const [isReconsiderOpen, setIsReconsiderOpen] = useState(false);
-  const [isSuccessOpen, setIsSuccessOpen] = useState(false); // State for success modal
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [actionType, setActionType] = useState<'verify' | 'unverify'>('verify');
 
-  const openReconsiderModal = (company: CompanyVerification) => {
+  const openConfirmModal = (company: CompanyVerification, action: 'verify' | 'unverify') => {
     setSelected(company);
-    setIsReconsiderOpen(true);
+    setActionType(action);
+    setIsConfirmOpen(true);
   };
 
   const closeModal = () => {
-    setIsReconsiderOpen(false);
+    setIsConfirmOpen(false);
     setSelected(null);
   };
 
   const handleView = (company: CompanyVerification) => {
     console.log('View company:', company);
-    // In a real app, navigate to company details page
-    window.open(`/companies/${company.id}`, '_blank');
+    // Navigate to company details page
+    window.open(`/company/${company.id}`, '_blank');
   };
 
-  const handleReconsider = async () => {
+  const handleVerifyAction = async () => {
     if (!selected) return;
 
     try {
-      // implement review logic here (API call etc.)
-      // For now just refetch or log
-      // await reconsiderCompany(selected.id);
-      refetch();
-      setIsSuccessOpen(true); // Open success modal on success
+      const status = actionType === 'verify' ? 'verified' : 'unverified';
+      await verifyCompany(selected.id, status);
+      setIsSuccessOpen(true);
     } catch (error) {
-      console.error('Failed to reconsider company:', error);
+      console.error('Failed to update company verification:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to update company');
+      setIsErrorOpen(true);
     } finally {
       closeModal();
     }
@@ -48,16 +52,100 @@ export function CompanyVerificationPage() {
     setIsSuccessOpen(false);
   };
 
+  const closeErrorModal = () => {
+    setIsErrorOpen(false);
+    setErrorMessage('');
+  };
+
+  const getStatusBadge = (status: string | undefined = 'pending') => {
+    const styles = {
+      pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
+      verified: 'bg-green-500/20 text-green-400 border-green-500/50',
+      unverified: 'bg-red-500/20 text-red-400 border-red-500/50',
+    };
+    return (
+      <span
+        className={`rounded-full border px-3 py-1 text-xs font-medium ${styles[status as keyof typeof styles] || 'border-gray-500/50 bg-gray-500/20 text-gray-400'}`}
+      >
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
   return (
     <div className="ml-64 flex-1">
       <div className="p-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-white">Company Verification</h1>
-          <p className="text-gray-400">Review and reconsider company registrations</p>
+          <p className="text-gray-400">Review and manage company verification status</p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={() => setStatusFilter(undefined)}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              statusFilter === undefined
+                ? 'bg-primary-green text-white'
+                : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'
+            }`}
+          >
+            All Companies
+          </button>
+          <button
+            onClick={() => setStatusFilter('pending')}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              statusFilter === 'pending'
+                ? 'bg-primary-green text-white'
+                : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'
+            }`}
+          >
+            Pending
+          </button>
+          <button
+            onClick={() => setStatusFilter('verified')}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              statusFilter === 'verified'
+                ? 'bg-primary-green text-white'
+                : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'
+            }`}
+          >
+            Verified
+          </button>
+          <button
+            onClick={() => setStatusFilter('unverified')}
+            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              statusFilter === 'unverified'
+                ? 'bg-primary-green text-white'
+                : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'
+            }`}
+          >
+            Unverified
+          </button>
         </div>
 
         <section className="rounded-lg bg-zinc-900/40 p-4">
-          <h2 className="text-primary-green mb-4 text-xl font-semibold">Rejected Companies</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-primary-green text-xl font-semibold">
+              Companies {statusFilter ? `(${statusFilter})` : ''}
+            </h2>
+            <span className="text-sm text-gray-400">
+              {companies.length} {companies.length === 1 ? 'company' : 'companies'} found
+            </span>
+          </div>
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
@@ -66,6 +154,7 @@ export function CompanyVerificationPage() {
                   <th className="px-6 py-3">Company Name</th>
                   <th className="px-6 py-3">Industry</th>
                   <th className="px-6 py-3">Contact</th>
+                  <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Submitted</th>
                   <th className="px-6 py-3">Actions</th>
                 </tr>
@@ -75,7 +164,7 @@ export function CompanyVerificationPage() {
                   if (isLoading) {
                     return (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
                           Loading companies...
                         </td>
                       </tr>
@@ -84,8 +173,8 @@ export function CompanyVerificationPage() {
                   if (companies.length === 0) {
                     return (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
-                          No rejected companies found
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                          No companies found
                         </td>
                       </tr>
                     );
@@ -93,26 +182,48 @@ export function CompanyVerificationPage() {
                   return companies.map((company) => (
                     <tr key={company.id} className="border-b border-zinc-800 hover:bg-zinc-800">
                       <td className="px-6 py-4 align-top">
-                        <div className="font-medium text-white">{company.name}</div>
-                        <div className="mt-1 text-xs text-gray-400">{company.location}</div>
+                        <div className="font-medium text-white">{company.name || 'N/A'}</div>
+                        <div className="mt-1 text-xs text-gray-400">
+                          {company.location || 'N/A'}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 align-top text-gray-200">{company.industry}</td>
-                      <td className="px-6 py-4 align-top text-gray-200">{company.contact}</td>
-                      <td className="px-6 py-4 align-top text-gray-200">{company.submitted}</td>
+                      <td className="px-6 py-4 align-top text-gray-200">
+                        {company.industry || 'N/A'}
+                      </td>
                       <td className="px-6 py-4 align-top">
-                        <div className="flex gap-2">
+                        <div className="text-gray-200">{company.email || 'N/A'}</div>
+                        <div className="mt-1 text-xs text-gray-400">{company.phone || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        {getStatusBadge(company.verification_status)}
+                      </td>
+                      <td className="px-6 py-4 align-top text-gray-200">
+                        {formatDate(company.created_at)}
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => handleView(company)}
                             className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                           >
                             View
                           </button>
-                          <button
-                            onClick={() => openReconsiderModal(company)}
-                            className="bg-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
-                          >
-                            Reconsider
-                          </button>
+                          {company.verification_status !== 'verified' && (
+                            <button
+                              onClick={() => openConfirmModal(company, 'verify')}
+                              className="bg-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
+                            >
+                              Verify
+                            </button>
+                          )}
+                          {company.verification_status === 'verified' && (
+                            <button
+                              onClick={() => openConfirmModal(company, 'unverify')}
+                              className="cursor-pointer rounded-full bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                            >
+                              Unverify
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -123,19 +234,32 @@ export function CompanyVerificationPage() {
           </div>
         </section>
 
-        {/* Reconsider Modal */}
-        <ReconsiderModal
-          isOpen={isReconsiderOpen}
+        {/* Confirm Modal */}
+        <ConfirmModal
+          isOpen={isConfirmOpen}
           onClose={closeModal}
-          onConfirm={handleReconsider}
-          companyName={selected?.name}
+          onConfirm={handleVerifyAction}
+          title={actionType === 'verify' ? 'Verify Company' : 'Unverify Company'}
+          message={actionType === 'verify' ? 'Confirm Verification' : 'Confirm Unverification'}
+          description={
+            actionType === 'verify'
+              ? `Are you sure you want to verify "${selected?.name}"?\n\nThis will mark the company as verified and allow them to post jobs.`
+              : `Are you sure you want to unverify "${selected?.name}"?\n\nThis will revoke their verification status and may affect their ability to post jobs.`
+          }
         />
 
         {/* Success Modal */}
         <SuccessModal
           isOpen={isSuccessOpen}
           onClose={closeSuccessModal}
-          message="Company approved successfully"
+          message={`Company ${actionType === 'verify' ? 'verified' : 'unverified'} successfully`}
+        />
+
+        {/* Error Modal */}
+        <UnsuccessModal
+          isOpen={isErrorOpen}
+          onClose={closeErrorModal}
+          message={errorMessage || 'An error occurred while updating the company'}
         />
       </div>
     </div>

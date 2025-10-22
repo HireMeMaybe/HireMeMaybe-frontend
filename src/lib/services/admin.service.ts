@@ -18,12 +18,26 @@ export interface Report {
 }
 
 export interface CompanyVerification {
-  id: number;
+  id: string;
+  ID: number;
   name: string;
+  about: string;
   location: string;
   industry: string;
-  contact: string;
-  submitted: string;
+  size: string;
+  email: string;
+  phone: string;
+  website: string;
+  User?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    tel: string;
+  };
+  verification_status: 'pending' | 'verified' | 'unverified';
+  created_at: string;
+  updated_at: string;
 }
 
 interface DashboardStats {
@@ -221,87 +235,70 @@ export class AdminService {
       throw new Error(`Failed to ${action} job post`);
     }
   }
-    /**
-   * Get rejected companies for verification
+  /**
+   * Get companies based on verification status
+   * @param status - Optional status filter: 'pending', 'verified', or 'unverified'
    */
-  static async getRejectedCompanies(): Promise<CompanyVerification[]> {
-    // Mock data for rejected companies
-    const mockRejectedCompanies: CompanyVerification[] = [
-      {
-        id: 1,
-        name: 'Tech Solutions Co.',
-        location: 'Bangkok, Thailand',
-        industry: 'Software Development',
-        contact: 'contact@techsolutions.com',
-        submitted: '2025-09-30',
-      },
-      {
-        id: 2,
-        name: 'Digital Marketing Hub',
-        location: 'Chiang Mai, Thailand',
-        industry: 'Marketing',
-        contact: 'hr@digitalhub.co.th',
-        submitted: '2025-09-30',
-      },
-      {
-        id: 3,
-        name: 'Tech Solutions Co.',
-        location: 'Bangkok, Thailand',
-        industry: 'Software Development',
-        contact: 'contact@techsolutions.com',
-        submitted: '2025-09-30',
-      },
-      {
-        id: 4,
-        name: 'Digital Marketing Hub',
-        location: 'Chiang Mai, Thailand',
-        industry: 'Marketing',
-        contact: 'hr@digitalhub.co.th',
-        submitted: '2025-09-30',
-      },
-      {
-        id: 5,
-        name: 'Tech Solutions Co.',
-        location: 'Bangkok, Thailand',
-        industry: 'Software Development',
-        contact: 'contact@techsolutions.com',
-        submitted: '2025-09-30',
-      },
-      {
-        id: 6,
-        name: 'Digital Marketing Hub',
-        location: 'Chiang Mai, Thailand',
-        industry: 'Marketing',
-        contact: 'hr@digitalhub.co.th',
-        submitted: '2025-09-30',
-      },
-      {
-        id: 7,
-        name: 'Tech Solutions Co.',
-        location: 'Bangkok, Thailand',
-        industry: 'Software Development',
-        contact: 'contact@techsolutions.com',
-        submitted: '2025-09-30',
-      },
-    ];
-
+  static async getCompanies(
+    status?: 'pending' | 'verified' | 'unverified'
+  ): Promise<CompanyVerification[]> {
     try {
-      return await apiClient.get<CompanyVerification[]>('/admin/companies/rejected');
+      console.log('Fetching companies with status:', status || 'all');
+      const endpoint = status ? `/get-companies?status=${status}` : '/get-companies';
+      const companies = await apiClient.get<CompanyVerification[]>(endpoint);
+      console.log('Fetched companies:', companies.length);
+      return companies;
     } catch (error) {
-      console.warn(
-        'AdminService.getRejectedCompanies: backend unavailable, returning mock data',
-        error
-      );
-      return mockRejectedCompanies;
+      console.error('AdminService.getCompanies: Failed to fetch companies', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch companies: ${error.message}`);
+      }
+      throw new Error('Failed to fetch companies');
     }
   }
 
   /**
+   * Verify or unverify a company
+   * @param companyId - The ID of the company to update
+   * @param status - The new verification status: 'verified' or 'unverified'
+   */
+  static async verifyCompany(
+    companyId: string,
+    status: 'verified' | 'unverified' = 'verified'
+  ): Promise<CompanyVerification> {
+    try {
+      console.log(`Updating company ${companyId} status to:`, status);
+      const endpoint = `/verify-company/${companyId}?status=${status}`;
+      const company = await apiClient.patch<CompanyVerification>(endpoint);
+      console.log('Company verification updated successfully:', company.name);
+      return company;
+    } catch (error) {
+      console.error('AdminService.verifyCompany: Failed to update company', error);
+      if (error instanceof ApiError) {
+        throw new Error(
+          `Failed to ${status === 'verified' ? 'verify' : 'unverify'} company: ${error.message}`
+        );
+      }
+      throw new Error(`Failed to ${status === 'verified' ? 'verify' : 'unverify'} company`);
+    }
+  }
+
+  /**
+   * @deprecated Use getCompanies() with status filter instead
+   * Get rejected companies for verification
+   */
+  static async getRejectedCompanies(): Promise<CompanyVerification[]> {
+    return this.getCompanies('unverified');
+  }
+
+  /**
+   * @deprecated Use verifyCompany() instead
    * Reconsider a rejected company
    */
   static async reconsiderCompany(companyId: number): Promise<{ message: string }> {
     try {
-      return await apiClient.post(`/admin/companies/${companyId}/reconsider`);
+      await this.verifyCompany(companyId.toString(), 'verified');
+      return { message: 'Company verified successfully' };
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to reconsider company: ${error.message}`);
