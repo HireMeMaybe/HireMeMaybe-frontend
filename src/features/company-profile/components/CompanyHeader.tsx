@@ -2,7 +2,8 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTransition, useState } from 'react';
+import { useTransition, useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { Mail, Phone, Building, Edit } from 'lucide-react';
@@ -10,10 +11,13 @@ import EditProfileModal from '@/features/company-profile/components/EditProfileM
 import { SuccessModal } from '@/components/modals';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
 import type { Company } from '@/types/company';
+import { mapBackendToDisplay } from '@/lib/utils/size';
+import { capitalize } from '@/lib/utils/string';
+import { normalizeUser, isValidEmail, isValidPhone } from '@/lib/utils/user';
 
 interface CompanyHeaderProps {
   readonly company: Company;
-  readonly viewType: 'student' | 'company';
+  readonly viewType: 'owner' | 'company' | 'cpsk';
   readonly onCompanyUpdate?: (updatedCompany: Company) => void;
 }
 
@@ -21,6 +25,12 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
   const [isPending, startTransition] = useTransition();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+
+  useEffect(() => {
+    // reset error when logo url changes
+    setLogoError(false);
+  }, [company.logoUrl]);
 
   const { setError } = useForm<CompanyRegisterFormData>({
     resolver: zodResolver(companyRegisterSchema),
@@ -30,9 +40,12 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
       phone: company.phone,
       overview: company.about,
       industry: company.industry,
-      companySize: company.employeeCount,
+      companySize: company.size,
     },
   });
+
+  const { data: session } = useSession();
+  const isOwner = !!session?.user?.email && session.user.email === company.email;
 
   const handleEditProfile = () => {
     setShowEditModal(true);
@@ -52,7 +65,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
         formData.append('phone', updatedData.phone || company.phone);
         formData.append('overview', updatedData.about || company.about);
         formData.append('industry', updatedData.industry || company.industry);
-        formData.append('companySize', updatedData.employeeCount || company.employeeCount);
+        formData.append('companySize', updatedData.size || company.size);
 
         // Append files if they exist
         if (logoFile) {
@@ -86,12 +99,12 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
           newBannerUrl = URL.createObjectURL(bannerFile);
         }
 
-        let formattedEmployeeCount = company.employeeCount;
+        let formattedSize = company.size;
 
-        if (updatedData.employeeCount) {
-          formattedEmployeeCount = updatedData.employeeCount.includes('employees')
-            ? updatedData.employeeCount
-            : `${updatedData.employeeCount} employees`;
+        if (updatedData.size) {
+          formattedSize = updatedData.size.includes('employees')
+            ? updatedData.size
+            : `${updatedData.size} employees`;
         }
 
         const updatedCompany: Company = {
@@ -104,7 +117,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
             ? updatedData.industry.charAt(0).toUpperCase() +
               updatedData.industry.slice(1).toLowerCase()
             : company.industry,
-          employeeCount: formattedEmployeeCount,
+          size: formattedSize,
           logoUrl: newLogoUrl,
           bannerUrl: newBannerUrl,
         };
@@ -127,9 +140,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
         {/* Banner */}
         <div
           className="h-85 bg-gray-800 bg-cover bg-center"
-          style={{
-            backgroundImage: company.bannerUrl ? `url(${company.bannerUrl})` : undefined,
-          }}
+          style={company.bannerUrl ? { backgroundImage: `url(${company.bannerUrl})` } : undefined}
         />
 
         {/* Company Info Card */}
@@ -139,13 +150,14 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
               {/* Company Logo */}
               <div className="flex-shrink-0">
                 <div className="bg-component flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl border border-zinc-600">
-                  {company.logoUrl ? (
+                  {company.logoUrl && !logoError ? (
                     <Image
                       src={company.logoUrl as string}
                       alt={`${company.name} logo`}
                       width={96}
                       height={96}
                       className="h-full w-full object-cover"
+                      onError={() => setLogoError(true)}
                     />
                   ) : (
                     <Building className="text-primary-green h-12 w-12" />
@@ -159,25 +171,51 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                   <div>
                     <h1 className="mb-2 text-3xl font-bold text-white">{company.name}</h1>
                     <p className="text-lighter-gray-text mb-4">
-                      {company.industry} | {company.employeeCount} | {company.location}
+                      {capitalize(company.industry)} | {mapBackendToDisplay(company.size)} |{' '}
+                      {company.location}
                     </p>
 
                     {/* Contact Info */}
                     <div className="text-lighter-gray-text flex flex-col gap-4 text-sm sm:flex-row">
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4" />
-                        <span>{company.email}</span>
+                        {company.email && company.email.length > 0 ? (
+                          isValidEmail(company.email) ? (
+                            <a className="underline" href={`mailto:${company.email}`}>
+                              {company.email}
+                            </a>
+                          ) : (
+                            <span>{company.email}</span>
+                          )
+                        ) : (
+                          <span>Not provided</span>
+                        )}
                       </div>
+
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4" />
-                        <span>{company.phone}</span>
+                        {company.phone && company.phone.length > 0 ? (
+                          isValidPhone(company.phone) ? (
+                            // normalize tel to remove spaces for tel: link
+                            <a
+                              className="underline"
+                              href={`tel:${company.phone.replace(/[^+0-9]/g, '')}`}
+                            >
+                              {company.phone}
+                            </a>
+                          ) : (
+                            <span>{company.phone}</span>
+                          )
+                        ) : (
+                          <span>Not provided</span>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Action Button */}
                   <div className="flex-shrink-0">
-                    {viewType === 'company' && (
+                    {(viewType === 'owner' || isOwner) && (
                       <Button
                         onClick={handleEditProfile}
                         className="hover:bg-gray-cancel cursor-pointer rounded-md bg-[#595256] px-6 py-2 text-white"

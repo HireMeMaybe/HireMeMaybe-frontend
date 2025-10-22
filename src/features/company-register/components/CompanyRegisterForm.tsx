@@ -26,7 +26,7 @@ import SuccessModal from '@/components/modals/SuccessModal';
 
 export function CompanyRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [submitMessage, setSubmitMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -35,7 +35,6 @@ export function CompanyRegisterForm(): React.JSX.Element {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const router = useRouter();
-
   const {
     register,
     handleSubmit,
@@ -110,7 +109,49 @@ export function CompanyRegisterForm(): React.JSX.Element {
           }
         }
 
-        setSubmitMessage({ type: 'success', text: 'Company profile updated successfully.' });
+        let successText = 'Company profile updated successfully.';
+        try {
+          const aiVerification = await CompanyService.aiVerifyCompany();
+          const aiDecision = aiVerification?.ai_decision;
+          let status: 'Verified' | 'Unverified' | undefined;
+          if (aiDecision === 'Verified' || aiDecision === 'Unverified') {
+            status = aiDecision;
+          }
+
+          if (aiVerification?.company?.id) {
+            setCompanyId(String(aiVerification.company.id));
+          }
+          if (!status) {
+            const backendStatus = aiVerification?.company?.verified_status;
+            if (backendStatus === 'Verified' || backendStatus === 'Unverified') {
+              status = backendStatus;
+            }
+          }
+
+          if (status && aiVerification?.company) {
+            aiVerification.company.verified_status = status;
+          }
+
+          if (status) {
+            successText = `Company profile submitted. Verification status: ${status}.`;
+          } else {
+            successText = 'Company profile submitted. Verification complete.';
+          }
+
+          if (status && typeof updateSession === 'function') {
+            await updateSession({
+              backendUser: {
+                ...(session?.backendUser ?? {}),
+                verified_status: status,
+              },
+            });
+          }
+        } catch (verifyError) {
+          console.warn('AI verification failed, continuing with registration:', verifyError);
+          successText = 'Company profile submitted. Verification will be completed soon.';
+        }
+
+        setSubmitMessage({ type: 'success', text: successText });
         setIsSuccessOpen(true);
         reset();
       } catch (error) {

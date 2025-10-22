@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useTransition, useState, useEffect } from 'react';
+import { useRef, useTransition, useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,7 +20,9 @@ import { Upload, X, Camera, User } from 'lucide-react';
 import { WarningModal } from '@/components/modals';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
 import type { Company } from '@/types/company';
+import { normalizeUser } from '@/lib/utils/user';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
+import { mapBackendToDisplay, mapFrontendToBackend } from '@/lib/utils/size';
 
 interface EditProfileModalProps {
   readonly isOpen: boolean;
@@ -49,6 +51,9 @@ export default function EditProfileModal({
   // File states
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
+  // Normalize user info from company (in case backend places contact under nested shapes)
+  const normalized = normalizeUser(company as any);
+
   const [logoPreview, setLogoPreview] = useState<string>(company.logoUrl || '');
   const [bannerPreview, setBannerPreview] = useState<string>(company.bannerUrl || '');
 
@@ -60,6 +65,7 @@ export default function EditProfileModal({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isDirty },
     setError,
     clearErrors,
@@ -68,25 +74,56 @@ export default function EditProfileModal({
     resolver: zodResolver(companyRegisterSchema),
     defaultValues: {
       companyName: company.name,
-      email: company.email,
-      phone: company.phone,
+      email: normalized.email || company.email,
+      phone: normalized.tel || company.phone,
       overview: company.about,
       industry: company.industry,
-      companySize: company.employeeCount,
+      companySize: mapBackendToDisplay(company.size),
     },
   });
 
   // Check if there are any changes
   const hasChanges = isDirty || logoFile !== null || bannerFile !== null;
+  const selectedIndustry = watch('industry');
+  const selectedCompanySize = watch('companySize');
+
+  const industryOptions = useMemo(() => {
+    if (!company.industry) {
+      return [...INDUSTRY_OPTIONS];
+    }
+
+    const hasExisting = INDUSTRY_OPTIONS.some((option) => option.value === company.industry);
+    return hasExisting
+      ? [...INDUSTRY_OPTIONS]
+      : [{ value: company.industry, label: company.industry }, ...INDUSTRY_OPTIONS];
+  }, [company.industry]);
+
+  const companySizeDisplayValue = useMemo(
+    () => mapBackendToDisplay(company.size),
+    [company.size]
+  );
+
+  const companySizeOptions = useMemo(() => {
+    if (!companySizeDisplayValue) {
+      return [...COMPANY_SIZE_OPTIONS];
+    }
+
+    const hasExisting = COMPANY_SIZE_OPTIONS.some(
+      (option) => option.value === companySizeDisplayValue
+    );
+    return hasExisting
+      ? [...COMPANY_SIZE_OPTIONS]
+      : [{ value: companySizeDisplayValue, label: companySizeDisplayValue }, ...COMPANY_SIZE_OPTIONS];
+  }, [companySizeDisplayValue]);
 
   useEffect(() => {
     reset({
       companyName: company.name,
-      email: company.email,
-      phone: company.phone,
+      email: normalized.email || company.email,
+      phone: normalized.tel || company.phone,
       overview: company.about,
       industry: company.industry,
-      companySize: company.employeeCount,
+      companySize: mapBackendToDisplay(company.size),
     });
     setLogoPreview(company.logoUrl || '');
     setBannerPreview(company.bannerUrl || '');
@@ -160,7 +197,7 @@ export default function EditProfileModal({
           email: data.email,
           phone: data.phone,
           industry: data.industry,
-          employeeCount: data.companySize,
+          size: mapFrontendToBackend(data.companySize) ?? data.companySize,
         };
 
         // Pass the files to the save handler
@@ -423,6 +460,9 @@ export default function EditProfileModal({
                   {...register('email')}
                   className="bg-very-dark-gray border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter email address"
+                  disabled
+                  readOnly
+                  title="Email cannot be changed"
                 />
                 {errors.email && (
                   <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
@@ -467,8 +507,9 @@ export default function EditProfileModal({
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-white">Industry</Label>
                 <Select
+                  value={selectedIndustry || undefined}
                   onValueChange={(value) => {
-                    setValue('industry', value);
+                    setValue('industry', value, { shouldDirty: true });
                     clearErrors('industry');
                   }}
                 >
@@ -476,7 +517,7 @@ export default function EditProfileModal({
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
                   <SelectContent className="bg-very-dark-gray border-zinc-600">
-                    {INDUSTRY_OPTIONS.map((option) => (
+                    {industryOptions.map((option) => (
                       <SelectItem
                         key={option.value}
                         value={option.value}
@@ -505,8 +546,9 @@ export default function EditProfileModal({
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-white">Company Size</Label>
                 <Select
+                  value={selectedCompanySize || undefined}
                   onValueChange={(value) => {
-                    setValue('companySize', value);
+                    setValue('companySize', value, { shouldDirty: true });
                     clearErrors('companySize');
                   }}
                 >
@@ -514,7 +556,7 @@ export default function EditProfileModal({
                     <SelectValue placeholder="Select company size" />
                   </SelectTrigger>
                   <SelectContent className="bg-very-dark-gray border-zinc-600">
-                    {COMPANY_SIZE_OPTIONS.map((option) => (
+                    {companySizeOptions.map((option) => (
                       <SelectItem
                         key={option.value}
                         value={option.value}
