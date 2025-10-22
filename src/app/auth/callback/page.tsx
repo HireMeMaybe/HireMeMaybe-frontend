@@ -46,8 +46,17 @@ export default function AuthCallbackPage() {
     function getRedirectPath(
       isRegistered: boolean,
       selectedRole: string | null,
-      backendUser: { id?: string | number; name?: string } | null
+      backendUser: { id?: string | number; name?: string; verified_status?: string } | null
     ): string {
+      // If company is unverified, redirect to unverify page
+      if (selectedRole === 'Company' && backendUser) {
+        const verifiedStatus = (backendUser as any)?.verified_status;
+        const isUnverified = verifiedStatus && String(verifiedStatus).toLowerCase() !== 'verified';
+        if (isUnverified) {
+          return '/unverify';
+        }
+      }
+
       if (isRegistered) {
         return selectedRole === 'Company' || backendUser?.name
           ? `/company/${backendUser?.id ?? ''}`

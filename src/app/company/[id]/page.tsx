@@ -1,18 +1,42 @@
 // src/app/company/[id]/page.tsx
-import { CompanyProfile } from "@/features/company-profile";
+import { CompanyProfile } from '@/features/company-profile';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 
 interface CompanyProfilePageProps {
   readonly params: Promise<{ id: string }>;
-  readonly searchParams: Promise<{ view?: "student" | "company" }>;
+  readonly searchParams: Promise<{ view?: 'owner' | 'company' | 'cpsk' }>;
 }
 
-export default async function CompanyProfilePage({ params, searchParams }: CompanyProfilePageProps) {
+export default async function CompanyProfilePage({
+  params,
+  searchParams,
+}: CompanyProfilePageProps) {
   const { id } = await params;
   const { view } = await searchParams;
+  const session = await getServerSession(authOptions);
+
+  // Determine viewType based on session and query param
+  let viewType: 'owner' | 'company' | 'cpsk' = view || 'cpsk';
+
+  // If no explicit view param, determine from session
+  if (!view && session) {
+    // Check if user is the owner of this company
+    const isOwner = session.backendUser?.id === id;
+    const userRole = session.backendUser?.role;
+
+    if (isOwner && userRole === 'Company') {
+      viewType = 'owner';
+    } else if (userRole === 'Company') {
+      viewType = 'company';
+    } else {
+      viewType = 'cpsk';
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <CompanyProfile companyId={id} viewType={view || "student"} />
+    <div className="bg-background min-h-screen">
+      <CompanyProfile companyId={id} viewType={viewType} />
     </div>
   );
 }
