@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -12,8 +12,8 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
   const router = useRouter();
   const { applications, totalApplications, isLoading, error } = useJobApplications({ jobId });
 
-  // Use the useCompanyProfile hook to get jobOpenings
-  const { jobOpenings } = useCompanyProfile(companyId);
+  // Use the useCompanyProfile hook to get jobOpenings (viewing own company, so isOwner = true)
+  const { jobOpenings } = useCompanyProfile(companyId, true);
 
   // Get job data from jobOpenings
   const jobData = jobOpenings.find((job) => job.id === jobId);
@@ -34,9 +34,9 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="bg-background flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary-green border-t-transparent rounded-full animate-spin"></div>
+          <div className="border-primary-green h-12 w-12 animate-spin rounded-full border-4 border-t-transparent"></div>
           <p className="text-gray-text">Loading applications...</p>
         </div>
       </div>
@@ -45,15 +45,15 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
 
   if (error || !jobData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="bg-background flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">Applications Not Found</h2>
+          <h2 className="mb-2 text-2xl font-bold text-white">Applications Not Found</h2>
           <p className="text-gray-text mb-4">
             {error || 'The job applications you are looking for do not exist.'}
           </p>
-          <Button 
+          <Button
             onClick={handleBackToProfile}
-            className="bg-primary-green hover:bg-green-700 text-white"
+            className="bg-primary-green text-white hover:bg-green-700"
           >
             Go Back
           </Button>
@@ -63,27 +63,23 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="bg-background min-h-screen">
+      <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Header */}
         <div className="mb-8">
           {/* Back Button */}
           <Button
             onClick={handleBackToProfile}
             variant="ghost"
-            className="text-gray-400 hover:text-white mb-4 px-0 cursor-pointer"
+            className="mb-4 cursor-pointer px-0 text-gray-400 hover:text-white"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Company Profile
           </Button>
-          
+
           {/* Page Title */}
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {jobData.title} Applications
-          </h1>
-          <p className="text-gray-400">
-            {totalApplications} applications received
-          </p>
+          <h1 className="mb-2 text-3xl font-bold text-white">{jobData.title} Applications</h1>
+          <p className="text-gray-400">{totalApplications} applications received</p>
         </div>
 
         {/* Applications List */}
@@ -98,7 +94,7 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
               />
             ))
           ) : (
-            <div className="text-center py-12">
+            <div className="py-12 text-center">
               <p className="text-gray-text text-lg">No applications found for this position.</p>
             </div>
           )}

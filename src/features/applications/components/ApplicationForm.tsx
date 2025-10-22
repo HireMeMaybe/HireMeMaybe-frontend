@@ -28,6 +28,7 @@ import { CpskService } from '@/lib/services/cpsk.service';
 import { useSoftSkills } from '@/features/cpsk-register/hooks/useSoftSkills';
 import { useResumeUpload } from '@/features/cpsk-register/hooks/useResumeUpload';
 import { useProfile } from '@/features/profile/hooks/useProfile';
+import { normalizeUser } from '@/lib/utils/user';
 import { useApplicationSubmit } from '@/features/applications/hooks';
 
 interface ApplicationFormProps {
@@ -102,8 +103,9 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       // Populate basic info
       if (profileData.first_name) setValue('name', profileData.first_name);
       if (profileData.last_name) setValue('surname', profileData.last_name);
-      if (profileData.User?.email) setValue('email', profileData.User.email);
-      if (profileData.User?.tel) setValue('phone', profileData.User.tel);
+      const n = normalizeUser(profileData.User as any);
+      if (n.email) setValue('email', n.email);
+      if (n.tel) setValue('phone', n.tel);
       if (profileData.program) {
         const majorValue =
           profileData.program === 'CPE' ? 'CPE' : profileData.program === 'SKE' ? 'SKE' : '';
