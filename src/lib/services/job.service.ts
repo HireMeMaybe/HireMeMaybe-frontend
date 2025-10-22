@@ -150,7 +150,7 @@ export class JobService {
    */
   static async getCompanyJobs(companyId?: string): Promise<JobPost[]> {
     try {
-      const endpoint = companyId ? `/companies/${companyId}/jobs` : '/jobs/my-posts';
+      const endpoint = companyId ? `/company/${companyId}/jobs` : '/jobs/my-posts';
       return await apiClient.get<JobPost[]>(endpoint);
     } catch (error) {
       if (error instanceof ApiError) {
