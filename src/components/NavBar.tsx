@@ -16,12 +16,24 @@ export default function Navbar() {
   const pathname = usePathname();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
+
   // Type guard for app-extended session property
   function hasIsRegistered(obj: unknown): obj is { isRegistered?: boolean } {
     return typeof obj === 'object' && obj !== null && 'isRegistered' in obj;
   }
 
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
+  const backendUser = session?.backendUser;
+  const isCompany = backendUser?.role === 'Company';
+  const verifiedStatus =
+    ((backendUser as any)?.company as any)?.verified_status ??
+    backendUser?.verified_status ??
+    null;
+  const isUnverifiedCompany = isCompany && String(verifiedStatus).toLowerCase() !== 'verified';
+  const profileHref = isCompany
+    ? `/company/${backendUser?.id ?? ''}?view=company`
+    : '/profile';
+
   const scrollToLoginSection = () => {
     setOpen(false);
     const el = typeof document !== 'undefined' ? document.getElementById('login-section') : null;
@@ -118,24 +130,38 @@ export default function Navbar() {
                     </div>
                   </div>
                 </div>
-                <a
-                  href="/profile"
-                  className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
-                >
-                  <UserPen className="h-4 w-4" />
-                  View profile
-                </a>
-                <a
-                  href="/history"
-                  className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
-                >
-                  <History className="h-4 w-4" />
-                  History
-                </a>
+                {!isUnverifiedCompany && (
+                  <a
+                    href={profileHref}
+                    className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+                  >
+                    <UserPen className="h-4 w-4" />
+                    View profile
+                  </a>
+                )}
+                {!isUnverifiedCompany && (
+                  session?.backendUser?.role === 'Company' ? (
+                    <a
+                      href={`/company/${session.backendUser?.id ?? ''}?view=company`}
+                      className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+                    >
+                      <History className="h-4 w-4" />
+                      Applications
+                    </a>
+                  ) : (
+                    <a
+                      href="/history"
+                      className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+                    >
+                      <History className="h-4 w-4" />
+                      History
+                    </a>
+                  )
+                )}
                 <button
                   onClick={() => {
-                    signOut();
                     setOpen(false);
+                    signOut({ callbackUrl: '/' });
                   }}
                   className="flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-left hover:bg-white/5"
                 >

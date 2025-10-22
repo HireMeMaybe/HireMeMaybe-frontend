@@ -5,6 +5,7 @@ import { useCompanyVerification } from '@/features/admin/hooks/useCompanyVerific
 import type { CompanyVerification } from '@/lib/services';
 import ReconsiderModal from '@/components/modals/ReconsiderModal';
 import SuccessModal from '@/components/modals/SuccessModal'; // Import the success modal component
+import { capitalize } from '@/lib/utils/string';
 
 export function CompanyVerificationPage() {
   const { companies, isLoading, refetch, reconsiderCompany } = useCompanyVerification();
@@ -25,7 +26,7 @@ export function CompanyVerificationPage() {
   const handleView = (company: CompanyVerification) => {
     console.log('View company:', company);
     // In a real app, navigate to company details page
-    window.open(`/companies/${company.id}`, '_blank');
+    window.open(`/company/${company.id}`, '_blank');
   };
 
   const handleReconsider = async () => {
@@ -96,7 +97,9 @@ export function CompanyVerificationPage() {
                         <div className="font-medium text-white">{company.name}</div>
                         <div className="mt-1 text-xs text-gray-400">{company.location}</div>
                       </td>
-                      <td className="px-6 py-4 align-top text-gray-200">{company.industry}</td>
+                      <td className="px-6 py-4 align-top text-gray-200">
+                        {capitalize(company.industry)}
+                      </td>
                       <td className="px-6 py-4 align-top text-gray-200">{company.contact}</td>
                       <td className="px-6 py-4 align-top text-gray-200">{company.submitted}</td>
                       <td className="px-6 py-4 align-top">
