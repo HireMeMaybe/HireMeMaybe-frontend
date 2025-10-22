@@ -93,7 +93,7 @@ export function ManageJobPostsPage() {
                       <td className="px-6 py-4 align-top text-gray-200">{post.posted}</td>
                       <td className="px-6 py-4 align-top">
                         <span className={`font-medium ${getReportColor(post.reports)}`}>
-                          {post.reports} {post.reports === 1 ? 'report' : 'reports'}
+                          {post.reports}
                         </span>
                       </td>
                       <td className="px-6 py-4 align-top">

@@ -8,3 +8,8 @@ export { AdminAuthGuard } from "./components/AdminAuthGuard";
 export { CompanyVerificationPage } from './components/CompanyVerificationPage';
 export { useCompanyVerification } from './hooks/useCompanyVerification';
 export type { CompanyVerification } from './hooks/useCompanyVerification';
+export { ManageCPSKPage } from './components/ManageCPSKPage';
+export { ManageCompaniesPage } from './components/ManageCompaniesPage';
+export { useCPSK } from './hooks/useCPSK';
+export { useManageCompanies } from './hooks/useManageCompanies';
+export type { CPSKAccount, ManagedCompany } from '@/types/admin';

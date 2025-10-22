@@ -9,3 +9,7 @@ export { default as UnsuccessModal } from './UnsuccessModal';
 export { default as WarningModal } from './WarningModal';
 export { ResumePreviewModal } from './ResumePreviewModal';
 export { default as ReconsiderModal } from './ReconsiderModal';
+export { default as SuspendModal } from './SuspendModal';
+export { default as BanModal } from './BanModal';
+export { default as CancelSuspendModal } from './CancelSuspendModal';
+export { default as UnbanModal } from './UnbanModal';
