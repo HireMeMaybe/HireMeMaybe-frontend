@@ -5,7 +5,7 @@
  */
 
 import { apiClient, ApiError } from './api-client';
-import type { CPSKAccount, JobPostItem, ManagedCompany } from '@/types/admin';
+import type { CPSKAccount, JobPostItem, ManagedCompany, VisitorAccount, VisitorReport } from '@/types/admin';
 
 export interface Report {
   id: string;
@@ -474,6 +474,122 @@ export class AdminService {
       return await apiClient.post(`/admin/companies/${companyId}/unban`);
     } catch (error) {
       throw new Error(`Failed to unban company: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Get all visitor accounts
+   */
+  static async getVisitorAccounts(): Promise<VisitorAccount[]> {
+    const mockAccounts: VisitorAccount[] = [
+      {
+        id: 1,
+        name: 'Jane Visitor',
+        email: 'jane.v@example.com',
+        reportCount: 0,
+        status: 'Active',
+      },
+      {
+        id: 2,
+        name: 'Bob Reporter',
+        email: 'bob.r@example.com',
+        reportCount: 3,
+        status: 'Active',
+      },
+      {
+        id: 3,
+        name: 'Spam User',
+        email: 'spam@example.com',
+        reportCount: 12,
+        status: 'Suspended',
+      },
+      {
+        id: 4,
+        name: 'Banned Visitor',
+        email: 'banned@example.com',
+        reportCount: 25,
+        status: 'Banned',
+      },
+    ];
+    try {
+      return await apiClient.get<VisitorAccount[]>('/admin/visitors');
+    } catch (error) {
+      console.warn('AdminService.getVisitorAccounts: backend unavailable, returning mock data', error);
+      return mockAccounts;
+    }
+  }
+
+  /**
+   * Suspend a visitor account
+   */
+  static async suspendVisitorAccount(visitorId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/visitors/${visitorId}/suspend`);
+    } catch (error) {
+      throw new Error(`Failed to suspend visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Reactivate a visitor account
+   */
+  static async reactivateVisitorAccount(visitorId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/visitors/${visitorId}/reactivate`);
+    } catch (error) {
+      throw new Error(`Failed to reactivate visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Ban a visitor account
+   */
+  static async banVisitorAccount(visitorId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/visitors/${visitorId}/ban`);
+    } catch (error) {
+      throw new Error(`Failed to ban visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Unban a visitor account
+   */
+  static async unbanVisitorAccount(visitorId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.post(`/admin/visitors/${visitorId}/unban`);
+    } catch (error) {
+      throw new Error(`Failed to unban visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Get reports submitted by a visitor
+   */
+  static async getVisitorReports(visitorId: number): Promise<VisitorReport[]> {
+    const mockReports: VisitorReport[] = [
+      {
+        id: 1,
+        reportedEntity: 'Software Engineer Position',
+        reportedEntityType: 'Job',
+        reason: 'Misleading job description',
+        submitted: '2025-10-15',
+        status: 'Pending',
+      },
+      {
+        id: 2,
+        reportedEntity: 'Tech Solutions Co.',
+        reportedEntityType: 'Company',
+        reason: 'Spam job postings',
+        submitted: '2025-10-10',
+        status: 'Reviewed',
+      },
+    ];
+    try {
+      return await apiClient.get<VisitorReport[]>(`/admin/visitors/${visitorId}/reports`);
+    } catch (error) {
+      console.warn('AdminService.getVisitorReports: backend unavailable, returning mock data', error);
+      return mockReports;
     }
   }
 }
