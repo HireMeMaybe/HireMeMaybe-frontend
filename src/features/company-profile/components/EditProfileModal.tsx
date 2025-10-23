@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Upload, X, Camera, User } from 'lucide-react';
 import { WarningModal } from '@/components/modals';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
-import type { Company, BackendCompanyResponse } from '@/types/company';
+import type { Company } from '@/types/company';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
 import { mapBackendToDisplay, mapFrontendToBackend } from '@/lib/utils/size';
 import { normalizeUser } from '@/lib/utils/user';
@@ -58,7 +58,7 @@ export default function EditProfileModal({
 
   // Get session to access backendUser for email/phone
   const { data: session } = useSession();
-  const backendUser = (session?.backendUser as any) ?? null;
+  const backendUser = (session?.backendUser as Record<string, unknown>) ?? null;
 
   // Backend returns either 'User' or 'user' field - try both
   const userField = backendUser?.User ?? backendUser?.user ?? null;
@@ -80,7 +80,6 @@ export default function EditProfileModal({
     formState: { errors, isDirty },
     setError,
     clearErrors,
-    reset,
   } = useForm<CompanyRegisterFormData>({
     resolver: zodResolver(companyRegisterSchema),
     defaultValues: {

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/services/api-client';
 import { CompanyService } from '@/lib/services/company.service';
 import { useSession } from 'next-auth/react';
 import type { Session } from 'next-auth';
@@ -131,6 +130,32 @@ async function hydrateCompany(data: BackendCompanyResponse): Promise<Company> {
   };
 }
 
+// Fetch company data based on ownership status
+async function fetchCompanyData(
+  isOwner: boolean,
+  companyId: string,
+  sessionUpdater?: (partial: Partial<Session>) => Promise<void>
+): Promise<BackendCompanyResponse> {
+  if (isOwner) {
+    return await CompanyService.getMyProfileAndSync(sessionUpdater);
+  }
+  return await CompanyService.getCompany(companyId);
+}
+
+// Process fetched company data
+async function processCompanyData(
+  data: BackendCompanyResponse
+): Promise<{ company: Company; jobs: JobOpening[] }> {
+  const hydratedCompany = await hydrateCompany(data);
+  const jobs = mapJobOpenings(data.job_post);
+
+  if (!('job_post' in data)) {
+    console.warn('company.myprofile did not include job_post field; no jobs will be shown');
+  }
+
+  return { company: hydratedCompany, jobs };
+}
+
 export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
   const [company, setCompany] = useState<Company | null>(null);
   const [jobOpenings, setJobOpenings] = useState<JobOpening[]>([]);
@@ -154,18 +179,8 @@ export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
               }
             : undefined;
 
-        // For owner: fetch and sync session with fresh User data
-        // For non-owner: just fetch public profile, no session sync
-        const data = isOwner
-          ? await CompanyService.getMyProfileAndSync(sessionUpdater)
-          : await CompanyService.getCompany(companyId);
-
-        const hydratedCompany = await hydrateCompany(data);
-        const jobs = mapJobOpenings(data.job_post);
-
-        if (!('job_post' in data)) {
-          console.warn('company.myprofile did not include job_post field; no jobs will be shown');
-        }
+        const data = await fetchCompanyData(isOwner, companyId, sessionUpdater);
+        const { company: hydratedCompany, jobs } = await processCompanyData(data);
 
         if (mounted) {
           setCompany(hydratedCompany);

@@ -297,7 +297,7 @@ export class CompanyService {
           : null;
 
       // Extract User data from the company response
-      const userData = (company as any)?.User || company?.user;
+      const userData = (company as unknown as Record<string, unknown>)?.User || company?.user;
 
       const companyPayload = {
         ...company,
@@ -312,7 +312,7 @@ export class CompanyService {
           User: userData,
           // keep verified_status at top-level for backward compatibility
           verified_status: normalizedStatus ?? null,
-        } as any,
+        } as Record<string, unknown>,
       };
 
       try {

@@ -73,7 +73,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
 
         // Remove undefined values to avoid sending empty fields
         const cleanedPayload = Object.fromEntries(
-          Object.entries(profilePayload).filter(([_, v]) => v !== undefined)
+          Object.entries(profilePayload).filter(([, v]) => v !== undefined)
         );
 
         console.log('Sending payload to backend:', cleanedPayload);
@@ -89,7 +89,10 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
             const logoResponse = await CompanyService.uploadProfileLogo(logoFile);
             console.log('Logo upload response:', logoResponse);
             // Backend should return updated profile with logo_id
-            logoId = (logoResponse as any)?.logo_id || logoId;
+            logoId =
+              ((logoResponse as unknown as Record<string, unknown>)?.logo_id as
+                | number
+                | undefined) || logoId;
           } catch (e) {
             console.error('Logo upload failed:', e);
             throw new Error('Profile updated but logo upload failed.');
@@ -102,7 +105,10 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
             const bannerResponse = await CompanyService.uploadProfileBanner(bannerFile);
             console.log('Banner upload response:', bannerResponse);
             // Backend should return updated profile with banner_id
-            bannerId = (bannerResponse as any)?.banner_id || bannerId;
+            bannerId =
+              ((bannerResponse as unknown as Record<string, unknown>)?.banner_id as
+                | number
+                | undefined) || bannerId;
           } catch (e) {
             console.error('Banner upload failed:', e);
             throw new Error('Profile updated but banner upload failed.');

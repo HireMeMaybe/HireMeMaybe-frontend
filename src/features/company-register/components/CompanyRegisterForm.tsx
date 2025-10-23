@@ -23,6 +23,114 @@ import { CompanyService } from '@/lib/services/company.service';
 import ConfirmationModal from '@/components/modals/ConfirmModal'; // Import ConfirmModal
 import SuccessModal from '@/components/modals/SuccessModal';
 
+// Helper: Upload company files (logo and banner)
+async function uploadCompanyFiles(
+  logoFile: File | undefined,
+  bannerFile: File | undefined
+): Promise<{ success: boolean; error?: string }> {
+  if (logoFile instanceof File) {
+    try {
+      await CompanyService.uploadProfileLogo(logoFile);
+    } catch (e) {
+      console.error('Logo upload failed:', e);
+      return { success: false, error: 'Profile updated but logo upload failed.' };
+    }
+  }
+
+  if (bannerFile instanceof File) {
+    try {
+      await CompanyService.uploadProfileBanner(bannerFile);
+    } catch (e) {
+      console.error('Banner upload failed:', e);
+      return { success: false, error: 'Profile updated but banner upload failed.' };
+    }
+  }
+
+  return { success: true };
+}
+
+// Helper: Determine verification status from AI response
+function extractVerificationStatus(aiVerification: unknown): 'Verified' | 'Unverified' | undefined {
+  if (!aiVerification || typeof aiVerification !== 'object') return undefined;
+
+  const verification = aiVerification as Record<string, unknown>;
+  const aiDecision = verification.ai_decision;
+  if (aiDecision === 'Verified' || aiDecision === 'Unverified') {
+    return aiDecision;
+  }
+
+  const backendStatus = (verification.company as Record<string, unknown> | undefined)
+    ?.verified_status;
+  if (backendStatus === 'Verified' || backendStatus === 'Unverified') {
+    return backendStatus;
+  }
+
+  return undefined;
+}
+
+// Helper: Perform AI verification and extract company ID
+async function performAIVerification(): Promise<{
+  status: 'Verified' | 'Unverified' | undefined;
+  companyId: string | null;
+  successText: string;
+}> {
+  try {
+    const aiVerification = await CompanyService.aiVerifyCompany();
+    const status = extractVerificationStatus(aiVerification);
+
+    let companyId: string | null = null;
+    if ((aiVerification?.company as unknown as Record<string, unknown> | undefined)?.id) {
+      companyId = String((aiVerification.company as unknown as Record<string, unknown>).id);
+    }
+
+    if (status && aiVerification?.company) {
+      (aiVerification.company as unknown as Record<string, unknown>).verified_status = status;
+    }
+
+    const successText = status
+      ? `Company profile submitted. Verification status: ${status}.`
+      : 'Company profile submitted. Verification complete.';
+
+    return { status, companyId, successText };
+  } catch (verifyError) {
+    console.warn('AI verification failed, continuing with registration:', verifyError);
+    return {
+      status: 'Unverified',
+      companyId: null,
+      successText: 'Company profile submitted. Verification will be completed soon.',
+    };
+  }
+}
+
+// Helper: Update session with verification status
+async function updateSessionWithStatus(
+  updateSession: unknown,
+  session: unknown,
+  status: 'Verified' | 'Unverified',
+  companyName: string
+): Promise<void> {
+  if (typeof updateSession !== 'function') return;
+
+  const sess = session as Record<string, unknown> | null | undefined;
+  const existingCompany =
+    ((sess?.backendUser as Record<string, unknown> | undefined)?.company as
+      | Record<string, unknown>
+      | undefined) ?? {};
+
+  await updateSession({
+    backendUser: {
+      ...((sess?.backendUser as Record<string, unknown>) ?? {}),
+      name: companyName,
+      verified_status: status,
+      company: {
+        ...existingCompany,
+        verified_status: status,
+      },
+    },
+    isRegistered: true,
+  });
+}
+
 export function CompanyRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
   const { data: session, update: updateSession } = useSession();
@@ -92,97 +200,33 @@ export function CompanyRegisterForm(): React.JSX.Element {
           setCompanyId(capturedId);
         }
 
-        // If logo file present, upload it using authenticated endpoint
-        if (data.logo instanceof File) {
-          try {
-            await CompanyService.uploadProfileLogo(data.logo);
-          } catch (e) {
-            console.error('Logo upload failed:', e);
-            setSubmitMessage({ type: 'error', text: 'Profile updated but logo upload failed.' });
-            return;
-          }
+        // Upload files (logo and banner)
+        const uploadResult = await uploadCompanyFiles(data.logo, data.banner);
+        if (!uploadResult.success) {
+          setSubmitMessage({ type: 'error', text: uploadResult.error! });
+          return;
         }
 
-        // If banner file present, upload it using authenticated endpoint
-        if (data.banner instanceof File) {
-          try {
-            await CompanyService.uploadProfileBanner(data.banner);
-          } catch (e) {
-            console.error('Banner upload failed:', e);
-            setSubmitMessage({ type: 'error', text: 'Profile updated but banner upload failed.' });
-            return;
-          }
+        // Perform AI verification
+        const { status, companyId: verifiedCompanyId, successText } = await performAIVerification();
+
+        // Update company ID if verification returned one
+        if (verifiedCompanyId) {
+          setCompanyId(verifiedCompanyId);
         }
 
-        let successText = 'Company profile updated successfully.';
-        try {
-          const aiVerification = await CompanyService.aiVerifyCompany();
-          const aiDecision = aiVerification?.ai_decision;
-          let status: 'Verified' | 'Unverified' | undefined;
-          if (aiDecision === 'Verified' || aiDecision === 'Unverified') {
-            status = aiDecision;
-          }
-
-          if (aiVerification?.company?.id) {
-            const capturedId = String(aiVerification.company.id);
-            setCompanyId(capturedId);
-          }
-          if (!status) {
-            const backendStatus = aiVerification?.company?.verified_status;
-            if (backendStatus === 'Verified' || backendStatus === 'Unverified') {
-              status = backendStatus;
-            }
-          }
-
-          if (status && aiVerification?.company) {
-            aiVerification.company.verified_status = status;
-          }
-
-          if (status) {
-            successText = `Company profile submitted. Verification status: ${status}.`;
-            setVerificationStatus(status);
-          } else {
-            successText = 'Company profile submitted. Verification complete.';
-          }
-
-          if (status && typeof updateSession === 'function') {
-            const existingCompany =
-              (session?.backendUser?.company as Record<string, unknown> | undefined) ?? {};
-            await updateSession({
-              backendUser: {
-                ...(session?.backendUser ?? {}),
-                verified_status: status,
-                company: {
-                  ...existingCompany,
-                  verified_status: status,
-                },
-              },
-              isRegistered: true,
-            });
-          }
-        } catch (verifyError) {
-          console.warn('AI verification failed, continuing with registration:', verifyError);
-          successText = 'Company profile submitted. Verification will be completed soon.';
-          setVerificationStatus('Unverified');
-
-          // Update session even when AI verification fails
-          if (typeof updateSession === 'function') {
-            const existingCompany =
-              (session?.backendUser?.company as Record<string, unknown> | undefined) ?? {};
-            await updateSession({
-              backendUser: {
-                ...(session?.backendUser ?? {}),
-                name: data.companyName,
-                verified_status: 'Unverified',
-                company: {
-                  ...existingCompany,
-                  verified_status: 'Unverified',
-                },
-              },
-              isRegistered: true,
-            });
-          }
+        // Update verification status
+        if (status) {
+          setVerificationStatus(status);
         }
+
+        // Update session with verification status
+        await updateSessionWithStatus(
+          updateSession,
+          session,
+          status || 'Unverified',
+          data.companyName
+        );
 
         setSubmitMessage({ type: 'success', text: successText });
         setIsSuccessOpen(true);
