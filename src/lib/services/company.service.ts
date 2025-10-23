@@ -5,6 +5,7 @@
 
 import { apiClient, ApiError } from './api-client';
 import { mapFrontendToBackend } from '@/lib/utils/size';
+import type { Session } from 'next-auth';
 
 interface CompanyProfile {
   id: string;
@@ -68,16 +69,6 @@ interface CompanyProfileResponse {
     username?: string;
   };
   verified_status?: string;
-}
-
-interface CompanyRegistrationData {
-  name: string;
-  email: string;
-  phone: string;
-  description?: string;
-  website?: string;
-  location?: string;
-  industry?: string;
 }
 
 interface AIVerificationResponse {
@@ -211,8 +202,20 @@ export class CompanyService {
       // Detect DB constraint error for company size and surface a clearer message
       if (error instanceof ApiError) {
         try {
-          const data = (error as any).data;
-          const text = typeof data === 'string' ? data : data?.message || JSON.stringify(data);
+          const data = error.data;
+          let text = '';
+          if (typeof data === 'string') {
+            text = data;
+          } else if (data && typeof data === 'object' && 'message' in data) {
+            const message = (data as { message?: unknown }).message;
+            text = typeof message === 'string' ? message : JSON.stringify(message);
+          } else if (data !== undefined) {
+            try {
+              text = JSON.stringify(data);
+            } catch {
+              text = '';
+            }
+          }
           const combined = `${error.message} ${text}`.toLowerCase();
           if (
             combined.includes('chk_companies_size') ||
@@ -223,7 +226,7 @@ export class CompanyService {
               'The selected company size is not accepted by the backend. Please choose a different size or ask the backend team for the allowed values.'
             );
           }
-        } catch (e) {
+        } catch {
           // fallthrough to generic message below
         }
 
@@ -275,38 +278,50 @@ export class CompanyService {
    */
   static async getCompanyAndSync(
     companyId: string,
-    updateSession?: (partialSession: Record<string, any>) => Promise<void> | void
+    updateSession?: (partialSession: Partial<Session>) => Promise<void> | void
   ): Promise<CompanyProfileResponse> {
     const company = await this.getCompany(companyId);
 
     // Only attempt to sync the client session when in a browser environment
     if (typeof window !== 'undefined') {
+      const verifiedStatus = company?.verified_status;
+      const normalizedStatus: 'Verified' | 'Pending' | 'Unverified' | null | undefined =
+        verifiedStatus === 'Verified' || verifiedStatus === 'Pending' || verifiedStatus === 'Unverified'
+          ? verifiedStatus
+          : null;
+
+      const companyPayload = {
+        ...company,
+        verified_status: company?.verified_status ?? null,
+      } as Record<string, unknown> & { verified_status?: string | null };
+
       const sessionPatch = {
         backendUser: {
-          company,
+          company: companyPayload,
           // keep verified_status at top-level for backward compatibility
-          verified_status: (company as any)?.verified_status,
+          verified_status: normalizedStatus ?? null,
         },
       };
 
       try {
         if (typeof updateSession === 'function') {
           // Caller provided the `update` function from useSession()
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore allow flexible shapes for partial session
-          await updateSession(sessionPatch as any);
-        } else if (typeof (window as any).__HMM_UPDATE_SESSION__ === 'function') {
+          await updateSession(sessionPatch);
+        } else {
+          const globalWindow = window as typeof window & {
+            __HMM_UPDATE_SESSION__?: (patch: Partial<Session>) => Promise<void> | void;
+          };
           // Optional global hook: window.__HMM_UPDATE_SESSION__ = update (set by app root if desired)
           try {
-            await (window as any).__HMM_UPDATE_SESSION__(sessionPatch);
-          } catch (e) {
+            await globalWindow.__HMM_UPDATE_SESSION__?.(sessionPatch);
+          } catch (hookError) {
             // ignore failures from the global hook
-            console.warn('Global session update hook failed', e);
+            console.warn('Global session update hook failed', hookError);
           }
         }
-      } catch (e) {
+      } catch (updateError) {
         // Don't fail the fetch if session syncing fails; just warn
-        console.warn('Failed to update client session after fetching company', e);
+        console.warn('Failed to update client session after fetching company', updateError);
       }
     }
 

@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     try {
       new URL(backendUrl);
     } catch (err) {
-      console.error('Invalid NEXT_PUBLIC_BACKEND_URL:', backendUrl);
+      console.error('Invalid NEXT_PUBLIC_BACKEND_URL:', backendUrl, err);
       return NextResponse.json(
         { success: false, message: 'invalid backend URL configuration' },
         { status: 500 }

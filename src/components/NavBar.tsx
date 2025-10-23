@@ -29,10 +29,19 @@ export default function Navbar() {
   }
 
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
-  const backendUser = session?.backendUser;
+  type BackendUser = {
+    role?: string | null;
+    verified_status?: string | null;
+    company?: { verified_status?: string | null } | null;
+    id?: string | number;
+    name?: string | null;
+    first_name?: string | null;
+    User?: { profile_picture?: string | null } | null;
+  };
+
+  const backendUser = session?.backendUser as BackendUser | undefined;
   const isCompany = backendUser?.role === 'Company';
-  const verifiedStatus =
-    ((backendUser as any)?.company as any)?.verified_status ?? backendUser?.verified_status ?? null;
+  const verifiedStatus = backendUser?.company?.verified_status ?? backendUser?.verified_status ?? null;
   const isUnverifiedCompany = isCompany && String(verifiedStatus).toLowerCase() !== 'verified';
   const profileHref = isCompany ? `/company/${backendUser?.id ?? ''}?view=company` : '/profile';
 

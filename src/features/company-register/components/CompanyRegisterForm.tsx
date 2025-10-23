@@ -19,7 +19,6 @@ import {
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
 import { useSession } from 'next-auth/react';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
-import { registerCompany } from '@/features/company-register/server/actions.server';
 import { CompanyService } from '@/lib/services/company.service';
 import ConfirmationModal from '@/components/modals/ConfirmModal'; // Import ConfirmModal
 import SuccessModal from '@/components/modals/SuccessModal';
@@ -61,8 +60,12 @@ export function CompanyRegisterForm(): React.JSX.Element {
 
   // Populate email from logged-in session and lock it
   useEffect(() => {
-    const emailFromBackend =
-      (session?.backendUser as any)?.User?.email ?? (session?.user as any)?.email ?? null;
+    type SessionCompanyUser = {
+      User?: { email?: string | null } | null;
+    };
+
+    const backendUser = session?.backendUser as SessionCompanyUser | undefined;
+    const emailFromBackend = backendUser?.User?.email ?? session?.user?.email ?? null;
     if (emailFromBackend) {
       setValue('email', String(emailFromBackend));
       clearErrors('email');

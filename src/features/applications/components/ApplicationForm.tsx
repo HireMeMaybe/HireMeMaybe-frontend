@@ -103,7 +103,7 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       // Populate basic info
       if (profileData.first_name) setValue('name', profileData.first_name);
       if (profileData.last_name) setValue('surname', profileData.last_name);
-      const n = normalizeUser(profileData.User as any);
+      const n = normalizeUser(profileData.User);
       if (n.email) setValue('email', n.email);
       if (n.tel) setValue('phone', n.tel);
       if (profileData.program) {

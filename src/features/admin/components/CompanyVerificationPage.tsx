@@ -8,7 +8,7 @@ import SuccessModal from '@/components/modals/SuccessModal'; // Import the succe
 import { capitalize } from '@/lib/utils/string';
 
 export function CompanyVerificationPage() {
-  const { companies, isLoading, refetch, reconsiderCompany } = useCompanyVerification();
+  const { companies, isLoading, refetch } = useCompanyVerification();
   const [selected, setSelected] = useState<CompanyVerification | null>(null);
   const [isReconsiderOpen, setIsReconsiderOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false); // State for success modal

@@ -13,7 +13,7 @@ import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/valid
 import type { Company } from '@/types/company';
 import { mapBackendToDisplay } from '@/lib/utils/size';
 import { capitalize } from '@/lib/utils/string';
-import { normalizeUser, isValidEmail, isValidPhone } from '@/lib/utils/user';
+import { isValidEmail, isValidPhone } from '@/lib/utils/user';
 
 interface CompanyHeaderProps {
   readonly company: Company;

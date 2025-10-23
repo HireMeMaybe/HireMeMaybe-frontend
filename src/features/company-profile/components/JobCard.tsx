@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Users, Edit, Eye } from 'lucide-react';
+import Image from 'next/image';
 import type { JobOpening } from '@/types/company';
 
 interface JobCardProps {
@@ -99,15 +100,17 @@ export default function JobCard({
 
       {/* Right Side - Job Image/Info */}
       <div className="ml-6 flex-shrink-0">
-        <div className="flex h-40 w-60 flex-col justify-between overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900 p-4">
+        <div className="relative h-40 w-60 overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
           {job.imageUrl ? (
-            <img
+            <Image
               src={job.imageUrl}
               alt={job.title}
-              className="h-full w-full rounded object-cover"
+              fill
+              className="object-cover"
+              sizes="240px"
             />
           ) : (
-            <>
+            <div className="flex h-full flex-col justify-between p-4">
               {/* Job Stats */}
               <div className="space-y-2">
                 {job.postedDate && (
@@ -131,7 +134,7 @@ export default function JobCard({
                   </p>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>

@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 const UnverifyPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const isCompany = session?.backendUser?.role === 'Company';
-  // backendUser shape can vary; access company via a safe cast to avoid strict type errors
-  const verifiedStatus =
-    ((session?.backendUser as any)?.company as any)?.verified_status ??
-    session?.backendUser?.verified_status ??
-    null;
+  type MaybeCompanyUser = {
+    role?: string | null;
+    verified_status?: string | null;
+    company?: { verified_status?: string | null } | null;
+  };
+
+  const backendUser = session?.backendUser as MaybeCompanyUser | undefined;
+  const isCompany = backendUser?.role === 'Company';
+  const verifiedStatus = backendUser?.company?.verified_status ?? backendUser?.verified_status ?? null;
   const isUnverified = isCompany && String(verifiedStatus).toLowerCase() !== 'verified';
 
   useEffect(() => {
@@ -36,7 +39,7 @@ const UnverifyPage = () => {
         <div className="mb-6">
           <p className="text-gray-300">
             Please wait for an administrator to reconsider your registration information. In the
-            meantime you won't be able to access certain company features until your account is
+            meantime you won&apos;t be able to access certain company features until your account is
             verified.
           </p>
           <div className="mt-4 flex gap-3">

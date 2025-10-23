@@ -121,7 +121,7 @@ function ProfileView({
               <p className="mb-1 font-medium text-white">Phone</p>
               <p className="text-gray-300">
                 {(() => {
-                  const u = normalizeUser(profileData?.User as any);
+                  const u = normalizeUser(profileData?.User);
                   if (u.tel) {
                     return isValidPhone(u.tel) ? (
                       <a className="underline" href={`tel:${u.tel.replace(/[^+0-9]/g, '')}`}>
@@ -143,7 +143,7 @@ function ProfileView({
               <p className="mb-1 font-medium text-white">Email</p>
               <p className="text-gray-300">
                 {(() => {
-                  const u = normalizeUser(profileData?.User as any);
+                  const u = normalizeUser(profileData?.User);
                   if (u.email) {
                     return isValidEmail(u.email) ? (
                       <a className="underline" href={`mailto:${u.email}`}>

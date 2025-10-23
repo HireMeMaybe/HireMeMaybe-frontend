@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from 'react';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
 
 interface AdminUser {
@@ -64,17 +71,17 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     };
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     const response = await AdminAuthService.login({ username, password });
     setUser(response.user);
     setIsAuthenticated(true);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     AdminAuthService.logout();
     setUser(null);
     setIsAuthenticated(false);
-  };
+  }, []);
 
   const value: AdminAuthContextType = React.useMemo(() => ({
     user,

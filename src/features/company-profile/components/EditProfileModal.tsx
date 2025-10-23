@@ -23,6 +23,7 @@ import type { Company } from '@/types/company';
 import { normalizeUser } from '@/lib/utils/user';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
 import { mapBackendToDisplay, mapFrontendToBackend } from '@/lib/utils/size';
+import type { BackendUser, BackendUserPascal } from '@/types/user';
 
 interface EditProfileModalProps {
   readonly isOpen: boolean;
@@ -51,8 +52,13 @@ export default function EditProfileModal({
   // File states
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
-  // Normalize user info from company (in case backend places contact under nested shapes)
-  const normalized = normalizeUser(company as any);
+  type CompanyWithUser = Company & {
+    user?: BackendUser | BackendUserPascal | null;
+    User?: BackendUserPascal | null;
+  };
+
+  const companyWithUser = company as CompanyWithUser;
+  const normalized = normalizeUser(companyWithUser.user ?? companyWithUser.User ?? null);
 
   const [logoPreview, setLogoPreview] = useState<string>(company.logoUrl || '');
   const [bannerPreview, setBannerPreview] = useState<string>(company.bannerUrl || '');
@@ -137,7 +143,7 @@ export default function EditProfileModal({
     // Clear errors and messages
     clearErrors();
     setSubmitMessage(null);
-  }, [isOpen, company, reset, clearErrors]);
+  }, [isOpen, company, reset, clearErrors, normalized.email, normalized.tel]);
 
   // Handle file uploads
   const handleFileChange = (type: 'logo' | 'banner', file: File) => {

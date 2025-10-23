@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/services/api-client';
 import { CompanyService } from '@/lib/services/company.service';
 import { useSession } from 'next-auth/react';
+import type { Session } from 'next-auth';
 import type { Company, JobOpening, BackendCompanyResponse } from '@/types/company';
 import { normalizeUser } from '@/lib/utils/user';
 
@@ -13,7 +14,7 @@ export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: session, update } = useSession();
+  const { update } = useSession();
 
   useEffect(() => {
     let mounted = true;
@@ -29,13 +30,15 @@ export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
           : await CompanyService.getCompanyAndSync(
               companyId,
               typeof update === 'function'
-                ? // adapt NextAuth's UpdateSession signature (returns Promise<Session|null>) to our expected (void|Promise<void>)
-                  (partial: Record<string, any>) =>
-                    Promise.resolve(update(partial) as unknown as void)
+                ? async (partial: Partial<Session>) => {
+                    await update(partial);
+                  }
                 : undefined
             );
 
         // Map backend response to frontend Company shape
+        const contactInfo = normalizeUser(data.user ?? null);
+
         const mapped: Company = {
           id: String(data.id),
           name: data.name || '',
@@ -43,13 +46,8 @@ export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
           size: data.size || '',
           location: data.location || '',
           // Normalize user/contact info using helper
-          ...(() => {
-            const n = normalizeUser(data as any);
-            return {
-              email: n.email || (data as any).email || (data as any).contact || '',
-              phone: n.tel || (data as any).tel || (data as any).phone || '',
-            };
-          })(),
+          email: contactInfo.email || data.email || data.contact || '',
+          phone: contactInfo.tel || data.tel || data.phone || '',
           logoUrl: undefined, // Will be set after fetching blob
           bannerUrl: undefined, // Will be set after fetching blob
           about: data.overview || '',
@@ -90,32 +88,51 @@ export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
             console.warn('company.myprofile did not include job_post field; no jobs will be shown');
           }
 
-          const jobs: JobOpening[] = (Array.isArray(jobsArray) ? jobsArray : []).map((j: any) => ({
-            id: j.id,
-            title: j.title || '',
+          type BackendJob = NonNullable<BackendCompanyResponse['job_post']>[number];
+
+          const mapJobType = (value?: string | null): JobOpening['type'] => {
+            const normalized = value?.toLowerCase();
+            switch (normalized) {
+              case 'part-time':
+              case 'part time':
+                return 'Part-time';
+              case 'internship':
+                return 'Internship';
+              case 'contract':
+                return 'Contract';
+              case 'full-time':
+              case 'full time':
+              default:
+                return 'Full-time';
+            }
+          };
+
+          const jobs: JobOpening[] = (Array.isArray(jobsArray) ? jobsArray : []).map((job: BackendJob) => ({
+            id: job.id ?? 0,
+            title: job.title || '',
             department: '',
-            location: j.location || '',
-            type: j.type || 'Full-time',
-            applicationCount: j.applications?.length,
+            location: job.location || '',
+            type: mapJobType(job.type),
+            applicationCount: job.applications?.length,
             imageUrl: undefined,
-            description: j.desc,
+            description: job.desc,
             // convert req field (string) into an array of requirements
             requirements:
-              typeof j.req === 'string' && j.req.length > 0
-                ? j.req
+              typeof job.req === 'string' && job.req.length > 0
+                ? job.req
                     .split(/\r?\n|,/)
                     .map((s: string) => s.trim())
                     .filter(Boolean)
-                : Array.isArray(j.req)
-                  ? j.req
+                : Array.isArray(job.req)
+                  ? job.req
                   : [],
-            salary: j.salary || undefined,
-            tags: Array.isArray(j.tags) ? j.tags : [],
-            expLevel: j.exp_lvl || undefined,
-            expiring: j.expiring || undefined,
-            companyId: j.company_id || undefined,
-            rawApplications: Array.isArray(j.applications) ? j.applications : [],
-            postedDate: j.post_time || '',
+            salary: job.salary || undefined,
+            tags: Array.isArray(job.tags) ? job.tags : [],
+            expLevel: job.exp_lvl || undefined,
+            expiring: job.expiring || undefined,
+            companyId: job.company_id || undefined,
+            rawApplications: Array.isArray(job.applications) ? job.applications : [],
+            postedDate: job.post_time || '',
           }));
 
           if (mounted) setJobOpenings(jobs);
