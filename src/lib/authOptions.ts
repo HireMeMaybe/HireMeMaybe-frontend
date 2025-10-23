@@ -216,8 +216,6 @@ export const authOptions: AuthOptions = {
         const backendPath = role === 'Company' ? '/auth/google/company' : '/auth/google/cpsk';
         const backendEndpoint = `${process.env.BACKEND_URL}${backendPath}`;
 
-        console.log('Using backend endpoint based on role:', { role, backendEndpoint });
-
         const res = await fetch(backendEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -243,7 +241,7 @@ export const authOptions: AuthOptions = {
         return false;
       }
     },
-    async jwt({ token, account, user }) {
+    async jwt({ token, account, user, trigger, session: updatedSession }) {
       // On initial sign-in, store backend data
       if (user && typeof user === 'object') {
         const u = user as unknown as Record<string, unknown>;
@@ -252,6 +250,23 @@ export const authOptions: AuthOptions = {
         token.backendUser = (u['backendUser'] as BackendUser | undefined) ?? undefined;
         token.isRegistered = (u['isRegistered'] as boolean | undefined) ?? undefined;
       }
+
+      // Handle session updates (when updateSession is called)
+      if (trigger === 'update' && updatedSession) {
+        const updateData = updatedSession as Record<string, unknown>;
+        // Merge updated backendUser data
+        if (updateData['backendUser']) {
+          token.backendUser = {
+            ...(token.backendUser as BackendUser | undefined),
+            ...(updateData['backendUser'] as BackendUser),
+          };
+        }
+        // Update isRegistered flag if explicitly set
+        if (typeof updateData['isRegistered'] === 'boolean') {
+          token.isRegistered = updateData['isRegistered'];
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -262,8 +277,16 @@ export const authOptions: AuthOptions = {
       s['accessToken'] = (t['accessToken'] as string | undefined) ?? undefined;
       s['backendToken'] = (t['backendToken'] as string | undefined) ?? undefined;
       s['backendUser'] = backendUser ?? undefined;
-      // User is registered if they have program (CPSK) or name (Company)
-      s['isRegistered'] = backendUser?.program || backendUser?.name ? true : false;
+
+      // Use explicit isRegistered from token if set, otherwise calculate from user data
+      const explicitIsRegistered = t['isRegistered'] as boolean | undefined;
+      if (typeof explicitIsRegistered === 'boolean') {
+        s['isRegistered'] = explicitIsRegistered;
+      } else {
+        // Fallback: User is registered if they have program (CPSK) or name (Company)
+        s['isRegistered'] = backendUser?.program || backendUser?.name ? true : false;
+      }
+
       return s as unknown as typeof session;
     },
     async redirect({ url, baseUrl }) {

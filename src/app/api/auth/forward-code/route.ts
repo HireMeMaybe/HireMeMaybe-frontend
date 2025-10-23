@@ -31,19 +31,11 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('Forwarding code to backend:', {
-      code: code.substring(0, 10) + '...',
-      selectedRole,
-      backendUrl,
-    });
-
     // Determine backend endpoint based on selected role
     const backendEndpoint =
       selectedRole === 'Company'
         ? `${backendUrl}/auth/google/company`
         : `${backendUrl}/auth/google/cpsk`;
-
-    console.log('Using backend endpoint:', backendEndpoint);
 
     // Helper: fetch with timeout
     const fetchWithTimeout = async (
@@ -63,6 +55,12 @@ export async function POST(request: Request) {
       }
     };
 
+    console.log('Forwarding code to backend:', {
+      code: code.substring(0, 10) + '...',
+      selectedRole,
+      backendUrl,
+    });
+
     // Try fetch with simple retry/backoff strategy
     const maxRetries = 1; // Reduce retries to avoid long waits
     let res: Response | null = null;
@@ -71,10 +69,6 @@ export async function POST(request: Request) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const startTime = Date.now();
       try {
-        console.log(
-          `🔄 Attempt ${attempt + 1}/${maxRetries + 1}: Sending POST to ${backendEndpoint}...`
-        );
-
         res = await fetchWithTimeout(
           backendEndpoint,
           {
@@ -86,7 +80,7 @@ export async function POST(request: Request) {
         );
 
         const elapsed = Date.now() - startTime;
-        console.log(`✅ Backend responded in ${elapsed}ms with status ${res.status}`);
+        console.info(`Backend responded in ${elapsed}ms (attempt ${attempt + 1})`);
         break; // success
       } catch (err) {
         lastError = err;
@@ -97,7 +91,6 @@ export async function POST(request: Request) {
         );
         // small backoff before retrying
         if (attempt < maxRetries) {
-          console.log(`⏳ Retrying in ${500 * (attempt + 1)}ms...`);
           await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
         }
       }

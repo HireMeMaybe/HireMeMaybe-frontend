@@ -57,7 +57,12 @@ export default function AuthCallbackPage() {
       selectedRole: string | null,
       backendUser: RedirectUser | null
     ): string {
-      // If company is unverified, redirect to unverify page
+      // Check registration first - unregistered users go to registration page
+      if (!isRegistered) {
+        return selectedRole === 'Company' ? '/company-register' : '/cpsk-register';
+      }
+
+      // For registered companies, check verification status
       if (selectedRole === 'Company' && backendUser) {
         const verifiedStatus =
           backendUser.verified_status ?? backendUser.company?.verified_status ?? null;
@@ -69,12 +74,10 @@ export default function AuthCallbackPage() {
         }
       }
 
-      if (isRegistered) {
-        return selectedRole === 'Company' || backendUser?.name
-          ? `/company/${backendUser?.id ?? ''}`
-          : '/profile';
-      }
-      return selectedRole === 'Company' ? '/company-register' : '/cpsk-register';
+      // Registered and verified (or not company) - go to profile
+      return selectedRole === 'Company' || backendUser?.name
+        ? `/company/${backendUser?.id ?? ''}`
+        : '/profile';
     }
 
     async function run() {

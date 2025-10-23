@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import type { JWT } from 'next-auth/jwt';
 
-const ALLOWED_PATHS = new Set(['/', '/unverify']);
+const ALLOWED_PATHS = new Set(['/', '/unverify', '/company-register']);
 const SKIP_PREFIXES = ['/_next', '/favicon', '/assets', '/images', '/static', '/public'];
 
 function normalizePathname(pathname: string): string {
@@ -19,25 +19,46 @@ function shouldSkip(pathname: string): boolean {
   return pathname.includes('.');
 }
 
-function isUnverifiedCompany(token: JWT): boolean {
+type CompanyAccessRedirect = '/company-register' | '/unverify' | null;
+
+function evaluateCompanyAccess(token: JWT): CompanyAccessRedirect {
   const backendUser = (token as Record<string, unknown>)['backendUser'] as
     | Record<string, unknown>
     | undefined;
+  const isRegistered =
+    typeof (token as Record<string, unknown>)['isRegistered'] === 'boolean'
+      ? ((token as Record<string, unknown>)['isRegistered'] as boolean)
+      : false;
 
-  if (!backendUser) return false;
+  if (!backendUser) return null;
 
   const role = (backendUser['role'] as string | undefined)?.toLowerCase();
-  if (role !== 'company') return false;
+  if (role !== 'company') return null;
 
   const directStatus = backendUser['verified_status'] as string | undefined | null;
   const nestedStatus = (backendUser['company'] as Record<string, unknown> | undefined)?.[
     'verified_status'
   ] as string | undefined | null;
 
-  const status = directStatus ?? nestedStatus ?? null;
-  if (!status) return true;
+  const rawStatus = directStatus ?? nestedStatus ?? null;
+  const normalizedStatus = typeof rawStatus === 'string' ? rawStatus.toLowerCase() : null;
 
-  return status.toLowerCase() !== 'verified';
+  // Trust isRegistered flag first - if explicitly set, use it
+  // Otherwise fall back to checking if company profile data exists
+  const hasCompanyProfile = isRegistered
+    ? true
+    : Boolean(backendUser['name']) ||
+      Boolean((backendUser['company'] as Record<string, unknown> | undefined)?.['name']);
+
+  if (!hasCompanyProfile) {
+    return '/company-register';
+  }
+
+  if (!normalizedStatus || normalizedStatus === 'pending' || normalizedStatus === 'unverified') {
+    return '/unverify';
+  }
+
+  return null;
 }
 
 export async function middleware(request: NextRequest) {
@@ -58,9 +79,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isUnverifiedCompany(token)) {
+  const redirectPath = evaluateCompanyAccess(token);
+  if (redirectPath) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/unverify';
+    redirectUrl.pathname = redirectPath;
     redirectUrl.search = '';
     return NextResponse.redirect(redirectUrl);
   }
