@@ -184,6 +184,7 @@ export class CompanyService {
     overview?: string;
     size?: string;
     tel?: string;
+    email?: string;
   }): Promise<CompanyProfileResponse> {
     try {
       // Map frontend size values to backend-expected values if needed.
@@ -199,42 +200,46 @@ export class CompanyService {
         requireAuth: true,
       });
     } catch (error) {
-      // Detect DB constraint error for company size and surface a clearer message
-      if (error instanceof ApiError) {
-        try {
-          const data = error.data;
-          let text = '';
-          if (typeof data === 'string') {
-            text = data;
-          } else if (data && typeof data === 'object' && 'message' in data) {
-            const message = (data as { message?: unknown }).message;
-            text = typeof message === 'string' ? message : JSON.stringify(message);
-          } else if (data !== undefined) {
-            try {
-              text = JSON.stringify(data);
-            } catch {
-              text = '';
-            }
-          }
-          const combined = `${error.message} ${text}`.toLowerCase();
-          if (
-            combined.includes('chk_companies_size') ||
-            combined.includes('sqlstate 23514') ||
-            combined.includes('companies_size')
-          ) {
-            throw new Error(
-              'The selected company size is not accepted by the backend. Please choose a different size or ask the backend team for the allowed values.'
-            );
-          }
-        } catch {
-          // fallthrough to generic message below
-        }
-
-        throw new Error(`Failed to update company profile: ${error.message}`);
+      if (!(error instanceof ApiError)) {
+        throw new Error('Failed to update company profile');
       }
 
-      throw new Error('Failed to update company profile');
+      if (this.isCompanySizeConstraint(error)) {
+        throw new Error(
+          'The selected company size is not accepted by the backend. Please choose a different size or ask the backend team for the allowed values.'
+        );
+      }
+
+      throw new Error(`Failed to update company profile: ${error.message}`);
     }
+  }
+
+  private static readonly SIZE_ERROR_PATTERNS = [
+    'chk_companies_size',
+    'sqlstate 23514',
+    'companies_size',
+  ];
+
+  private static extractErrorText(data: unknown): string {
+    if (typeof data === 'string') return data;
+
+    if (data && typeof data === 'object') {
+      const maybeMessage = (data as { message?: unknown }).message;
+      if (typeof maybeMessage === 'string') return maybeMessage;
+      try {
+        return JSON.stringify(data);
+      } catch {
+        return '';
+      }
+    }
+
+    return '';
+  }
+
+  private static isCompanySizeConstraint(error: ApiError): boolean {
+    const errorText = this.extractErrorText(error.data);
+    const combined = `${error.message} ${errorText}`.toLowerCase();
+    return this.SIZE_ERROR_PATTERNS.some((pattern) => combined.includes(pattern));
   }
 
   /**
@@ -270,25 +275,29 @@ export class CompanyService {
   }
 
   /**
-   * Fetch public company profile and optionally sync it into the client session.
+   * Fetch own company profile from /company/myprofile and sync it into the client session.
+   * - Fetches authenticated user's company profile
    * - If `updateSession` is provided (the `update` function from `useSession()`), it will be called
-   *   with a partial session containing the fresh company data.
+   *   with a partial session containing the fresh company data including User field.
    * - If not provided, but a global `window.__HMM_UPDATE_SESSION__` function exists, it will be used.
-   * This helper is client-only when used to update the session; it still works server-side as a plain fetch.
    */
-  static async getCompanyAndSync(
-    companyId: string,
+  static async getMyProfileAndSync(
     updateSession?: (partialSession: Partial<Session>) => Promise<void> | void
   ): Promise<CompanyProfileResponse> {
-    const company = await this.getCompany(companyId);
+    const company = await this.getMyProfile();
 
-    // Only attempt to sync the client session when in a browser environment
+    // Sync session with fresh data when in browser environment
     if (typeof window !== 'undefined') {
       const verifiedStatus = company?.verified_status;
       const normalizedStatus: 'Verified' | 'Pending' | 'Unverified' | null | undefined =
-        verifiedStatus === 'Verified' || verifiedStatus === 'Pending' || verifiedStatus === 'Unverified'
+        verifiedStatus === 'Verified' ||
+        verifiedStatus === 'Pending' ||
+        verifiedStatus === 'Unverified'
           ? verifiedStatus
           : null;
+
+      // Extract User data from the company response
+      const userData = (company as any)?.User || company?.user;
 
       const companyPayload = {
         ...company,
@@ -297,10 +306,13 @@ export class CompanyService {
 
       const sessionPatch = {
         backendUser: {
+          ...company,
           company: companyPayload,
+          // Sync User data at top level for EditProfileModal access
+          User: userData,
           // keep verified_status at top-level for backward compatibility
           verified_status: normalizedStatus ?? null,
-        },
+        } as any,
       };
 
       try {
@@ -372,10 +384,12 @@ export class CompanyService {
 
     try {
       const errorData = await response.json();
+      console.log('extractErrorMessage: Error data from response:', errorData);
       return errorData.error || errorData.message || errorMessage;
     } catch {
       try {
         const errorText = await response.text();
+        console.log('extractErrorMessage: Error text from response:', errorText);
         if (errorText) return errorText;
       } catch {
         // Ignore
@@ -390,28 +404,49 @@ export class CompanyService {
    * @param fileId - The logo file ID
    */
   static async fetchLogo(fileId: number): Promise<Blob> {
+    console.log('fetchLogo: Starting fetch for fileId:', fileId);
     try {
-      const session = await this.getAuthSession();
-
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       if (!backendUrl) {
         throw new Error('Backend URL is not configured');
       }
 
-      const response = await fetch(`${backendUrl}/file/${fileId}`, {
+      // Use apiClient's auth mechanism instead of manual token handling
+      const token = await apiClient['getAuthToken']();
+      console.log('fetchLogo: Got token:', token ? `${token.substring(0, 20)}...` : 'none');
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const url = `${backendUrl}/file/${fileId}`;
+      console.log('fetchLogo: Fetching from URL:', url, 'with auth:', !!token);
+
+      const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.backendToken}`,
-        },
+        headers,
       });
 
+      console.log('fetchLogo: Response status:', response.status);
+
       if (!response.ok) {
-        const errorMessage = await this.extractErrorMessage(response);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          console.log('fetchLogo: Error response:', errorData);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          console.log('fetchLogo: Could not parse error response as JSON');
+        }
         throw new Error(`Failed to fetch logo: ${errorMessage}`);
       }
 
-      return await response.blob();
+      const blob = await response.blob();
+      console.log('fetchLogo: Successfully fetched blob, size:', blob.size, 'type:', blob.type);
+      return blob;
     } catch (error) {
+      console.error('fetchLogo: Error occurred:', error);
       if (error instanceof Error) {
         throw error;
       }
@@ -425,22 +460,32 @@ export class CompanyService {
    */
   static async fetchBanner(fileId: number): Promise<Blob> {
     try {
-      const session = await this.getAuthSession();
-
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       if (!backendUrl) {
         throw new Error('Backend URL is not configured');
       }
 
+      // Use apiClient's auth mechanism instead of manual token handling
+      const token = await apiClient['getAuthToken']();
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${backendUrl}/file/${fileId}`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.backendToken}`,
-        },
+        headers,
       });
 
       if (!response.ok) {
-        const errorMessage = await this.extractErrorMessage(response);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // Could not parse error response
+        }
         throw new Error(`Failed to fetch banner: ${errorMessage}`);
       }
 

@@ -109,8 +109,9 @@ export interface BackendCompanyResponse {
   name?: string;
   overview?: string;
   size?: string;
-  // account/user info nested under `user`
+  // account/user info nested under `user` (lowercase) or `User` (Pascal case)
   user?: BackendUser | BackendUserPascal;
+  User?: BackendUser | BackendUserPascal;
   verified_status?: string;
   // legacy/alternate top-level contact fields
   email?: string;
