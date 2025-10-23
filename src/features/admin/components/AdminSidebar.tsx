@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MayBeIcon } from '@/components/icons';
-import { BarChart3, Building2, FileText, Briefcase, Users } from 'lucide-react';
+import { BarChart3, Building2, FileText, Briefcase, Users, Eye } from 'lucide-react';
 
 const menuItems = [
   {
@@ -40,6 +40,12 @@ const menuItems = [
     icon: Users,
     label: 'Manage CPSK',
     href: '/admin/manage-cpsk',
+    isActive: false,
+  },
+  {
+    icon: Eye,
+    label: 'Manage Visitors',
+    href: '/admin/manage-visitors',
     isActive: false,
   },
 ];

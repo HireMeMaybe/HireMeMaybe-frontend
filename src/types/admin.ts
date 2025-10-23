@@ -37,3 +37,40 @@ export type JobPostItem = {
   posted: string;
   reports: number;
 };
+
+export interface CPSKAccount {
+  id: number;
+  name: string;
+  email: string;
+  major: string;
+  year: string;
+  status: 'Active' | 'Suspended' | 'Banned';
+}
+
+export interface ManagedCompany {
+  id: number;
+  name: string;
+  location: string;
+  industry: string;
+  verifiedDate: string;
+  activePosts: number;
+  reports: number;
+  status: 'Active' | 'Suspended' | 'Banned';
+}
+
+export interface VisitorAccount {
+  id: number;
+  name: string;
+  email: string;
+  reportCount: number;
+  status: 'Active' | 'Suspended' | 'Banned';
+}
+
+export interface VisitorReport {
+  id: number;
+  reportedEntity: string;
+  reportedEntityType: 'Job' | 'Company';
+  reason: string;
+  submitted: string;
+  status: 'Pending' | 'Reviewed' | 'Resolved';
+}

@@ -9,5 +9,5 @@ export { ApplicationService } from './application.service';
 export { JobService } from './job.service';
 export { CompanyService } from './company.service';
 export { AdminService } from './admin.service';
-
+export { AdminAuthService } from './admin-auth.service';
 export type { Report, CompanyVerification } from './admin.service';
