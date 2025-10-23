@@ -11,9 +11,10 @@ import EditProfileModal from '@/features/company-profile/components/EditProfileM
 import { SuccessModal } from '@/components/modals';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
 import type { Company } from '@/types/company';
-import { mapBackendToDisplay } from '@/lib/utils/size';
+import { mapBackendToDisplay, mapFrontendToBackend } from '@/lib/utils/size';
 import { capitalize } from '@/lib/utils/string';
 import { isValidEmail, isValidPhone } from '@/lib/utils/user';
+import { CompanyService } from '@/lib/services/company.service';
 
 interface CompanyHeaderProps {
   readonly company: Company;
@@ -58,53 +59,84 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
   ) => {
     startTransition(async () => {
       try {
-        const formData = new FormData();
+        console.log('Saving profile with data:', updatedData);
+        console.log('Session:', session);
 
-        formData.append('companyName', updatedData.name || company.name);
-        formData.append('email', updatedData.email || company.email);
-        formData.append('phone', updatedData.phone || company.phone);
-        formData.append('overview', updatedData.about || company.about);
-        formData.append('industry', updatedData.industry || company.industry);
-        formData.append('companySize', updatedData.size || company.size);
+        // Update company profile data (don't send email - it's read-only)
+        const profilePayload = {
+          name: updatedData.name || undefined,
+          industry: updatedData.industry || undefined,
+          overview: updatedData.about || undefined,
+          size: mapFrontendToBackend(updatedData.size) || undefined,
+          tel: updatedData.phone || undefined,
+        };
 
-        // Append files if they exist
+        // Remove undefined values to avoid sending empty fields
+        const cleanedPayload = Object.fromEntries(
+          Object.entries(profilePayload).filter(([_, v]) => v !== undefined)
+        );
+
+        console.log('Sending payload to backend:', cleanedPayload);
+        const updatedProfile = await CompanyService.patchCompanyProfile(cleanedPayload);
+        console.log('Backend response:', updatedProfile);
+
+        let logoId = updatedProfile?.logo_id;
+        let bannerId = updatedProfile?.banner_id;
+
+        // Upload logo if provided
         if (logoFile) {
-          formData.append('logo', logoFile);
+          try {
+            const logoResponse = await CompanyService.uploadProfileLogo(logoFile);
+            console.log('Logo upload response:', logoResponse);
+            // Backend should return updated profile with logo_id
+            logoId = (logoResponse as any)?.logo_id || logoId;
+          } catch (e) {
+            console.error('Logo upload failed:', e);
+            throw new Error('Profile updated but logo upload failed.');
+          }
         }
+
+        // Upload banner if provided
         if (bannerFile) {
-          formData.append('banner', bannerFile);
+          try {
+            const bannerResponse = await CompanyService.uploadProfileBanner(bannerFile);
+            console.log('Banner upload response:', bannerResponse);
+            // Backend should return updated profile with banner_id
+            bannerId = (bannerResponse as any)?.banner_id || bannerId;
+          } catch (e) {
+            console.error('Banner upload failed:', e);
+            throw new Error('Profile updated but banner upload failed.');
+          }
         }
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Create updated company object
+        // Fetch fresh logo and banner URLs from backend using the IDs
         let newLogoUrl = company.logoUrl;
         let newBannerUrl = company.bannerUrl;
 
-        // Update image URLs only if new files are provided
-        if (logoFile) {
-          // Clean up old URL if it exists and is a blob URL
-          if (company.logoUrl?.startsWith('blob:')) {
-            URL.revokeObjectURL(company.logoUrl);
+        if (logoFile && logoId) {
+          try {
+            const logoBlob = await CompanyService.fetchLogo(logoId);
+            // Clean up old URL if it exists and is a blob URL
+            if (company.logoUrl?.startsWith('blob:')) {
+              URL.revokeObjectURL(company.logoUrl);
+            }
+            newLogoUrl = URL.createObjectURL(logoBlob);
+          } catch (err) {
+            console.warn('Failed to fetch updated logo:', err);
           }
-          newLogoUrl = URL.createObjectURL(logoFile);
         }
 
-        if (bannerFile) {
-          // Clean up old URL if it exists and is a blob URL
-          if (company.bannerUrl?.startsWith('blob:')) {
-            URL.revokeObjectURL(company.bannerUrl);
+        if (bannerFile && bannerId) {
+          try {
+            const bannerBlob = await CompanyService.fetchBanner(bannerId);
+            // Clean up old URL if it exists and is a blob URL
+            if (company.bannerUrl?.startsWith('blob:')) {
+              URL.revokeObjectURL(company.bannerUrl);
+            }
+            newBannerUrl = URL.createObjectURL(bannerBlob);
+          } catch (err) {
+            console.warn('Failed to fetch updated banner:', err);
           }
-          newBannerUrl = URL.createObjectURL(bannerFile);
-        }
-
-        let formattedSize = company.size;
-
-        if (updatedData.size) {
-          formattedSize = updatedData.size.includes('employees')
-            ? updatedData.size
-            : `${updatedData.size} employees`;
         }
 
         const updatedCompany: Company = {
@@ -113,11 +145,8 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
           email: updatedData.email || company.email,
           phone: updatedData.phone || company.phone,
           about: updatedData.about || company.about,
-          industry: updatedData.industry
-            ? updatedData.industry.charAt(0).toUpperCase() +
-              updatedData.industry.slice(1).toLowerCase()
-            : company.industry,
-          size: formattedSize,
+          industry: updatedData.industry || company.industry,
+          size: updatedData.size || company.size,
           logoUrl: newLogoUrl,
           bannerUrl: newBannerUrl,
         };
@@ -127,7 +156,8 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
       } catch (error) {
         console.error('Error updating profile:', error);
         setError('companyName', {
-          message: 'Failed to update profile. Please try again.',
+          message:
+            error instanceof Error ? error.message : 'Failed to update profile. Please try again.',
         });
         throw error;
       }

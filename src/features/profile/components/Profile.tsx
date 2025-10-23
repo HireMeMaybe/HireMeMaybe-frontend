@@ -11,7 +11,6 @@ import { normalizeUser, isValidEmail, isValidPhone } from '@/lib/utils/user';
 import { ResumePreviewModal } from '@/components/modals';
 import type { ProfileData } from '@/types/cpsk';
 import { useProfile } from '../hooks/useProfile';
-import { getProfileImageUrl } from '@/lib/utils';
 import { handleTokenExpiration, isAuthError } from '@/lib/utils/auth-helpers';
 import Loading from '@/app/loading';
 import ErrorPage from '@/app/error';
@@ -54,9 +53,8 @@ function ProfileView({
       : profileData?.year?.toString() || 'Not specified';
 
   // Avatar source: prefer top-level, fallback to nested User.profile_picture from API
-  const avatarSrc = getProfileImageUrl(
-    profileData.profile_picture || profileData.User?.profile_picture || null
-  );
+  // Use direct URL from Google OAuth (no proxy needed)
+  const avatarSrc = profileData.profile_picture || profileData.User?.profile_picture || null;
 
   // Track image load failure to show initials fallback
   const [imgFailed, setImgFailed] = React.useState(false);

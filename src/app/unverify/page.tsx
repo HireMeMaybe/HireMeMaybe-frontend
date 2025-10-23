@@ -12,20 +12,29 @@ const UnverifyPage = () => {
     role?: string | null;
     verified_status?: string | null;
     company?: { verified_status?: string | null } | null;
+    id?: string | number;
   };
 
   const backendUser = session?.backendUser as MaybeCompanyUser | undefined;
   const isCompany = backendUser?.role === 'Company';
-  const verifiedStatus = backendUser?.company?.verified_status ?? backendUser?.verified_status ?? null;
-  const isUnverified = isCompany && String(verifiedStatus).toLowerCase() !== 'verified';
+  const verifiedStatus =
+    backendUser?.company?.verified_status ?? backendUser?.verified_status ?? null;
+  // Consider company unverified if: it's a company AND (no status OR status is not "Verified")
+  const isUnverified =
+    isCompany && (!verifiedStatus || String(verifiedStatus).toLowerCase() !== 'verified');
 
   useEffect(() => {
-    // if session finished loading and the user is not an unverified company, redirect away
-    if (status !== 'loading' && !isUnverified) {
-      // push to home (or company profile) to keep the flow simple
+    // Only redirect if we have a session and the user is definitely NOT an unverified company
+    // (i.e., they're verified or not a company at all)
+    if (status === 'authenticated' && isCompany && !isUnverified) {
+      // Company is verified, redirect to their profile
+      router.push(`/company/${backendUser?.id ?? ''}`);
+    } else if (status === 'authenticated' && !isCompany) {
+      // Not a company user, redirect to home
       router.push('/');
     }
-  }, [status, isUnverified, router]);
+    // If unauthenticated, let the middleware handle it
+  }, [status, isUnverified, isCompany, router, backendUser?.id]);
 
   return (
     <div className="bg-background min-h-screen py-16">

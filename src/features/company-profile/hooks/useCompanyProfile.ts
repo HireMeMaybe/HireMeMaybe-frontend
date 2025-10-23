@@ -8,6 +8,129 @@ import type { Session } from 'next-auth';
 import type { Company, JobOpening, BackendCompanyResponse } from '@/types/company';
 import { normalizeUser } from '@/lib/utils/user';
 
+type BackendJob = NonNullable<BackendCompanyResponse['job_post']>[number];
+
+async function createObjectUrl(
+  id: number | null | undefined,
+  loader: (assetId: number) => Promise<Blob>
+): Promise<string | undefined> {
+  if (id == null) {
+    console.log('createObjectUrl: No ID provided, returning undefined');
+    return undefined;
+  }
+  console.log('createObjectUrl: Fetching asset with ID:', id);
+  try {
+    const blob = await loader(id);
+    console.log('createObjectUrl: Successfully fetched blob, size:', blob.size, 'type:', blob.type);
+    const url = URL.createObjectURL(blob);
+    console.log('createObjectUrl: Created blob URL:', url);
+    return url;
+  } catch (err) {
+    console.error('createObjectUrl: Failed to fetch company asset:', err);
+    return undefined;
+  }
+}
+
+function mapJobType(value?: string | null): JobOpening['type'] {
+  const normalized = value?.toLowerCase();
+  switch (normalized) {
+    case 'part-time':
+    case 'part time':
+      return 'Part-time';
+    case 'internship':
+      return 'Internship';
+    case 'contract':
+      return 'Contract';
+    case 'full-time':
+    case 'full time':
+    default:
+      return 'Full-time';
+  }
+}
+
+function parseJobRequirements(req: BackendJob['req']): string[] {
+  if (typeof req === 'string' && req.length > 0) {
+    return req
+      .split(/\r?\n|,/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  return Array.isArray(req) ? req : [];
+}
+
+function mapJob(job: BackendJob): JobOpening {
+  return {
+    id: job.id ?? 0,
+    title: job.title || '',
+    department: '',
+    location: job.location || '',
+    type: mapJobType(job.type),
+    applicationCount: job.applications?.length,
+    imageUrl: undefined,
+    description: job.desc,
+    requirements: parseJobRequirements(job.req),
+    salary: job.salary || undefined,
+    tags: Array.isArray(job.tags) ? job.tags : [],
+    expLevel: job.exp_lvl || undefined,
+    expiring: job.expiring || undefined,
+    companyId: job.company_id || undefined,
+    rawApplications: Array.isArray(job.applications) ? job.applications : [],
+    postedDate: job.post_time || '',
+  };
+}
+
+function mapJobOpenings(jobPost: BackendCompanyResponse['job_post']): JobOpening[] {
+  if (!Array.isArray(jobPost)) return [];
+  return jobPost.map((job) => mapJob(job));
+}
+
+async function hydrateCompany(data: BackendCompanyResponse): Promise<Company> {
+  console.log('hydrateCompany: Received data:', {
+    id: data.id,
+    name: data.name,
+    logo_id: data.logo_id,
+    banner_id: data.banner_id,
+  });
+
+  // Backend may return user data as 'user' or 'User' (Pascal case)
+  const userData = data.User || data.user;
+  const contactInfo = normalizeUser(userData ?? null);
+
+  const baseCompany: Company = {
+    id: String(data.id),
+    name: data.name || '',
+    industry: data.industry || '',
+    size: data.size || '',
+    location: data.location || '',
+    // Prioritize top-level fields over nested user fields (top-level is fresher)
+    email: data.email || data.contact || contactInfo.email || '',
+    phone: data.tel || data.phone || contactInfo.tel || '',
+    logoUrl: undefined,
+    bannerUrl: undefined,
+    about: data.overview || '',
+    website: data.website || '',
+  };
+
+  console.log(
+    'hydrateCompany: Fetching assets - logo_id:',
+    data.logo_id,
+    'banner_id:',
+    data.banner_id
+  );
+
+  const [logoUrl, bannerUrl] = await Promise.all([
+    createObjectUrl(data.logo_id, CompanyService.fetchLogo),
+    createObjectUrl(data.banner_id, CompanyService.fetchBanner),
+  ]);
+
+  return {
+    ...baseCompany,
+    ...(logoUrl ? { logoUrl } : {}),
+    ...(bannerUrl ? { bannerUrl } : {}),
+  };
+}
+
 export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
   const [company, setCompany] = useState<Company | null>(null);
   const [jobOpenings, setJobOpenings] = useState<JobOpening[]>([]);
@@ -24,121 +147,29 @@ export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
       setError(null);
 
       try {
-        // Use /company/myprofile for owner, /company/{id} for public view
-        const data: BackendCompanyResponse = isOwner
-          ? await apiClient.get('/company/myprofile', { requireAuth: true })
-          : await CompanyService.getCompanyAndSync(
-              companyId,
-              typeof update === 'function'
-                ? async (partial: Partial<Session>) => {
-                    await update(partial);
-                  }
-                : undefined
-            );
+        const sessionUpdater =
+          typeof update === 'function'
+            ? async (partial: Partial<Session>) => {
+                await update(partial);
+              }
+            : undefined;
 
-        // Map backend response to frontend Company shape
-        const contactInfo = normalizeUser(data.user ?? null);
+        // For owner: fetch and sync session with fresh User data
+        // For non-owner: just fetch public profile, no session sync
+        const data = isOwner
+          ? await CompanyService.getMyProfileAndSync(sessionUpdater)
+          : await CompanyService.getCompany(companyId);
 
-        const mapped: Company = {
-          id: String(data.id),
-          name: data.name || '',
-          industry: data.industry || '',
-          size: data.size || '',
-          location: data.location || '',
-          // Normalize user/contact info using helper
-          email: contactInfo.email || data.email || data.contact || '',
-          phone: contactInfo.tel || data.tel || data.phone || '',
-          logoUrl: undefined, // Will be set after fetching blob
-          bannerUrl: undefined, // Will be set after fetching blob
-          about: data.overview || '',
-          website: data.website || '',
-        };
+        const hydratedCompany = await hydrateCompany(data);
+        const jobs = mapJobOpenings(data.job_post);
 
-        // Fetch logo and banner as blobs and create object URLs
-        if (data.logo_id != null) {
-          try {
-            const logoBlob = await CompanyService.fetchLogo(data.logo_id);
-            const logoUrl = URL.createObjectURL(logoBlob);
-            mapped.logoUrl = logoUrl;
-          } catch (err) {
-            console.warn('Failed to fetch company logo:', err);
-          }
-        }
-
-        if (data.banner_id != null) {
-          try {
-            const bannerBlob = await CompanyService.fetchBanner(data.banner_id);
-            const bannerUrl = URL.createObjectURL(bannerBlob);
-            mapped.bannerUrl = bannerUrl;
-          } catch (err) {
-            console.warn('Failed to fetch company banner:', err);
-          }
+        if (!('job_post' in data)) {
+          console.warn('company.myprofile did not include job_post field; no jobs will be shown');
         }
 
         if (mounted) {
-          setCompany(mapped);
-        }
-
-        // Use job_post from profile response (backend provides job_post on profile)
-        try {
-          const jobsArray = data.job_post;
-
-          // Warn only if job_post field is missing entirely (not just empty)
-          if (!('job_post' in data)) {
-            console.warn('company.myprofile did not include job_post field; no jobs will be shown');
-          }
-
-          type BackendJob = NonNullable<BackendCompanyResponse['job_post']>[number];
-
-          const mapJobType = (value?: string | null): JobOpening['type'] => {
-            const normalized = value?.toLowerCase();
-            switch (normalized) {
-              case 'part-time':
-              case 'part time':
-                return 'Part-time';
-              case 'internship':
-                return 'Internship';
-              case 'contract':
-                return 'Contract';
-              case 'full-time':
-              case 'full time':
-              default:
-                return 'Full-time';
-            }
-          };
-
-          const jobs: JobOpening[] = (Array.isArray(jobsArray) ? jobsArray : []).map((job: BackendJob) => ({
-            id: job.id ?? 0,
-            title: job.title || '',
-            department: '',
-            location: job.location || '',
-            type: mapJobType(job.type),
-            applicationCount: job.applications?.length,
-            imageUrl: undefined,
-            description: job.desc,
-            // convert req field (string) into an array of requirements
-            requirements:
-              typeof job.req === 'string' && job.req.length > 0
-                ? job.req
-                    .split(/\r?\n|,/)
-                    .map((s: string) => s.trim())
-                    .filter(Boolean)
-                : Array.isArray(job.req)
-                  ? job.req
-                  : [],
-            salary: job.salary || undefined,
-            tags: Array.isArray(job.tags) ? job.tags : [],
-            expLevel: job.exp_lvl || undefined,
-            expiring: job.expiring || undefined,
-            companyId: job.company_id || undefined,
-            rawApplications: Array.isArray(job.applications) ? job.applications : [],
-            postedDate: job.post_time || '',
-          }));
-
-          if (mounted) setJobOpenings(jobs);
-        } catch (jobsErr) {
-          console.warn('Failed to map company job_post', jobsErr);
-          if (mounted) setJobOpenings([]);
+          setCompany(hydratedCompany);
+          setJobOpenings(jobs);
         }
       } catch (err) {
         console.error('Error fetching company profile:', err);

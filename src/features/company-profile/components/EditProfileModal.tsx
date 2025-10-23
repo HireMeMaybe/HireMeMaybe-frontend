@@ -19,11 +19,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Upload, X, Camera, User } from 'lucide-react';
 import { WarningModal } from '@/components/modals';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
-import type { Company } from '@/types/company';
-import { normalizeUser } from '@/lib/utils/user';
+import type { Company, BackendCompanyResponse } from '@/types/company';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
 import { mapBackendToDisplay, mapFrontendToBackend } from '@/lib/utils/size';
-import type { BackendUser, BackendUserPascal } from '@/types/user';
+import { normalizeUser } from '@/lib/utils/user';
+import { useSession } from 'next-auth/react';
 
 interface EditProfileModalProps {
   readonly isOpen: boolean;
@@ -52,16 +52,21 @@ export default function EditProfileModal({
   // File states
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
-  type CompanyWithUser = Company & {
-    user?: BackendUser | BackendUserPascal | null;
-    User?: BackendUserPascal | null;
-  };
-
-  const companyWithUser = company as CompanyWithUser;
-  const normalized = normalizeUser(companyWithUser.user ?? companyWithUser.User ?? null);
 
   const [logoPreview, setLogoPreview] = useState<string>(company.logoUrl || '');
   const [bannerPreview, setBannerPreview] = useState<string>(company.bannerUrl || '');
+
+  // Get session to access backendUser for email/phone
+  const { data: session } = useSession();
+  const backendUser = (session?.backendUser as any) ?? null;
+
+  // Backend returns either 'User' or 'user' field - try both
+  const userField = backendUser?.User ?? backendUser?.user ?? null;
+  const userInfo = normalizeUser(userField);
+
+  // Use email/phone from session's User field, fallback to company object
+  const emailValue = userInfo.email || company.email || '';
+  const phoneValue = userInfo.tel || company.phone || '';
 
   // File input refs
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -80,8 +85,8 @@ export default function EditProfileModal({
     resolver: zodResolver(companyRegisterSchema),
     defaultValues: {
       companyName: company.name,
-      email: normalized.email || company.email,
-      phone: normalized.tel || company.phone,
+      email: emailValue,
+      phone: phoneValue,
       overview: company.about,
       industry: company.industry,
       companySize: mapBackendToDisplay(company.size),
@@ -104,10 +109,7 @@ export default function EditProfileModal({
       : [{ value: company.industry, label: company.industry }, ...INDUSTRY_OPTIONS];
   }, [company.industry]);
 
-  const companySizeDisplayValue = useMemo(
-    () => mapBackendToDisplay(company.size),
-    [company.size]
-  );
+  const companySizeDisplayValue = useMemo(() => mapBackendToDisplay(company.size), [company.size]);
 
   const companySizeOptions = useMemo(() => {
     if (!companySizeDisplayValue) {
@@ -119,18 +121,38 @@ export default function EditProfileModal({
     );
     return hasExisting
       ? [...COMPANY_SIZE_OPTIONS]
-      : [{ value: companySizeDisplayValue, label: companySizeDisplayValue }, ...COMPANY_SIZE_OPTIONS];
+      : [
+          { value: companySizeDisplayValue, label: companySizeDisplayValue },
+          ...COMPANY_SIZE_OPTIONS,
+        ];
   }, [companySizeDisplayValue]);
 
   useEffect(() => {
-    reset({
-      companyName: company.name,
-      email: normalized.email || company.email,
-      phone: normalized.tel || company.phone,
-      overview: company.about,
-      industry: company.industry,
-      companySize: mapBackendToDisplay(company.size),
-    });
+    if (!isOpen) return; // Only run when modal is actually open
+
+    // Recalculate email/phone from session when modal opens
+    // Backend returns either 'User' or 'user' field - try both
+    const freshUserField = backendUser?.User ?? backendUser?.user ?? null;
+    const freshUserInfo = normalizeUser(freshUserField);
+    const freshEmail = freshUserInfo.email || company.email || '';
+    const freshPhone = freshUserInfo.tel || company.phone || '';
+
+    console.log('EditProfileModal - backendUser:', backendUser);
+    console.log('EditProfileModal - freshUserField:', freshUserField);
+    console.log('EditProfileModal - freshUserInfo:', freshUserInfo);
+    console.log('EditProfileModal - freshEmail:', freshEmail);
+    console.log('EditProfileModal - freshPhone:', freshPhone);
+    console.log('EditProfileModal - company.email:', company.email);
+    console.log('EditProfileModal - company.phone:', company.phone);
+
+    // Use setValue to explicitly set each field value
+    setValue('companyName', company.name);
+    setValue('email', freshEmail);
+    setValue('phone', freshPhone);
+    setValue('overview', company.about);
+    setValue('industry', company.industry);
+    setValue('companySize', mapBackendToDisplay(company.size));
+
     setLogoPreview(company.logoUrl || '');
     setBannerPreview(company.bannerUrl || '');
     setLogoFile(null);
@@ -143,7 +165,7 @@ export default function EditProfileModal({
     // Clear errors and messages
     clearErrors();
     setSubmitMessage(null);
-  }, [isOpen, company, reset, clearErrors, normalized.email, normalized.tel]);
+  }, [isOpen, company, setValue, clearErrors, backendUser]);
 
   // Handle file uploads
   const handleFileChange = (type: 'logo' | 'banner', file: File) => {

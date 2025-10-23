@@ -33,6 +33,7 @@ export function CompanyRegisterForm(): React.JSX.Element {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // State to control ConfirmModal visibility
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const router = useRouter();
   const {
     register,
@@ -87,7 +88,8 @@ export function CompanyRegisterForm(): React.JSX.Element {
         const updatedProfile = await CompanyService.patchCompanyProfile(profilePayload);
         // capture company id returned from backend for redirect after success
         if (updatedProfile?.id) {
-          setCompanyId(String(updatedProfile.id));
+          const capturedId = String(updatedProfile.id);
+          setCompanyId(capturedId);
         }
 
         // If logo file present, upload it using authenticated endpoint
@@ -122,7 +124,8 @@ export function CompanyRegisterForm(): React.JSX.Element {
           }
 
           if (aiVerification?.company?.id) {
-            setCompanyId(String(aiVerification.company.id));
+            const capturedId = String(aiVerification.company.id);
+            setCompanyId(capturedId);
           }
           if (!status) {
             const backendStatus = aiVerification?.company?.verified_status;
@@ -137,21 +140,48 @@ export function CompanyRegisterForm(): React.JSX.Element {
 
           if (status) {
             successText = `Company profile submitted. Verification status: ${status}.`;
+            setVerificationStatus(status);
           } else {
             successText = 'Company profile submitted. Verification complete.';
           }
 
           if (status && typeof updateSession === 'function') {
+            const existingCompany =
+              (session?.backendUser?.company as Record<string, unknown> | undefined) ?? {};
             await updateSession({
               backendUser: {
                 ...(session?.backendUser ?? {}),
                 verified_status: status,
+                company: {
+                  ...existingCompany,
+                  verified_status: status,
+                },
               },
+              isRegistered: true,
             });
           }
         } catch (verifyError) {
           console.warn('AI verification failed, continuing with registration:', verifyError);
           successText = 'Company profile submitted. Verification will be completed soon.';
+          setVerificationStatus('Unverified');
+
+          // Update session even when AI verification fails
+          if (typeof updateSession === 'function') {
+            const existingCompany =
+              (session?.backendUser?.company as Record<string, unknown> | undefined) ?? {};
+            await updateSession({
+              backendUser: {
+                ...(session?.backendUser ?? {}),
+                name: data.companyName,
+                verified_status: 'Unverified',
+                company: {
+                  ...existingCompany,
+                  verified_status: 'Unverified',
+                },
+              },
+              isRegistered: true,
+            });
+          }
         }
 
         setSubmitMessage({ type: 'success', text: successText });
@@ -544,8 +574,11 @@ export function CompanyRegisterForm(): React.JSX.Element {
         isOpen={isSuccessOpen}
         onClose={() => {
           setIsSuccessOpen(false);
-          if (companyId) {
+          // If verified, redirect to company profile; otherwise go to unverify page
+          if (verificationStatus === 'Verified' && companyId) {
             router.push(`/company/${companyId}`);
+          } else {
+            router.push('/unverify');
           }
         }}
         title="Registration submitted"
