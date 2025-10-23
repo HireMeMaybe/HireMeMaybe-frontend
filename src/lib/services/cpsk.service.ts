@@ -21,14 +21,12 @@ const cpskRegistrationSchema = z.object({
 export type CpskRegistrationData = z.infer<typeof cpskRegistrationSchema>;
 
 interface CpskProfileUpdateData {
-  first_name: string;
-  last_name: string;
-  User: {
-    tel: string;
-  };
-  soft_skill: string[];
-  program: string;
-  year: string;
+  first_name?: string;
+  last_name?: string;
+  tel?: string;
+  soft_skill?: string[];
+  program?: string;
+  year?: string;
 }
 
 export class CpskService {
@@ -51,7 +49,7 @@ export class CpskService {
    */
   static async updateProfile(data: CpskProfileUpdateData): Promise<ProfileData> {
     try {
-      return await apiClient.put<ProfileData>('/cpsk/profile', data);
+      return await apiClient.patch<ProfileData>('/cpsk/profile', data);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to update profile: ${error.message}`);
