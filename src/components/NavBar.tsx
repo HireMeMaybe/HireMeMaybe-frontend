@@ -16,16 +16,35 @@ export default function Navbar() {
   const pathname = usePathname();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
-  
+
   const isAdminRoute = pathname?.startsWith('/admin');
-  const { user: adminUser, isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
+  const {
+    user: adminUser,
+    isAuthenticated: isAdminAuthenticated,
+    logout: adminLogout,
+  } = useAdminAuth();
 
   function hasIsRegistered(obj: unknown): obj is { isRegistered?: boolean } {
     return typeof obj === 'object' && obj !== null && 'isRegistered' in obj;
   }
 
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
-  
+  type BackendUser = {
+    role?: string | null;
+    verified_status?: string | null;
+    company?: { verified_status?: string | null } | null;
+    id?: string | number;
+    name?: string | null;
+    first_name?: string | null;
+    User?: { profile_picture?: string | null } | null;
+  };
+
+  const backendUser = session?.backendUser as BackendUser | undefined;
+  const isCompany = backendUser?.role === 'Company';
+  const verifiedStatus = backendUser?.company?.verified_status ?? backendUser?.verified_status ?? null;
+  const isUnverifiedCompany = isCompany && String(verifiedStatus).toLowerCase() !== 'verified';
+  const profileHref = isCompany ? `/company/${backendUser?.id ?? ''}?view=company` : '/profile';
+
   const scrollToLoginSection = () => {
     setOpen(false);
     const el = typeof document !== 'undefined' ? document.getElementById('login-section') : null;
@@ -60,7 +79,7 @@ export default function Navbar() {
       adminLogout();
       window.location.href = '/admin/login';
     } else {
-      signOut();
+      signOut({ callbackUrl: '/' });
     }
     setOpen(false);
   };
@@ -79,7 +98,7 @@ export default function Navbar() {
 
   // Determine what content to show in dropdown
   let dropdownContent: React.ReactNode = null;
-  
+
   if (isLoading) {
     dropdownContent = <div className="py-4">Loading...</div>;
   } else if (isAdminAuthenticated) {
@@ -87,7 +106,7 @@ export default function Navbar() {
     dropdownContent = (
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3 border-b pb-3">
-          <div className="h-10 w-10 rounded-full bg-primary-green flex items-center justify-center">
+          <div className="bg-primary-green flex h-10 w-10 items-center justify-center rounded-full">
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div className="min-w-0 flex-1">
@@ -146,21 +165,31 @@ export default function Navbar() {
           </div>
         </div>
 
-        <a
-          href="/profile"
-          className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
-        >
-          <UserPen className="h-4 w-4" />
-          View profile
-        </a>
+        {!isUnverifiedCompany && (
+          <a href={profileHref} className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5">
+            <UserPen className="h-4 w-4" />
+            View profile
+          </a>
+        )}
 
-        <a
-          href="/history"
-          className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
-        >
-          <History className="h-4 w-4" />
-          History
-        </a>
+        {!isUnverifiedCompany &&
+          (session?.backendUser?.role === 'Company' ? (
+            <a
+              href={`/company/${session.backendUser?.id ?? ''}?view=company`}
+              className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+            >
+              <History className="h-4 w-4" />
+              Applications
+            </a>
+          ) : (
+            <a
+              href="/history"
+              className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+            >
+              <History className="h-4 w-4" />
+              History
+            </a>
+          ))}
 
         <button
           onClick={handleLogout}
@@ -200,7 +229,7 @@ export default function Navbar() {
       )}
 
       {/* Right side - User icon and dropdown */}
-      <div className="relative ml-auto user-dropdown-container">
+      <div className="user-dropdown-container relative ml-auto">
         <button
           onClick={handleUserClick}
           aria-label="User menu"

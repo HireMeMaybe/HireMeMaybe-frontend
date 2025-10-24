@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Phone, Mail, Eye, Edit } from 'lucide-react';
+import { normalizeUser, isValidEmail, isValidPhone } from '@/lib/utils/user';
 import { ResumePreviewModal } from '@/components/modals';
 import type { ProfileData } from '@/types/cpsk';
 import { useProfile } from '../hooks/useProfile';
-import { getProfileImageUrl } from '@/lib/utils';
 import { handleTokenExpiration, isAuthError } from '@/lib/utils/auth-helpers';
 import Loading from '@/app/loading';
 import ErrorPage from '@/app/error';
@@ -53,9 +53,8 @@ function ProfileView({
       : profileData?.year?.toString() || 'Not specified';
 
   // Avatar source: prefer top-level, fallback to nested User.profile_picture from API
-  const avatarSrc = getProfileImageUrl(
-    profileData.profile_picture || profileData.User?.profile_picture || null
-  );
+  // Use direct URL from Google OAuth (no proxy needed)
+  const avatarSrc = profileData.profile_picture || profileData.User?.profile_picture || null;
 
   // Track image load failure to show initials fallback
   const [imgFailed, setImgFailed] = React.useState(false);
@@ -118,14 +117,44 @@ function ProfileView({
             <Phone className="mt-1 h-5 w-5 text-gray-400" />
             <div>
               <p className="mb-1 font-medium text-white">Phone</p>
-              <p className="text-gray-300">{profileData?.User?.tel || 'Not provided'}</p>
+              <p className="text-gray-300">
+                {(() => {
+                  const u = normalizeUser(profileData?.User);
+                  if (u.tel) {
+                    return isValidPhone(u.tel) ? (
+                      <a className="underline" href={`tel:${u.tel.replace(/[^+0-9]/g, '')}`}>
+                        {u.tel}
+                      </a>
+                    ) : (
+                      <>{u.tel}</>
+                    );
+                  }
+
+                  return 'Not provided';
+                })()}
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-light-gray)] p-3">
             <Mail className="mt-1 h-5 w-5 text-gray-400" />
             <div>
               <p className="mb-1 font-medium text-white">Email</p>
-              <p className="text-gray-300">{profileData?.User?.email || 'Not provided'}</p>
+              <p className="text-gray-300">
+                {(() => {
+                  const u = normalizeUser(profileData?.User);
+                  if (u.email) {
+                    return isValidEmail(u.email) ? (
+                      <a className="underline" href={`mailto:${u.email}`}>
+                        {u.email}
+                      </a>
+                    ) : (
+                      <>{u.email}</>
+                    );
+                  }
+
+                  return 'Not provided';
+                })()}
+              </p>
             </div>
           </div>
         </CardContent>

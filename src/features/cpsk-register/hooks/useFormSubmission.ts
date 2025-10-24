@@ -43,9 +43,7 @@ export function useFormSubmission({ session }: UseFormSubmissionProps): UseFormS
         const profileData = {
           first_name: data.first_name,
           last_name: data.last_name,
-          User: {
-            tel: data.phone,
-          },
+          tel: data.phone,
           soft_skill: Array.isArray(data.soft_skill)
             ? data.soft_skill
             : data.soft_skill

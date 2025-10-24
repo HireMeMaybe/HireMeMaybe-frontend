@@ -2,7 +2,8 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Button,
   Input,
@@ -16,20 +17,132 @@ import {
   FileUpload,
 } from '@/components/ui/';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
+import { useSession } from 'next-auth/react';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
-import { registerCompany } from '@/features/company-register/server/actions.server';
+import { CompanyService } from '@/lib/services/company.service';
 import ConfirmationModal from '@/components/modals/ConfirmModal'; // Import ConfirmModal
 import SuccessModal from '@/components/modals/SuccessModal';
 
+// Helper: Upload company files (logo and banner)
+async function uploadCompanyFiles(
+  logoFile: File | undefined,
+  bannerFile: File | undefined
+): Promise<{ success: boolean; error?: string }> {
+  if (logoFile instanceof File) {
+    try {
+      await CompanyService.uploadProfileLogo(logoFile);
+    } catch (e) {
+      console.error('Logo upload failed:', e);
+      return { success: false, error: 'Profile updated but logo upload failed.' };
+    }
+  }
+
+  if (bannerFile instanceof File) {
+    try {
+      await CompanyService.uploadProfileBanner(bannerFile);
+    } catch (e) {
+      console.error('Banner upload failed:', e);
+      return { success: false, error: 'Profile updated but banner upload failed.' };
+    }
+  }
+
+  return { success: true };
+}
+
+// Helper: Determine verification status from AI response
+function extractVerificationStatus(aiVerification: unknown): 'Verified' | 'Unverified' | undefined {
+  if (!aiVerification || typeof aiVerification !== 'object') return undefined;
+
+  const verification = aiVerification as Record<string, unknown>;
+  const aiDecision = verification.ai_decision;
+  if (aiDecision === 'Verified' || aiDecision === 'Unverified') {
+    return aiDecision;
+  }
+
+  const backendStatus = (verification.company as Record<string, unknown> | undefined)
+    ?.verified_status;
+  if (backendStatus === 'Verified' || backendStatus === 'Unverified') {
+    return backendStatus;
+  }
+
+  return undefined;
+}
+
+// Helper: Perform AI verification and extract company ID
+async function performAIVerification(): Promise<{
+  status: 'Verified' | 'Unverified' | undefined;
+  companyId: string | null;
+  successText: string;
+}> {
+  try {
+    const aiVerification = await CompanyService.aiVerifyCompany();
+    const status = extractVerificationStatus(aiVerification);
+
+    let companyId: string | null = null;
+    if ((aiVerification?.company as unknown as Record<string, unknown> | undefined)?.id) {
+      companyId = String((aiVerification.company as unknown as Record<string, unknown>).id);
+    }
+
+    if (status && aiVerification?.company) {
+      (aiVerification.company as unknown as Record<string, unknown>).verified_status = status;
+    }
+
+    const successText = status
+      ? `Company profile submitted. Verification status: ${status}.`
+      : 'Company profile submitted. Verification complete.';
+
+    return { status, companyId, successText };
+  } catch (verifyError) {
+    console.warn('AI verification failed, continuing with registration:', verifyError);
+    return {
+      status: 'Unverified',
+      companyId: null,
+      successText: 'Company profile submitted. Verification will be completed soon.',
+    };
+  }
+}
+
+// Helper: Update session with verification status
+async function updateSessionWithStatus(
+  updateSession: unknown,
+  session: unknown,
+  status: 'Verified' | 'Unverified',
+  companyName: string
+): Promise<void> {
+  if (typeof updateSession !== 'function') return;
+
+  const sess = session as Record<string, unknown> | null | undefined;
+  const existingCompany =
+    ((sess?.backendUser as Record<string, unknown> | undefined)?.company as
+      | Record<string, unknown>
+      | undefined) ?? {};
+
+  await updateSession({
+    backendUser: {
+      ...((sess?.backendUser as Record<string, unknown>) ?? {}),
+      name: companyName,
+      verified_status: status,
+      company: {
+        ...existingCompany,
+        verified_status: status,
+      },
+    },
+    isRegistered: true,
+  });
+}
+
 export function CompanyRegisterForm(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
+  const { data: session, update: updateSession } = useSession();
   const [submitMessage, setSubmitMessage] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // State to control ConfirmModal visibility
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -54,56 +167,83 @@ export function CompanyRegisterForm(): React.JSX.Element {
   const watchedLogo = watch('logo');
   const watchedBanner = watch('banner');
 
+  // Populate email from logged-in session and lock it
+  useEffect(() => {
+    type SessionCompanyUser = {
+      User?: { email?: string | null } | null;
+    };
+
+    const backendUser = session?.backendUser as SessionCompanyUser | undefined;
+    const emailFromBackend = backendUser?.User?.email ?? session?.user?.email ?? null;
+    if (emailFromBackend) {
+      setValue('email', String(emailFromBackend));
+      clearErrors('email');
+    }
+  }, [session, setValue, clearErrors]);
+
   const onSubmit = async (data: CompanyRegisterFormData) => {
     startTransition(async () => {
       try {
-        // Create FormData for server action
-        const formData = new FormData();
-
-        // Helper to conditionally append non-empty values
-        const appendIfPresent = (key: string, value: string | File | undefined) => {
-          if (value && value !== '') {
-            formData.append(key, value);
-          }
+        // First, PATCH the company profile using CompanyService
+        const profilePayload = {
+          name: data.companyName || undefined,
+          industry: data.industry || undefined,
+          overview: data.overview || undefined,
+          size: data.companySize || undefined,
+          tel: data.phone || undefined,
         };
 
-        // Append all fields
-        appendIfPresent('companyName', data.companyName);
-        appendIfPresent('email', data.email);
-        appendIfPresent('phone', data.phone);
-        appendIfPresent('overview', data.overview);
-        appendIfPresent('industry', data.industry);
-        appendIfPresent('companySize', data.companySize);
-        appendIfPresent('logo', data.logo);
-        appendIfPresent('banner', data.banner);
-
-        const result = await registerCompany(formData);
-
-        if (result.success) {
-          setSubmitMessage({
-            type: 'success',
-            text: result.message,
-          });
-          setIsSuccessOpen(true);
-          // Reset form after success
-          reset();
-        } else {
-          setSubmitMessage({
-            type: 'error',
-            text: result.message,
-          });
-
-          // Set field-specific errors if they exist
-          if (result.errors) {
-            result.errors.forEach((error) => {
-              setError(error.field as keyof CompanyRegisterFormData, {
-                message: error.message,
-              });
-            });
-          }
+        const updatedProfile = await CompanyService.patchCompanyProfile(profilePayload);
+        // capture company id returned from backend for redirect after success
+        if (updatedProfile?.id) {
+          const capturedId = String(updatedProfile.id);
+          setCompanyId(capturedId);
         }
+
+        // Upload files (logo and banner)
+        const uploadResult = await uploadCompanyFiles(data.logo, data.banner);
+        if (!uploadResult.success) {
+          setSubmitMessage({ type: 'error', text: uploadResult.error! });
+          return;
+        }
+
+        // Perform AI verification
+        const { status, companyId: verifiedCompanyId, successText } = await performAIVerification();
+
+        // Update company ID if verification returned one
+        if (verifiedCompanyId) {
+          setCompanyId(verifiedCompanyId);
+        }
+
+        // Update verification status
+        if (status) {
+          setVerificationStatus(status);
+        }
+
+        // Update session with verification status
+        await updateSessionWithStatus(
+          updateSession,
+          session,
+          status || 'Unverified',
+          data.companyName
+        );
+
+        setSubmitMessage({ type: 'success', text: successText });
+        setIsSuccessOpen(true);
+        reset();
       } catch (error) {
         console.error('Error during company registration:', error); // Log the error for debugging
+        const errMsg = error instanceof Error ? error.message : String(error);
+        // If this looks like a size mapping/backend rejection, attach the message to the companySize field
+        if (
+          errMsg.toLowerCase().includes('company size') ||
+          errMsg.toLowerCase().includes('size is not accepted')
+        ) {
+          setError('companySize', { type: 'manual', message: errMsg });
+          setSubmitMessage({ type: 'error', text: 'Please fix the highlighted fields and retry.' });
+          return;
+        }
+
         setSubmitMessage({
           type: 'error',
           text: 'An unexpected error occurred. Please try again.',
@@ -251,7 +391,10 @@ export function CompanyRegisterForm(): React.JSX.Element {
               id="email"
               type="email"
               {...register('email')}
-              className="bg-muted border-border focus:ring-primary-green/20 focus:border-primary-green h-12 rounded-lg px-4 text-base transition-all duration-200 focus:ring-2"
+              readOnly
+              aria-readonly="true"
+              title="Email cannot be changed"
+              className="bg-muted h-12 cursor-not-allowed rounded-lg px-4 text-base opacity-80 transition-all duration-200"
             />
             {errors.email && (
               <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
@@ -473,7 +616,15 @@ export function CompanyRegisterForm(): React.JSX.Element {
       />
       <SuccessModal
         isOpen={isSuccessOpen}
-        onClose={() => setIsSuccessOpen(false)}
+        onClose={() => {
+          setIsSuccessOpen(false);
+          // If verified, redirect to company profile; otherwise go to unverify page
+          if (verificationStatus === 'Verified' && companyId) {
+            router.push(`/company/${companyId}`);
+          } else {
+            router.push('/unverify');
+          }
+        }}
         title="Registration submitted"
         message={submitMessage?.text || 'Submitted successfully'}
         buttonText="Close"

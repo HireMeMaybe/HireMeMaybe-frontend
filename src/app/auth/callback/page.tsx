@@ -43,17 +43,41 @@ export default function AuthCallbackPage() {
       return { token, backendUser };
     }
 
+    interface RedirectUser {
+      id?: string | number;
+      name?: string | null;
+      verified_status?: string | null;
+      company?: { verified_status?: string | null } | null;
+      program?: string | null;
+      size?: string | null;
+    }
+
     function getRedirectPath(
       isRegistered: boolean,
       selectedRole: string | null,
-      backendUser: { id?: string | number; name?: string } | null
+      backendUser: RedirectUser | null
     ): string {
-      if (isRegistered) {
-        return selectedRole === 'Company' || backendUser?.name
-          ? `/company/${backendUser?.id ?? ''}`
-          : '/profile';
+      // Check registration first - unregistered users go to registration page
+      if (!isRegistered) {
+        return selectedRole === 'Company' ? '/company-register' : '/cpsk-register';
       }
-      return selectedRole === 'Company' ? '/company-register' : '/cpsk-register';
+
+      // For registered companies, check verification status
+      if (selectedRole === 'Company' && backendUser) {
+        const verifiedStatus =
+          backendUser.verified_status ?? backendUser.company?.verified_status ?? null;
+        const isUnverified = verifiedStatus
+          ? String(verifiedStatus).toLowerCase() !== 'verified'
+          : false;
+        if (isUnverified) {
+          return '/unverify';
+        }
+      }
+
+      // Registered and verified (or not company) - go to profile
+      return selectedRole === 'Company' || backendUser?.name
+        ? `/company/${backendUser?.id ?? ''}`
+        : '/profile';
     }
 
     async function run() {

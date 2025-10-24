@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useTransition, useState, useEffect } from 'react';
+import { useRef, useTransition, useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +21,9 @@ import { WarningModal } from '@/components/modals';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
 import type { Company } from '@/types/company';
 import { INDUSTRY_OPTIONS, COMPANY_SIZE_OPTIONS } from '@/types/company';
+import { mapBackendToDisplay, mapFrontendToBackend } from '@/lib/utils/size';
+import { normalizeUser } from '@/lib/utils/user';
+import { useSession } from 'next-auth/react';
 
 interface EditProfileModalProps {
   readonly isOpen: boolean;
@@ -49,8 +52,21 @@ export default function EditProfileModal({
   // File states
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
+
   const [logoPreview, setLogoPreview] = useState<string>(company.logoUrl || '');
   const [bannerPreview, setBannerPreview] = useState<string>(company.bannerUrl || '');
+
+  // Get session to access backendUser for email/phone
+  const { data: session } = useSession();
+  const backendUser = (session?.backendUser as Record<string, unknown>) ?? null;
+
+  // Backend returns either 'User' or 'user' field - try both
+  const userField = backendUser?.User ?? backendUser?.user ?? null;
+  const userInfo = normalizeUser(userField);
+
+  // Use email/phone from session's User field, fallback to company object
+  const emailValue = userInfo.email || company.email || '';
+  const phoneValue = userInfo.tel || company.phone || '';
 
   // File input refs
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -60,34 +76,82 @@ export default function EditProfileModal({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isDirty },
     setError,
     clearErrors,
-    reset,
   } = useForm<CompanyRegisterFormData>({
     resolver: zodResolver(companyRegisterSchema),
     defaultValues: {
       companyName: company.name,
-      email: company.email,
-      phone: company.phone,
+      email: emailValue,
+      phone: phoneValue,
       overview: company.about,
       industry: company.industry,
-      companySize: company.employeeCount,
+      companySize: mapBackendToDisplay(company.size),
     },
   });
 
   // Check if there are any changes
   const hasChanges = isDirty || logoFile !== null || bannerFile !== null;
+  const selectedIndustry = watch('industry');
+  const selectedCompanySize = watch('companySize');
+
+  const industryOptions = useMemo(() => {
+    if (!company.industry) {
+      return [...INDUSTRY_OPTIONS];
+    }
+
+    const hasExisting = INDUSTRY_OPTIONS.some((option) => option.value === company.industry);
+    return hasExisting
+      ? [...INDUSTRY_OPTIONS]
+      : [{ value: company.industry, label: company.industry }, ...INDUSTRY_OPTIONS];
+  }, [company.industry]);
+
+  const companySizeDisplayValue = useMemo(() => mapBackendToDisplay(company.size), [company.size]);
+
+  const companySizeOptions = useMemo(() => {
+    if (!companySizeDisplayValue) {
+      return [...COMPANY_SIZE_OPTIONS];
+    }
+
+    const hasExisting = COMPANY_SIZE_OPTIONS.some(
+      (option) => option.value === companySizeDisplayValue
+    );
+    return hasExisting
+      ? [...COMPANY_SIZE_OPTIONS]
+      : [
+          { value: companySizeDisplayValue, label: companySizeDisplayValue },
+          ...COMPANY_SIZE_OPTIONS,
+        ];
+  }, [companySizeDisplayValue]);
 
   useEffect(() => {
-    reset({
-      companyName: company.name,
-      email: company.email,
-      phone: company.phone,
-      overview: company.about,
-      industry: company.industry,
-      companySize: company.employeeCount,
-    });
+    if (!isOpen) return; // Only run when modal is actually open
+
+    // Recalculate email/phone from session when modal opens
+    // Backend returns either 'User' or 'user' field - try both
+    const freshUserField = backendUser?.User ?? backendUser?.user ?? null;
+    const freshUserInfo = normalizeUser(freshUserField);
+    const freshEmail = freshUserInfo.email || company.email || '';
+    const freshPhone = freshUserInfo.tel || company.phone || '';
+
+    console.log('EditProfileModal - backendUser:', backendUser);
+    console.log('EditProfileModal - freshUserField:', freshUserField);
+    console.log('EditProfileModal - freshUserInfo:', freshUserInfo);
+    console.log('EditProfileModal - freshEmail:', freshEmail);
+    console.log('EditProfileModal - freshPhone:', freshPhone);
+    console.log('EditProfileModal - company.email:', company.email);
+    console.log('EditProfileModal - company.phone:', company.phone);
+
+    // Use setValue to explicitly set each field value
+    setValue('companyName', company.name);
+    setValue('email', freshEmail);
+    setValue('phone', freshPhone);
+    setValue('overview', company.about);
+    setValue('industry', company.industry);
+    setValue('companySize', mapBackendToDisplay(company.size));
+
     setLogoPreview(company.logoUrl || '');
     setBannerPreview(company.bannerUrl || '');
     setLogoFile(null);
@@ -100,7 +164,7 @@ export default function EditProfileModal({
     // Clear errors and messages
     clearErrors();
     setSubmitMessage(null);
-  }, [isOpen, company, reset, clearErrors]);
+  }, [isOpen, company, setValue, clearErrors, backendUser]);
 
   // Handle file uploads
   const handleFileChange = (type: 'logo' | 'banner', file: File) => {
@@ -160,7 +224,7 @@ export default function EditProfileModal({
           email: data.email,
           phone: data.phone,
           industry: data.industry,
-          employeeCount: data.companySize,
+          size: mapFrontendToBackend(data.companySize) ?? data.companySize,
         };
 
         // Pass the files to the save handler
@@ -423,6 +487,9 @@ export default function EditProfileModal({
                   {...register('email')}
                   className="bg-very-dark-gray border-zinc-600 text-white placeholder-gray-400"
                   placeholder="Enter email address"
+                  disabled
+                  readOnly
+                  title="Email cannot be changed"
                 />
                 {errors.email && (
                   <p className="text-red-reject mt-2 flex items-center space-x-1 text-sm">
@@ -467,8 +534,9 @@ export default function EditProfileModal({
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-white">Industry</Label>
                 <Select
+                  value={selectedIndustry || undefined}
                   onValueChange={(value) => {
-                    setValue('industry', value);
+                    setValue('industry', value, { shouldDirty: true });
                     clearErrors('industry');
                   }}
                 >
@@ -476,7 +544,7 @@ export default function EditProfileModal({
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
                   <SelectContent className="bg-very-dark-gray border-zinc-600">
-                    {INDUSTRY_OPTIONS.map((option) => (
+                    {industryOptions.map((option) => (
                       <SelectItem
                         key={option.value}
                         value={option.value}
@@ -505,8 +573,9 @@ export default function EditProfileModal({
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-white">Company Size</Label>
                 <Select
+                  value={selectedCompanySize || undefined}
                   onValueChange={(value) => {
-                    setValue('companySize', value);
+                    setValue('companySize', value, { shouldDirty: true });
                     clearErrors('companySize');
                   }}
                 >
@@ -514,7 +583,7 @@ export default function EditProfileModal({
                     <SelectValue placeholder="Select company size" />
                   </SelectTrigger>
                   <SelectContent className="bg-very-dark-gray border-zinc-600">
-                    {COMPANY_SIZE_OPTIONS.map((option) => (
+                    {companySizeOptions.map((option) => (
                       <SelectItem
                         key={option.value}
                         value={option.value}

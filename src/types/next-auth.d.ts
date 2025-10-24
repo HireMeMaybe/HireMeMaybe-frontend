@@ -21,6 +21,12 @@ interface BackendUser {
   // Common fields
   role?: 'Company' | 'CPSK' | 'Visitor';
   raw?: unknown;
+  company?:
+    | {
+        verified_status?: 'Unverified' | 'Pending' | 'Verified' | string | null;
+        [key: string]: unknown;
+      }
+    | null;
   User?: {
     ID?: number;
     CreatedAt?: string;

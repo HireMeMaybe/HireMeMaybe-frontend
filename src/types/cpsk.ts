@@ -8,19 +8,11 @@ export interface CpskRegistrationResult {
   }[];
 }
 
+import type { BackendUserPascal } from '../types/user';
+
 export interface ProfileData {
   id?: string;
-  User?: {
-    ID?: number;
-    CreatedAt?: string;
-    UpdatedAt?: string;
-    DeletedAt?: string | null;
-    tel?: string;
-    email?: string;
-    id?: string;
-    username?: string;
-    profile_picture?: string | null;
-  };
+  User?: BackendUserPascal;
   first_name?: string;
   last_name?: string;
   program?: string | null;

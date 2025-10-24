@@ -8,7 +8,7 @@ import type { JobOpening } from '@/types/company';
 
 interface JobOpeningsProps {
   readonly jobOpenings: JobOpening[];
-  readonly viewType: 'student' | 'company';
+  readonly viewType: 'owner' | 'company' | 'cpsk';
 }
 
 export default function JobOpenings({ jobOpenings, viewType }: JobOpeningsProps) {
@@ -37,7 +37,7 @@ export default function JobOpenings({ jobOpenings, viewType }: JobOpeningsProps)
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Current Job Openings</h2>
-        {viewType === 'company' && (
+        {viewType === 'owner' && (
           <Button
             onClick={handlePostNewJob}
             className="bg-primary-green flex cursor-pointer items-center gap-2 rounded-md px-4 py-2 text-white hover:bg-green-700"

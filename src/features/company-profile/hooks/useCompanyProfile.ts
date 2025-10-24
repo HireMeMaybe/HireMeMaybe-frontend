@@ -1,75 +1,214 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
-import type { Company, JobOpening } from '@/types/company';
+import { CompanyService } from '@/lib/services/company.service';
+import { useSession } from 'next-auth/react';
+import type { Session } from 'next-auth';
+import type { Company, JobOpening, BackendCompanyResponse } from '@/types/company';
+import { normalizeUser } from '@/lib/utils/user';
 
-// Mock data - replace with actual API calls
-const mockCompany: Company = {
-  id: 'tech-innovators',
-  name: 'Tech Innovators Inc.',
-  industry: 'Technology',
-  employeeCount: '501-1000 employees',
-  location: 'New York, NY',
-  email: 'contact@techinnovators.com',
-  phone: '094-123-4567',
-  logoUrl: 'https://i.postimg.cc/dV3X3hq9/image.png',
-  bannerUrl: 'https://i.postimg.cc/cH3GHrBz/banner.png',
-  about: 'Tech Innovators Inc. is a leading software development company specializing in innovative solutions for businesses across various industries. Our mission is to empower organizations with cutting-edge technology that drives growth and efficiency. We foster a collaborative and inclusive work environment where creativity and innovation thrive. Our core values include integrity, excellence, and a commitment to continuous learning and development.',
-  website: 'https://techinnovators.com'
-};
+type BackendJob = NonNullable<BackendCompanyResponse['job_post']>[number];
 
-const mockJobOpenings: JobOpening[] = [
-  {
-    id: 1,
-    title: 'Senior Software Engineer',
-    department: 'Engineering',
-    location: 'New York, NY',
-    type: 'Full-time',
-    applicationCount: 2,
-    imageUrl: '/api/placeholder/job-1',
-    postedDate: '2025-08-25'
-  },
-  {
-    id: 2,
-    title: 'Product Manager',
-    department: 'Product',
-    location: 'New York, NY', 
-    type: 'Full-time',
-    applicationCount: 1,
-    imageUrl: '/api/placeholder/job-2',
-    postedDate: '2025-08-20'
+async function createObjectUrl(
+  id: number | null | undefined,
+  loader: (assetId: number) => Promise<Blob>
+): Promise<string | undefined> {
+  if (id == null) {
+    console.log('createObjectUrl: No ID provided, returning undefined');
+    return undefined;
   }
-];
+  console.log('createObjectUrl: Fetching asset with ID:', id);
+  try {
+    const blob = await loader(id);
+    console.log('createObjectUrl: Successfully fetched blob, size:', blob.size, 'type:', blob.type);
+    const url = URL.createObjectURL(blob);
+    console.log('createObjectUrl: Created blob URL:', url);
+    return url;
+  } catch (err) {
+    console.error('createObjectUrl: Failed to fetch company asset:', err);
+    return undefined;
+  }
+}
 
-export function useCompanyProfile(companyId: string) {
+function mapJobType(value?: string | null): JobOpening['type'] {
+  const normalized = value?.toLowerCase();
+  switch (normalized) {
+    case 'part-time':
+    case 'part time':
+      return 'Part-time';
+    case 'internship':
+      return 'Internship';
+    case 'contract':
+      return 'Contract';
+    case 'full-time':
+    case 'full time':
+    default:
+      return 'Full-time';
+  }
+}
+
+function parseJobRequirements(req: BackendJob['req']): string[] {
+  if (typeof req === 'string' && req.length > 0) {
+    return req
+      .split(/\r?\n|,/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  return Array.isArray(req) ? req : [];
+}
+
+function mapJob(job: BackendJob): JobOpening {
+  return {
+    id: job.id ?? 0,
+    title: job.title || '',
+    department: '',
+    location: job.location || '',
+    type: mapJobType(job.type),
+    applicationCount: job.applications?.length,
+    imageUrl: undefined,
+    description: job.desc,
+    requirements: parseJobRequirements(job.req),
+    salary: job.salary || undefined,
+    tags: Array.isArray(job.tags) ? job.tags : [],
+    expLevel: job.exp_lvl || undefined,
+    expiring: job.expiring || undefined,
+    companyId: job.company_id || undefined,
+    rawApplications: Array.isArray(job.applications) ? job.applications : [],
+    postedDate: job.post_time || '',
+  };
+}
+
+function mapJobOpenings(jobPost: BackendCompanyResponse['job_post']): JobOpening[] {
+  if (!Array.isArray(jobPost)) return [];
+  return jobPost.map((job) => mapJob(job));
+}
+
+async function hydrateCompany(data: BackendCompanyResponse): Promise<Company> {
+  console.log('hydrateCompany: Received data:', {
+    id: data.id,
+    name: data.name,
+    logo_id: data.logo_id,
+    banner_id: data.banner_id,
+  });
+
+  // Backend may return user data as 'user' or 'User' (Pascal case)
+  const userData = data.User || data.user;
+  const contactInfo = normalizeUser(userData ?? null);
+
+  const baseCompany: Company = {
+    id: String(data.id),
+    name: data.name || '',
+    industry: data.industry || '',
+    size: data.size || '',
+    location: data.location || '',
+    // Prioritize top-level fields over nested user fields (top-level is fresher)
+    email: data.email || data.contact || contactInfo.email || '',
+    phone: data.tel || data.phone || contactInfo.tel || '',
+    logoUrl: undefined,
+    bannerUrl: undefined,
+    about: data.overview || '',
+    website: data.website || '',
+  };
+
+  console.log(
+    'hydrateCompany: Fetching assets - logo_id:',
+    data.logo_id,
+    'banner_id:',
+    data.banner_id
+  );
+
+  const [logoUrl, bannerUrl] = await Promise.all([
+    createObjectUrl(data.logo_id, CompanyService.fetchLogo),
+    createObjectUrl(data.banner_id, CompanyService.fetchBanner),
+  ]);
+
+  return {
+    ...baseCompany,
+    ...(logoUrl ? { logoUrl } : {}),
+    ...(bannerUrl ? { bannerUrl } : {}),
+  };
+}
+
+// Fetch company data based on ownership status
+async function fetchCompanyData(
+  isOwner: boolean,
+  companyId: string,
+  sessionUpdater?: (partial: Partial<Session>) => Promise<void>
+): Promise<BackendCompanyResponse> {
+  if (isOwner) {
+    return await CompanyService.getMyProfileAndSync(sessionUpdater);
+  }
+  return await CompanyService.getCompany(companyId);
+}
+
+// Process fetched company data
+async function processCompanyData(
+  data: BackendCompanyResponse
+): Promise<{ company: Company; jobs: JobOpening[] }> {
+  const hydratedCompany = await hydrateCompany(data);
+  const jobs = mapJobOpenings(data.job_post);
+
+  if (!('job_post' in data)) {
+    console.warn('company.myprofile did not include job_post field; no jobs will be shown');
+  }
+
+  return { company: hydratedCompany, jobs };
+}
+
+export function useCompanyProfile(companyId: string, isOwner: boolean = false) {
   const [company, setCompany] = useState<Company | null>(null);
   const [jobOpenings, setJobOpenings] = useState<JobOpening[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { update } = useSession();
+
   useEffect(() => {
-    const fetchCompanyProfile = async () => {
+    let mounted = true;
+
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
-        setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // In real implementation, replace with:
-        // const response = await fetch(`/api/companies/${companyId}`);
-        // const companyData = await response.json();
-        
-        setCompany(mockCompany);
-        setJobOpenings(mockJobOpenings);
+        const sessionUpdater =
+          typeof update === 'function'
+            ? async (partial: Partial<Session>) => {
+                await update(partial);
+              }
+            : undefined;
+
+        const data = await fetchCompanyData(isOwner, companyId, sessionUpdater);
+        const { company: hydratedCompany, jobs } = await processCompanyData(data);
+
+        if (mounted) {
+          setCompany(hydratedCompany);
+          setJobOpenings(jobs);
+        }
       } catch (err) {
-        setError('Failed to load company profile');
         console.error('Error fetching company profile:', err);
+        if (mounted) setError(err instanceof Error ? err.message : String(err));
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     };
 
-    fetchCompanyProfile();
-  }, [companyId]);
+    fetchProfile();
+
+    return () => {
+      mounted = false;
+      // Cleanup blob URLs on unmount
+      if (company?.logoUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(company.logoUrl);
+      }
+      if (company?.bannerUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(company.bannerUrl);
+      }
+    };
+    // Only re-fetch when companyId or isOwner changes, not when URLs change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, isOwner]);
 
   return {
     company,
@@ -77,9 +216,11 @@ export function useCompanyProfile(companyId: string) {
     isLoading,
     error,
     refetch: () => {
+      // Trigger a refetch by setting loading true and re-calling effect
       setIsLoading(true);
       setError(null);
-      // Re-trigger the effect
-    }
+      // A simple way to re-run: set company to null (effect depends on companyId only)
+      setCompany(null);
+    },
   };
 }
