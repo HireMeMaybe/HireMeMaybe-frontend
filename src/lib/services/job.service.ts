@@ -102,20 +102,6 @@ export class JobService {
   }
 
   /**
-   * Get job details by ID
-   */
-  static async getJobById(jobId: string): Promise<JobPost> {
-    try {
-      return await apiClient.get<JobPost>(`/jobs/${jobId}`, { requireAuth: false });
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error(`Failed to fetch job details: ${error.message}`);
-      }
-      throw new Error('Failed to fetch job details');
-    }
-  }
-
-  /**
    * Get job post details by ID with applications (requires authentication)
    */
   static async getJobPostById(jobPostId: string): Promise<JobPostDetail> {
@@ -144,11 +130,11 @@ export class JobService {
   }
 
   /**
-   * Update a job post
+   * Update a job post (PATCH)
    */
   static async updateJobPost(jobId: string, data: Partial<JobPostCreateData>): Promise<JobPost> {
     try {
-      return await apiClient.put<JobPost>(`/jobs/${jobId}`, data);
+      return await apiClient.patch<JobPost>(`/jobpost/${jobId}`, data);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to update job post: ${error.message}`);
