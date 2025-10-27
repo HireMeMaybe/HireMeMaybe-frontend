@@ -87,14 +87,14 @@ export default function JobCard({
                 View Applications
               </Button>
             </>
-          ) : (
+          ) : viewType === 'cpsk' ? (
             <Button
               onClick={() => onApply?.(job.id)}
               className="rounded-md bg-[#02BC77] px-6 py-2 text-sm text-white hover:bg-green-700"
             >
               Apply
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -102,13 +102,7 @@ export default function JobCard({
       <div className="ml-6 flex-shrink-0">
         <div className="relative h-40 w-60 overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
           {job.imageUrl ? (
-            <Image
-              src={job.imageUrl}
-              alt={job.title}
-              fill
-              className="object-cover"
-              sizes="240px"
-            />
+            <Image src={job.imageUrl} alt={job.title} fill className="object-cover" sizes="240px" />
           ) : (
             <div className="flex h-full flex-col justify-between p-4">
               {/* Job Stats */}

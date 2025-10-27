@@ -5,25 +5,26 @@ import { authOptions } from '@/lib/authOptions';
 
 interface CompanyProfilePageProps {
   readonly params: Promise<{ id: string }>;
-  readonly searchParams: Promise<{ view?: 'owner' | 'company' | 'cpsk' }>;
 }
 
-export default async function CompanyProfilePage({
-  params,
-  searchParams,
-}: CompanyProfilePageProps) {
+export default async function CompanyProfilePage({ params }: CompanyProfilePageProps) {
   const { id } = await params;
-  const { view } = await searchParams;
   const session = await getServerSession(authOptions);
 
-  // Determine viewType based on session and query param
-  let viewType: 'owner' | 'company' | 'cpsk' = view || 'cpsk';
+  // Determine viewType based on session only (no URL override)
+  let viewType: 'owner' | 'company' | 'cpsk' = 'cpsk';
 
-  // If no explicit view param, determine from session
-  if (!view && session) {
-    // Check if user is the owner of this company
-    const isOwner = session.backendUser?.id === id;
-    const userRole = session.backendUser?.role;
+  if (session) {
+    const userRole = (session as any).role; // Role is now at top level
+    const backendUser = session.backendUser;
+
+    // For Company users, the id in backendUser is their company ID
+    const sessionCompanyId = backendUser?.id;
+    const sessionUserId = backendUser?.User?.id;
+
+    // Convert all to strings for comparison
+    const urlIdStr = String(id);
+    const isOwner = String(sessionCompanyId) === urlIdStr || String(sessionUserId) === urlIdStr;
 
     if (isOwner && userRole === 'Company') {
       viewType = 'owner';
