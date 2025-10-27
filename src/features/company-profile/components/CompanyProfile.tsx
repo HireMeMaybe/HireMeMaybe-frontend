@@ -169,7 +169,7 @@ export default function CompanyProfile({ companyId, viewType }: Readonly<Company
     <div className="bg-background min-h-screen">
       <CompanyHeader company={company} viewType={viewType} onCompanyUpdate={handleCompanyUpdate} />
       <CompanyAbout company={company} />
-      <JobOpenings jobOpenings={jobOpenings} viewType={viewType} />
+      <JobOpenings jobOpenings={jobOpenings} viewType={viewType} companyId={companyId} />
     </div>
   );
 }

@@ -3,16 +3,22 @@
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import JobCard from './JobCard';
+import EditJobModal from './EditJob';
+import SuccessModal from '@/components/modals/SuccessModal';
 import type { JobOpening } from '@/types/company';
 
 interface JobOpeningsProps {
   readonly jobOpenings: JobOpening[];
   readonly viewType: 'owner' | 'company' | 'cpsk';
+  readonly companyId: string;
 }
 
-export default function JobOpenings({ jobOpenings, viewType }: JobOpeningsProps) {
+export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpeningsProps) {
   const router = useRouter();
+  const [editingJobId, setEditingJobId] = useState<number | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleApply = (jobId: number) => {
     console.log('Applied to job:', jobId);
@@ -20,13 +26,21 @@ export default function JobOpenings({ jobOpenings, viewType }: JobOpeningsProps)
   };
 
   const handleEdit = (jobId: number) => {
-    console.log('Edit job:', jobId);
-    // Implement edit functionality
+    setEditingJobId(jobId);
+  };
+
+  const handleEditSuccess = () => {
+    setShowSuccessModal(true);
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    // Reload the page to show updated job data
+    window.location.reload();
   };
 
   const handleViewApplications = (jobId: number) => {
-    console.log('View applications for job:', jobId);
-    // Implement view applications functionality
+    router.push(`/company/${companyId}/jobs/${jobId}/applications`);
   };
 
   const handlePostNewJob = () => {
@@ -66,6 +80,26 @@ export default function JobOpenings({ jobOpenings, viewType }: JobOpeningsProps)
           </div>
         )}
       </div>
+
+      {/* Edit Job Modal */}
+      {editingJobId !== null && (
+        <EditJobModal
+          isOpen={editingJobId !== null}
+          onClose={() => setEditingJobId(null)}
+          jobId={editingJobId}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title="Job Updated Successfully"
+        message="Your job post has been updated"
+        description="The changes to your job posting have been saved and are now live."
+        buttonText="Got it"
+      />
     </div>
   );
 }
