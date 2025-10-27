@@ -85,10 +85,29 @@ function RoleCard({
         alert('Error starting Company authentication. Please try again.');
       }
     } else if (title === 'Visitor') {
-      console.log('Setting Visitor role...');
-      localStorage.setItem('visitorRole', 'Visitor');
-      onCloseModal?.();
-      alert('Welcome as a Visitor! You can browse the platform without logging in.');
+      try {
+        console.log('🔄 Starting Google authentication for Visitor...');
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID_CPSK;
+        const redirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/auth/callback`;
+        const state = JSON.stringify({ role: title, random: Math.random().toString(36).slice(2) });
+        sessionStorage.setItem('oauth_state', state);
+
+        const params = new URLSearchParams({
+          client_id: clientId || '',
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope: 'openid profile email',
+          access_type: 'offline',
+          prompt: 'consent',
+          state,
+        });
+
+        const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+        window.location.href = googleUrl;
+      } catch (error) {
+        console.error('❌ Error during Visitor authentication:', error);
+        alert('Error starting Visitor authentication. Please try again.');
+      }
     } else {
       console.log('Google login for', title, '- not implemented yet');
     }
@@ -180,7 +199,7 @@ export default function LoginSection() {
   const [active, setActive] = useState<string | null>(null);
   const { data: session } = useSession();
   const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
-  
+
   const isRegistered = hasIsRegistered(session) ? !!session.isRegistered : false;
 
   React.useEffect(() => {
@@ -202,11 +221,11 @@ export default function LoginSection() {
       <div className="container mx-auto text-center">
         <h2 className="text-3xl font-bold md:text-4xl">Ready to join?</h2>
         <p className="mt-3 text-lg text-white/80">
-          {isAdminAuthenticated 
-            ? "You're logged in as an administrator" 
-            : isRegistered 
-            ? "You're already registered" 
-            : "Select your role below"}
+          {isAdminAuthenticated
+            ? "You're logged in as an administrator"
+            : isRegistered
+              ? "You're already registered"
+              : 'Select your role below'}
         </p>
 
         <div className="mt-12 flex flex-col items-stretch justify-center md:flex-row">
