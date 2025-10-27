@@ -2,6 +2,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { CpskService } from '@/lib/services';
 import type { Session } from 'next-auth';
+import { useSession } from 'next-auth/react';
 
 interface UseFormSubmissionProps {
   session?: Session | null;
@@ -28,6 +29,7 @@ export function useFormSubmission({ session }: UseFormSubmissionProps): UseFormS
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | { ok: boolean; message: string }>(null);
   const router = useRouter();
+  const { update } = useSession();
 
   const submitForm = async (data: FormData) => {
     startTransition(async () => {
@@ -67,9 +69,26 @@ export function useFormSubmission({ session }: UseFormSubmissionProps): UseFormS
               message:
                 'Profile saved successfully, but resume upload failed. You can try uploading it again later.',
             });
+            // Update session even if resume upload fails
+            await update({
+              backendUser: {
+                ...session.backendUser,
+                ...profileData,
+              },
+              isRegistered: true,
+            });
             return;
           }
         }
+
+        // Update the session with new user data
+        await update({
+          backendUser: {
+            ...session.backendUser,
+            ...profileData,
+          },
+          isRegistered: true,
+        });
 
         // Both profile and resume (if provided) were successful
         setStatus({ ok: true, message: 'Registration completed successfully!' });
