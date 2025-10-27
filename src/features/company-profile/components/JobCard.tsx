@@ -98,36 +98,17 @@ export default function JobCard({
         </div>
       </div>
 
-      {/* Right Side - Job Image/Info */}
+      {/* Right Side - Job Info */}
       <div className="ml-6 flex-shrink-0">
-        <div className="relative h-40 w-60 overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
-          {job.imageUrl ? (
-            <Image src={job.imageUrl} alt={job.title} fill className="object-cover" sizes="240px" />
-          ) : (
-            <div className="flex h-full flex-col justify-between p-4">
-              {/* Job Stats */}
-              <div className="space-y-2">
-                {job.postedDate && (
-                  <div className="text-xs text-zinc-400">
-                    Posted: {new Date(job.postedDate).toLocaleDateString()}
-                  </div>
-                )}
-                {job.expiring && (
-                  <div className="text-xs text-orange-400">
-                    Expires: {new Date(job.expiring).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-
-              {/* Description Preview */}
-              {job.description && (
-                <div className="mt-auto">
-                  <p className="line-clamp-3 text-xs text-zinc-400">
-                    {job.description.substring(0, 120)}
-                    {job.description.length > 120 && '...'}
-                  </p>
-                </div>
-              )}
+        <div className="space-y-2">
+          {job.postedDate && (
+            <div className="text-xs text-zinc-400">
+              Posted: {new Date(job.postedDate).toLocaleDateString()}
+            </div>
+          )}
+          {job.expiring && (
+            <div className="text-xs text-orange-400">
+              Expires: {new Date(job.expiring).toLocaleDateString()}
             </div>
           )}
         </div>
