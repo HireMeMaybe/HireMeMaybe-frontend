@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { Users, Edit, Eye } from 'lucide-react';
-import Image from 'next/image';
 import type { JobOpening } from '@/types/company';
 
 interface JobCardProps {
