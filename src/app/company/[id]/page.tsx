@@ -3,21 +3,33 @@ import { CompanyProfile } from '@/features/company-profile';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 
+type ViewType = 'owner' | 'company' | 'cpsk';
+
 interface CompanyProfilePageProps {
-  readonly params: Promise<{ id: string }>;
-  readonly searchParams: Promise<{ view?: 'owner' | 'company' | 'cpsk' }>;
+  readonly params: { id: string };
+  readonly searchParams?: { view?: ViewType | string };
 }
+
+const VIEW_TYPES = {
+  owner: true,
+  company: true,
+  cpsk: true,
+} as const;
+
+const isViewType = (value: unknown): value is ViewType =>
+  typeof value === 'string' && value in VIEW_TYPES;
 
 export default async function CompanyProfilePage({
   params,
   searchParams,
 }: CompanyProfilePageProps) {
-  const { id } = await params;
-  const { view } = await searchParams;
+  const { id } = params;
+  const rawView = searchParams?.view;
+  const view = isViewType(rawView) ? rawView : undefined;
   const session = await getServerSession(authOptions);
 
   // Determine viewType based on session and query param
-  let viewType: 'owner' | 'company' | 'cpsk' = view || 'cpsk';
+  let viewType: ViewType = view || 'cpsk';
 
   // If no explicit view param, determine from session
   if (!view && session) {
