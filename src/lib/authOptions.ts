@@ -53,7 +53,7 @@ function getCodeFromAccount(acct: unknown): string | null {
 }
 
 // Helper: Extract role from OAuth state parameter
-function getRoleFromAccount(acct: unknown): 'Company' | 'CPSK' | null {
+function getRoleFromAccount(acct: unknown): 'Company' | 'CPSK' | 'Visitor' | null {
   if (!acct || typeof acct !== 'object') return null;
   const a = acct as Record<string, unknown>;
 
@@ -71,7 +71,7 @@ function getRoleFromAccount(acct: unknown): 'Company' | 'CPSK' | null {
   try {
     const stateData = JSON.parse(state);
     const role = stateData.role;
-    if (role === 'Company' || role === 'CPSK') {
+    if (role === 'Company' || role === 'CPSK' || role === 'Visitor') {
       return role;
     }
   } catch (err) {
@@ -140,7 +140,7 @@ function storeUserDataInSession(user: unknown, data: unknown, normalized: Backen
     const d = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
     u['backendToken'] = d['access_token'] || d['accessToken'] || d['token'];
     u['backendUser'] = normalized;
-    u['isRegistered'] = !!(normalized.program || normalized.size);
+    u['isRegistered'] = normalized.role === 'Visitor' || !!(normalized.program || normalized.size);
   }
 }
 
@@ -213,7 +213,12 @@ export const authOptions: AuthOptions = {
 
         // Extract role from OAuth state to determine the correct backend endpoint
         const role = getRoleFromAccount(account);
-        const backendPath = role === 'Company' ? '/auth/google/company' : '/auth/google/cpsk';
+        const backendPath =
+          role === 'Company'
+            ? '/auth/google/company'
+            : role === 'Visitor'
+              ? '/auth/google/visitor'
+              : '/auth/google/cpsk';
         const backendEndpoint = `${process.env.BACKEND_URL}${backendPath}`;
 
         const res = await fetch(backendEndpoint, {
@@ -283,8 +288,11 @@ export const authOptions: AuthOptions = {
       if (typeof explicitIsRegistered === 'boolean') {
         s['isRegistered'] = explicitIsRegistered;
       } else {
-        // Fallback: User is registered if they have program (CPSK) or name (Company)
-        s['isRegistered'] = backendUser?.program || backendUser?.name ? true : false;
+        // Fallback: User is registered if they have program (CPSK) or name (Company) or role is Visitor
+        s['isRegistered'] =
+          backendUser?.role === 'Visitor' || backendUser?.program || backendUser?.name
+            ? true
+            : false;
       }
 
       return s as unknown as typeof session;
