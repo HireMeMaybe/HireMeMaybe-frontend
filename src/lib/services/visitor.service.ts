@@ -3,8 +3,6 @@
  * Handles all Visitor-related API calls (authentication, profile)
  */
 
-import { apiClient, ApiError } from './api-client';
-
 interface VisitorUser {
   id: string;
   first_name: string;
