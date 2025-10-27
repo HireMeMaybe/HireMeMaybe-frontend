@@ -18,7 +18,6 @@ type RoleCardProps = Readonly<{
   checks: string[];
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   onSelect?: () => void;
-  onCloseModal?: () => void;
   isActive?: boolean;
   isDisabled?: boolean;
 }>;
@@ -29,7 +28,6 @@ function RoleCard({
   checks,
   Icon,
   onSelect,
-  onCloseModal,
   isActive,
   isDisabled,
 }: RoleCardProps) {
@@ -235,7 +233,6 @@ export default function LoginSection() {
             checks={['Create company profile', 'Post job openings', 'Track applications']}
             Icon={Building}
             onSelect={() => setActive((s) => (s === 'Company' ? null : 'Company'))}
-            onCloseModal={() => setActive(null)}
             isActive={active === 'Company'}
             isDisabled={shouldDisableCards}
           />
@@ -246,7 +243,6 @@ export default function LoginSection() {
             checks={['Build your profile', 'Apply to positions', 'Search & filter jobs']}
             Icon={GraduationCap}
             onSelect={() => setActive((s) => (s === 'CPSK' ? null : 'CPSK'))}
-            onCloseModal={() => setActive(null)}
             isActive={active === 'CPSK'}
             isDisabled={shouldDisableCards}
           />
@@ -257,7 +253,6 @@ export default function LoginSection() {
             checks={['View job posts', 'Browse company profiles', 'Explore opportunities']}
             Icon={Eye}
             onSelect={() => setActive((s) => (s === 'Visitor' ? null : 'Visitor'))}
-            onCloseModal={() => setActive(null)}
             isActive={active === 'Visitor'}
             isDisabled={shouldDisableCards}
           />
