@@ -19,6 +19,39 @@ interface JobPost {
   updatedAt: string;
 }
 
+export interface JobPostApplication {
+  id: number;
+  post_id: number;
+  cpsk_id: string;
+  answer_id: number;
+  status: string;
+  applied_at: string;
+  resume_id: number;
+  answer: {
+    id: number;
+    expected_salary: string;
+    programming_languages: string[];
+    right_to_work: string;
+    year_of_experience: number;
+  };
+}
+
+export interface JobPostDetail {
+  id: number;
+  company_id: string;
+  title: string;
+  desc: string;
+  exp_lvl: string;
+  location: string;
+  type: string;
+  req: string;
+  salary: string;
+  tags: string[];
+  post_time: string;
+  expiring: string;
+  applications: JobPostApplication[];
+}
+
 interface JobSearchParams {
   query?: string;
   location?: string;
@@ -36,12 +69,14 @@ interface JobSearchResponse {
 
 interface JobPostCreateData {
   title: string;
-  description: string;
+  desc: string;
+  exp_lvl: string;
   location: string;
   type: string;
+  req: string;
+  tags: string[];
+  expiring?: string;
   salary?: string;
-  requirements?: string[];
-  benefits?: string[];
 }
 
 export class JobService {
@@ -81,11 +116,25 @@ export class JobService {
   }
 
   /**
+   * Get job post details by ID with applications (requires authentication)
+   */
+  static async getJobPostById(jobPostId: string): Promise<JobPostDetail> {
+    try {
+      return await apiClient.get<JobPostDetail>(`/jobpost/${jobPostId}`, { requireAuth: true });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch job post details: ${error.message}`);
+      }
+      throw new Error('Failed to fetch job post details');
+    }
+  }
+
+  /**
    * Create a new job post (company only)
    */
   static async createJobPost(data: JobPostCreateData): Promise<JobPost> {
     try {
-      return await apiClient.post<JobPost>('/jobs', data);
+      return await apiClient.post<JobPost>('/jobpost', data);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to create job post: ${error.message}`);
