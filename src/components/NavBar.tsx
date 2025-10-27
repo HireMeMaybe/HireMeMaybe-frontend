@@ -41,7 +41,8 @@ export default function Navbar() {
 
   const backendUser = session?.backendUser as BackendUser | undefined;
   const isCompany = backendUser?.role === 'Company';
-  const verifiedStatus = backendUser?.company?.verified_status ?? backendUser?.verified_status ?? null;
+  const verifiedStatus =
+    backendUser?.company?.verified_status ?? backendUser?.verified_status ?? null;
   const isUnverifiedCompany = isCompany && String(verifiedStatus).toLowerCase() !== 'verified';
   const profileHref = isCompany ? `/company/${backendUser?.id ?? ''}?view=company` : '/profile';
 
@@ -139,6 +140,8 @@ export default function Navbar() {
       </div>
     );
   } else {
+    const isVisitor = backendUser?.role === 'Visitor';
+
     dropdownContent = (
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3 border-b pb-3">
@@ -157,7 +160,7 @@ export default function Navbar() {
             <div className="truncate font-bold">
               {session?.backendUser?.role === 'Company'
                 ? session?.backendUser?.name || 'Company'
-                : session?.backendUser?.first_name || 'U'}
+                : session?.backendUser?.first_name || 'User'}
             </div>
             <div className="overflow-wrap-anywhere text-sm break-all text-zinc-400">
               {session?.user?.email}
@@ -165,14 +168,18 @@ export default function Navbar() {
           </div>
         </div>
 
-        {!isUnverifiedCompany && (
-          <a href={profileHref} className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5">
+        {!isVisitor && !isUnverifiedCompany && (
+          <a
+            href={profileHref}
+            className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
+          >
             <UserPen className="h-4 w-4" />
             View profile
           </a>
         )}
 
-        {!isUnverifiedCompany &&
+        {!isVisitor &&
+          !isUnverifiedCompany &&
           (session?.backendUser?.role === 'Company' ? (
             <a
               href={`/company/${session.backendUser?.id ?? ''}?view=company`}
