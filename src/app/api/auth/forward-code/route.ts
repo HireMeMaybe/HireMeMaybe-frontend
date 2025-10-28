@@ -137,7 +137,9 @@ export async function POST(request: Request) {
     const backendEndpoint =
       selectedRole === 'Company'
         ? `${backendUrl}/auth/google/company`
-        : `${backendUrl}/auth/google/cpsk`;
+        : selectedRole === 'Visitor'
+          ? `${backendUrl}/auth/google/visitor`
+          : `${backendUrl}/auth/google/cpsk`;
 
     console.log('Forwarding code to backend:', {
       code: code.substring(0, 10) + '...',
