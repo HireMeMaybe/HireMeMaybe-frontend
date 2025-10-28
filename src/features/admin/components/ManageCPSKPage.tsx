@@ -46,11 +46,6 @@ export function ManageCPSKPage() {
     account: null,
   });
 
-  const handleView = (account: CPSKAccount) => {
-    console.log('View account:', account);
-    window.open(`/student/${account.id}`, '_blank');
-  };
-
   const handleSuspend = async (startDate: string, endDate: string) => {
     if (!suspendModal.account) return;
     try {
@@ -123,12 +118,6 @@ export function ManageCPSKPage() {
         return (
           <div className="flex gap-2">
             <button
-              onClick={() => handleView(account)}
-              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-            >
-              View
-            </button>
-            <button
               onClick={() => setSuspendModal({ isOpen: true, account })}
               className="bg-bright-yellow hover:bg-bright-yellow/85 cursor-pointer rounded-full px-4 py-2 text-sm text-black"
             >
@@ -146,12 +135,6 @@ export function ManageCPSKPage() {
         return (
           <div className="flex gap-2">
             <button
-              onClick={() => handleView(account)}
-              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-            >
-              View
-            </button>
-            <button
               onClick={() => setCancelSuspendModal({ isOpen: true, account })}
               className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
             >
@@ -162,12 +145,6 @@ export function ManageCPSKPage() {
       case 'Banned':
         return (
           <div className="flex gap-2">
-            <button
-              onClick={() => handleView(account)}
-              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-            >
-              View
-            </button>
             <button
               onClick={() => setUnbanModal({ isOpen: true, account })}
               className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
@@ -186,7 +163,7 @@ export function ManageCPSKPage() {
       <div className="p-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-white">Manage CPSK</h1>
-          <p className="text-gray-400">View and manage CPSK accounts</p>
+          <p className="text-gray-400">Manage CPSK accounts</p>
         </div>
 
         <section className="rounded-lg bg-zinc-900/40 p-4">
