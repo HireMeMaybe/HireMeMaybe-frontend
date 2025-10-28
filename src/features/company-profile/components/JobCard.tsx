@@ -81,18 +81,18 @@ export default function JobCard({
                 Edit
               </Button>
               <Button
+                onClick={() => onDelete?.(job.id)}
+                className="bg-red-reject flex cursor-pointer items-center gap-1 rounded-md px-4 py-2 text-sm text-white hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+              <Button
                 onClick={() => onViewApplications?.(job.id)}
                 className="flex cursor-pointer items-center gap-1 rounded-md bg-[#02BC77] px-4 py-2 text-sm text-white hover:bg-green-700"
               >
                 <Eye className="h-4 w-4" />
                 View Applications
-              </Button>
-              <Button
-                onClick={() => onDelete?.(job.id)}
-                className="flex cursor-pointer items-center gap-1 rounded-md bg-red-reject px-4 py-2 text-sm text-white hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
               </Button>
             </>
           ) : viewType === 'cpsk' ? (
