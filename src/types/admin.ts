@@ -19,7 +19,7 @@ export interface Report {
   reportedEntity: string;
   reason: string;
   submittedAt: Date;
-  status: "pending" | "reviewed" | "resolved";
+  status: 'pending' | 'reviewed' | 'resolved';
 }
 
 export interface AdminNavItem {
@@ -38,13 +38,34 @@ export type JobPostItem = {
   reports: number;
 };
 
+export type UserStatus = 'Active' | 'Suspended' | 'Banned';
+
 export interface CPSKAccount {
-  id: number;
+  id: string;
   name: string;
   email: string;
   major: string;
   year: string;
-  status: 'Active' | 'Suspended' | 'Banned';
+  status: UserStatus;
+  tel?: string;
+  first_name?: string;
+  last_name?: string;
+  program?: string;
+  punishment?: PunishmentInfo;
+}
+
+export type PunishmentType = 'ban' | 'suspend';
+
+export interface PunishmentInfo {
+  type: PunishmentType;
+  at?: string; // ISO 8601 format: YYYY-MM-DDTHH:mm:ssZ
+  end?: string; // ISO 8601 format: YYYY-MM-DDTHH:mm:ssZ (empty means permanent)
+}
+
+export interface PunishmentStruct {
+  type: PunishmentType;
+  at?: string;
+  end?: string;
 }
 
 export interface ManagedCompany {
@@ -55,7 +76,7 @@ export interface ManagedCompany {
   verifiedDate: string;
   activePosts: number;
   reports: number;
-  status: 'Active' | 'Suspended' | 'Banned';
+  status: UserStatus;
 }
 
 export interface VisitorAccount {
@@ -63,7 +84,7 @@ export interface VisitorAccount {
   name: string;
   email: string;
   reportCount: number;
-  status: 'Active' | 'Suspended' | 'Banned';
+  status: UserStatus;
 }
 
 export interface VisitorReport {
