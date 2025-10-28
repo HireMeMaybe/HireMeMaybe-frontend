@@ -1,6 +1,6 @@
 // src/app/company/[id]/page.tsx
 import { CompanyProfile } from '@/features/company-profile';
-import { getServerSession } from 'next-auth';
+import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 
 type ViewType = 'owner' | 'company' | 'cpsk';
@@ -30,6 +30,8 @@ const resolveView = async (
   return isViewType(viewValue) ? viewValue : undefined;
 };
 
+type SessionWithRole = Session & { role?: 'Company' | 'CPSK' | 'Visitor' };
+
 export default async function CompanyProfilePage({
   params,
   searchParams,
@@ -37,13 +39,14 @@ export default async function CompanyProfilePage({
   const { id } = await params;
   const view = await resolveView(searchParams);
   const session = await getServerSession(authOptions);
+  const sessionWithRole = session as SessionWithRole | null;
+  const userRole = sessionWithRole?.role ?? sessionWithRole?.backendUser?.role;
 
   // Determine viewType based on session only (no URL override)
   let viewType: ViewType = view || 'cpsk';
 
-  if (session) {
-    const userRole = (session as any).role; // Role is now at top level
-    const backendUser = session.backendUser;
+  if (sessionWithRole) {
+    const backendUser = sessionWithRole.backendUser;
 
     // For Company users, the id in backendUser is their company ID
     const sessionCompanyId = backendUser?.id;
