@@ -53,19 +53,40 @@ export interface JobPostDetail {
 }
 
 interface JobSearchParams {
+  search?: string;
   query?: string;
-  location?: string;
   type?: string;
-  page?: number;
-  limit?: number;
+  tag?: string;
+  salary?: string;
+  exp?: string;
+  company?: string;
+  industry?: string;
+  location?: string;
+  desc?: boolean;
 }
 
-interface JobSearchResponse {
-  jobs: JobPost[];
-  total: number;
-  page: number;
-  totalPages: number;
+export interface JobPostSummary {
+  id?: number;
+  company_id?: string;
+  title?: string;
+  desc?: string;
+  exp_lvl?: string;
+  location?: string;
+  type?: string;
+  req?: string | string[];
+  salary?: string;
+  tags?: string[];
+  post_time?: string;
+  expiring?: string;
+  company?: {
+    id?: string;
+    name?: string;
+    industry?: string;
+    location?: string;
+  };
 }
+
+type JobSearchResponse = JobPostSummary[];
 
 interface JobPostCreateData {
   title: string;
@@ -85,19 +106,41 @@ export class JobService {
    */
   static async searchJobs(params: JobSearchParams = {}): Promise<JobSearchResponse> {
     try {
-      const queryString = new URLSearchParams(
-        Object.entries(params)
-          .filter(([, value]) => value !== undefined)
-          .map(([key, value]) => [key, String(value)])
-      ).toString();
+      const {
+        search,
+        query: searchAlias,
+        type,
+        tag,
+        salary,
+        exp,
+        company,
+        industry,
+        location,
+        desc,
+      } = params;
 
-      const endpoint = queryString ? `/jobs?${queryString}` : '/jobs';
-      return await apiClient.get<JobSearchResponse>(endpoint, { requireAuth: false });
+      const queryParams = new URLSearchParams();
+      const searchValue = search ?? searchAlias;
+
+      if (searchValue) queryParams.set('search', searchValue);
+      if (type) queryParams.set('type', type);
+      if (tag) queryParams.set('tag', tag);
+      if (salary) queryParams.set('salary', salary);
+      if (exp) queryParams.set('exp', exp);
+      if (company) queryParams.set('company', company);
+      if (industry) queryParams.set('industry', industry);
+      if (location) queryParams.set('location', location);
+      if (desc !== undefined) queryParams.set('desc', desc ? 'true' : 'false');
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString ? `/jobpost?${queryString}` : '/jobpost';
+
+      return await apiClient.get<JobSearchResponse>(endpoint, { requireAuth: true });
     } catch (error) {
       if (error instanceof ApiError) {
-        throw new Error(`Failed to search jobs: ${error.message}`);
+        throw new Error(`Failed to search job posts: ${error.message}`);
       }
-      throw new Error('Failed to search jobs');
+      throw new Error('Failed to search job posts');
     }
   }
 
