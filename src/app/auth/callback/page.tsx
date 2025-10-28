@@ -13,7 +13,11 @@ export default function AuthCallbackPage() {
       if (!state) return null;
       try {
         const stateData = JSON.parse(state);
-        return stateData.role;
+        const role = stateData.role;
+        if (role === 'Company' || role === 'CPSK' || role === 'Visitor') {
+          return role;
+        }
+        return null;
       } catch (err) {
         console.warn('Could not parse state parameter:', err);
         return null;
@@ -57,6 +61,11 @@ export default function AuthCallbackPage() {
       selectedRole: string | null,
       backendUser: RedirectUser | null
     ): string {
+      // Visitors always go to /search page
+      if (selectedRole === 'Visitor') {
+        return '/search';
+      }
+
       // Check registration first - unregistered users go to registration page
       if (!isRegistered) {
         return selectedRole === 'Company' ? '/company-register' : '/cpsk-register';
@@ -114,7 +123,10 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        const isRegistered = !!(backendUser?.program || backendUser?.size || backendUser?.name);
+        // Visitors are always considered registered
+        const isRegistered =
+          selectedRole === 'Visitor' ||
+          !!(backendUser?.program || backendUser?.size || backendUser?.name);
         const redirectPath = getRedirectPath(isRegistered, selectedRole, backendUser);
         router.push(redirectPath);
       } catch (err) {

@@ -52,6 +52,61 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
     setShowEditModal(true);
   };
 
+  const uploadImage = async (
+    file: File,
+    uploadFn: (file: File) => Promise<unknown>,
+    errorMessage: string
+  ): Promise<number | undefined> => {
+    try {
+      const response = await uploadFn(file);
+      console.log(`${errorMessage.split(' ')[0]} upload response:`, response);
+      return ((response as unknown as Record<string, unknown>)?.logo_id ||
+        (response as unknown as Record<string, unknown>)?.banner_id) as number | undefined;
+    } catch (e) {
+      console.error(`${errorMessage.split(' ')[0]} upload failed:`, e);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const fetchAndCreateImageUrl = async (
+    imageId: number | undefined,
+    fetchFn: (id: number) => Promise<Blob>,
+    oldUrl: string | undefined
+  ): Promise<string | undefined> => {
+    if (!imageId) return oldUrl;
+
+    try {
+      const blob = await fetchFn(imageId);
+      if (oldUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(oldUrl);
+      }
+      return URL.createObjectURL(blob);
+    } catch (err) {
+      console.warn('Failed to fetch updated image:', err);
+      return oldUrl;
+    }
+  };
+
+  const updateProfileData = async (updatedData: Partial<Company>) => {
+    const profilePayload = {
+      name: updatedData.name || undefined,
+      industry: updatedData.industry || undefined,
+      overview: updatedData.about || undefined,
+      size: mapFrontendToBackend(updatedData.size) || undefined,
+      tel: updatedData.phone || undefined,
+    };
+
+    const cleanedPayload = Object.fromEntries(
+      Object.entries(profilePayload).filter(([, v]) => v !== undefined)
+    );
+
+    console.log('Sending payload to backend:', cleanedPayload);
+    const updatedProfile = await CompanyService.patchCompanyProfile(cleanedPayload);
+    console.log('Backend response:', updatedProfile);
+
+    return updatedProfile;
+  };
+
   const handleSaveProfile = async (
     updatedData: Partial<Company>,
     logoFile?: File,
@@ -62,88 +117,34 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
         console.log('Saving profile with data:', updatedData);
         console.log('Session:', session);
 
-        // Update company profile data (don't send email - it's read-only)
-        const profilePayload = {
-          name: updatedData.name || undefined,
-          industry: updatedData.industry || undefined,
-          overview: updatedData.about || undefined,
-          size: mapFrontendToBackend(updatedData.size) || undefined,
-          tel: updatedData.phone || undefined,
-        };
+        const updatedProfile = await updateProfileData(updatedData);
 
-        // Remove undefined values to avoid sending empty fields
-        const cleanedPayload = Object.fromEntries(
-          Object.entries(profilePayload).filter(([, v]) => v !== undefined)
-        );
+        let logoId: number | undefined = updatedProfile?.logo_id;
+        let bannerId: number | undefined = updatedProfile?.banner_id;
 
-        console.log('Sending payload to backend:', cleanedPayload);
-        const updatedProfile = await CompanyService.patchCompanyProfile(cleanedPayload);
-        console.log('Backend response:', updatedProfile);
-
-        let logoId = updatedProfile?.logo_id;
-        let bannerId = updatedProfile?.banner_id;
-
-        // Upload logo if provided
         if (logoFile) {
-          try {
-            const logoResponse = await CompanyService.uploadProfileLogo(logoFile);
-            console.log('Logo upload response:', logoResponse);
-            // Backend should return updated profile with logo_id
-            logoId =
-              ((logoResponse as unknown as Record<string, unknown>)?.logo_id as
-                | number
-                | undefined) || logoId;
-          } catch (e) {
-            console.error('Logo upload failed:', e);
-            throw new Error('Profile updated but logo upload failed.');
-          }
+          logoId = await uploadImage(
+            logoFile,
+            CompanyService.uploadProfileLogo,
+            'Profile updated but logo upload failed.'
+          );
         }
 
-        // Upload banner if provided
         if (bannerFile) {
-          try {
-            const bannerResponse = await CompanyService.uploadProfileBanner(bannerFile);
-            console.log('Banner upload response:', bannerResponse);
-            // Backend should return updated profile with banner_id
-            bannerId =
-              ((bannerResponse as unknown as Record<string, unknown>)?.banner_id as
-                | number
-                | undefined) || bannerId;
-          } catch (e) {
-            console.error('Banner upload failed:', e);
-            throw new Error('Profile updated but banner upload failed.');
-          }
+          bannerId = await uploadImage(
+            bannerFile,
+            CompanyService.uploadProfileBanner,
+            'Profile updated but banner upload failed.'
+          );
         }
 
-        // Fetch fresh logo and banner URLs from backend using the IDs
-        let newLogoUrl = company.logoUrl;
-        let newBannerUrl = company.bannerUrl;
+        const newLogoUrl = logoFile
+          ? await fetchAndCreateImageUrl(logoId, CompanyService.fetchLogo, company.logoUrl)
+          : company.logoUrl;
 
-        if (logoFile && logoId) {
-          try {
-            const logoBlob = await CompanyService.fetchLogo(logoId);
-            // Clean up old URL if it exists and is a blob URL
-            if (company.logoUrl?.startsWith('blob:')) {
-              URL.revokeObjectURL(company.logoUrl);
-            }
-            newLogoUrl = URL.createObjectURL(logoBlob);
-          } catch (err) {
-            console.warn('Failed to fetch updated logo:', err);
-          }
-        }
-
-        if (bannerFile && bannerId) {
-          try {
-            const bannerBlob = await CompanyService.fetchBanner(bannerId);
-            // Clean up old URL if it exists and is a blob URL
-            if (company.bannerUrl?.startsWith('blob:')) {
-              URL.revokeObjectURL(company.bannerUrl);
-            }
-            newBannerUrl = URL.createObjectURL(bannerBlob);
-          } catch (err) {
-            console.warn('Failed to fetch updated banner:', err);
-          }
-        }
+        const newBannerUrl = bannerFile
+          ? await fetchAndCreateImageUrl(bannerId, CompanyService.fetchBanner, company.bannerUrl)
+          : company.bannerUrl;
 
         const updatedCompany: Company = {
           ...company,
