@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ArrowDownUp, Loader2, Search as SearchIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ function mapToJobResult(job: JobPostSummary): JobSearchResult | null {
 }
 
 export default function SearchPage() {
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<FiltersState>({});
   const [jobs, setJobs] = useState<JobSearchResult[]>([]);
   const [companyCache, setCompanyCache] = useState<
@@ -61,6 +63,15 @@ export default function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
   const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  // Initialize search query from URL params
+  useEffect(() => {
+    const queryParam = searchParams.get('query');
+    if (queryParam) {
+      setSearchQuery(queryParam);
+      setDebouncedQuery(queryParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
