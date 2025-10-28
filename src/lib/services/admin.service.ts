@@ -1,11 +1,11 @@
-// src/lib/services/admin.service.ts
 /**
  * Admin Service
  * Handles admin-related API calls (reports, dashboard stats, etc.)
  */
 
 import { apiClient, ApiError } from './api-client';
-import type { CPSKAccount, JobPostItem, ManagedCompany, VisitorAccount, VisitorReport } from '@/types/admin';
+import type { CPSKUserResponse } from '@/types/cpsk';
+import type { CPSKAccount, PunishmentStruct } from '@/types/admin';
 
 export interface Report {
   id: string;
@@ -20,12 +20,26 @@ export interface Report {
 }
 
 export interface CompanyVerification {
-  id: number;
+  id: string;
+  ID: number;
   name: string;
+  about: string;
   location: string;
   industry: string;
-  contact: string;
-  submitted: string;
+  size: string;
+  email: string;
+  phone: string;
+  website: string;
+  User?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    tel: string;
+  };
+  verification_status: 'pending' | 'verified' | 'unverified';
+  created_at: string;
+  updated_at: string;
 }
 
 interface DashboardStats {
@@ -187,46 +201,22 @@ export class AdminService {
   /**
    * Get all job posts (for admin management)
    */
-  static async getAllJobPosts(): Promise<JobPostItem[]> {
-    const mockJobPosts: JobPostItem[] = [
-        {
-          id: 1,
-          title: 'Software Engineer Intern',
-          company: 'Tech Solutions Co.',
-          type: 'Internship',
-          posted: '2025-09-30',
-          reports: 0,
-        },
-        {
-          id: 2,
-          title: 'Data Analyst',
-          company: 'Digital Marketing Hub',
-          type: 'Full-time',
-          posted: '2025-09-25',
-          reports: 6,
-        },
-        {
-          id: 3,
-          title: 'Software Engineer Intern',
-          company: 'Tech Solutions Co.',
-          type: 'Internship',
-          posted: '2025-09-30',
-          reports: 1,
-        },
-        {
-          id: 4,
-          title: 'Data Analyst',
-          company: 'Digital Marketing Hub',
-          type: 'Full-time',
-          posted: '2025-09-25',
-          reports: 4,
-        },
-      ];
+  static async getAllJobPosts(): Promise<
+    Array<{
+      id: string;
+      title: string;
+      company: string;
+      status: string;
+      createdAt: string;
+    }>
+  > {
     try {
-      return await apiClient.get<JobPostItem[]>('/admin/jobs');
+      return await apiClient.get('/admin/jobs');
     } catch (error) {
-      console.warn('AdminService.getAllJobPosts: backend unavailable, returning mock data', error);
-      return mockJobPosts;
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch job posts: ${error.message}`);
+      }
+      throw new Error('Failed to fetch job posts');
     }
   }
 
@@ -248,46 +238,69 @@ export class AdminService {
     }
   }
   /**
-   * Get rejected companies for verification
+   * Get companies based on verification status
+   * @param status - Optional status filter: 'pending', 'verified', or 'unverified'
    */
-  static async getRejectedCompanies(): Promise<CompanyVerification[]> {
-    // Mock data for rejected companies
-    const mockRejectedCompanies: CompanyVerification[] = [
-      {
-        id: 1,
-        name: 'Tech Solutions Co.',
-        location: 'Bangkok, Thailand',
-        industry: 'Software Development',
-        contact: 'contact@techsolutions.com',
-        submitted: '2025-09-30',
-      },
-      {
-        id: 2,
-        name: 'Digital Marketing Hub',
-        location: 'Chiang Mai, Thailand',
-        industry: 'Marketing',
-        contact: 'hr@digitalhub.co.th',
-        submitted: '2025-09-30',
-      },
-    ];
-
+  static async getCompanies(
+    status?: 'pending' | 'verified' | 'unverified'
+  ): Promise<CompanyVerification[]> {
     try {
-      return await apiClient.get<CompanyVerification[]>('/admin/companies/rejected');
+      console.log('Fetching companies with status:', status || 'all');
+      const endpoint = status ? `/get-companies?status=${status}` : '/get-companies';
+      const companies = await apiClient.get<CompanyVerification[]>(endpoint);
+      console.log('Fetched companies:', companies.length);
+      return companies;
     } catch (error) {
-      console.warn(
-        'AdminService.getRejectedCompanies: backend unavailable, returning mock data',
-        error
-      );
-      return mockRejectedCompanies;
+      console.error('AdminService.getCompanies: Failed to fetch companies', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch companies: ${error.message}`);
+      }
+      throw new Error('Failed to fetch companies');
     }
   }
 
   /**
+   * Verify or unverify a company
+   * @param companyId - The ID of the company to update
+   * @param status - The new verification status: 'verified' or 'unverified'
+   */
+  static async verifyCompany(
+    companyId: string,
+    status: 'verified' | 'unverified' = 'verified'
+  ): Promise<CompanyVerification> {
+    try {
+      console.log(`Updating company ${companyId} status to:`, status);
+      const endpoint = `/verify-company/${companyId}?status=${status}`;
+      const company = await apiClient.patch<CompanyVerification>(endpoint);
+      console.log('Company verification updated successfully:', company.name);
+      return company;
+    } catch (error) {
+      console.error('AdminService.verifyCompany: Failed to update company', error);
+      if (error instanceof ApiError) {
+        throw new Error(
+          `Failed to ${status === 'verified' ? 'verify' : 'unverify'} company: ${error.message}`
+        );
+      }
+      throw new Error(`Failed to ${status === 'verified' ? 'verify' : 'unverify'} company`);
+    }
+  }
+
+  /**
+   * @deprecated Use getCompanies() with status filter instead
+   * Get rejected companies for verification
+   */
+  static async getRejectedCompanies(): Promise<CompanyVerification[]> {
+    return this.getCompanies('unverified');
+  }
+
+  /**
+   * @deprecated Use reconsiderCompany() instead
    * Reconsider a rejected company
    */
   static async reconsiderCompany(companyId: number): Promise<{ message: string }> {
     try {
-      return await apiClient.post(`/admin/companies/${companyId}/reconsider`);
+      await this.verifyCompany(companyId.toString(), 'verified');
+      return { message: 'Company verified successfully' };
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to reconsider company: ${error.message}`);
@@ -297,299 +310,85 @@ export class AdminService {
   }
 
   /**
-   * Get all CPSK accounts
+   * Get CPSK accounts based on punishment status
+   * @param punishment - Optional filter: 'ban' or 'suspend' (case insensitive)
+   * @returns Array of CPSK users
    */
-  static async getCPSKAccounts(): Promise<CPSKAccount[]> {
-    const mockAccounts: CPSKAccount[] = [
-      {
-        id: 1,
-        name: 'Mike Johnson',
-        email: 'mike.j@ku.th',
-        major: 'CPE',
-        year: 'Year 4',
-        status: 'Active',
-      },
-      {
-        id: 2,
-        name: 'Sarah Wilson',
-        email: 'sarah.w@ku.th',
-        major: 'SKE',
-        year: 'Year 2',
-        status: 'Suspended',
-      },
-      {
-        id: 3,
-        name: 'John Doe',
-        email: 'john.d@ku.th',
-        major: 'CPE',
-        year: 'Year 3',
-        status: 'Banned',
-      },
-    ];
+  static async getCPSKAccounts(punishment?: 'ban' | 'suspend'): Promise<CPSKAccount[]> {
     try {
-      return await apiClient.get<CPSKAccount[]>('/admin/cpsk');
+      const endpoint = punishment ? `/get-cpsk?punishment=${punishment}` : '/get-cpsk';
+      const response = await apiClient.get<CPSKUserResponse[]>(endpoint);
+
+      // Transform backend response to frontend format
+      return response.map((cpsk) => {
+        let status: 'Active' | 'Suspended' | 'Banned' = 'Active';
+
+        if (cpsk.User?.punishment) {
+          status = cpsk.User.punishment.type === 'ban' ? 'Banned' : 'Suspended';
+        }
+
+        return {
+          id: cpsk.id,
+          name: `${cpsk.first_name} ${cpsk.last_name}`.trim(),
+          email: cpsk.User?.email || '',
+          major: cpsk.program || 'N/A',
+          year: cpsk.year?.toString() || 'N/A',
+          status,
+          tel: cpsk.User?.tel || '',
+          first_name: cpsk.first_name,
+          last_name: cpsk.last_name,
+          program: cpsk.program || undefined,
+          punishment: cpsk.User?.punishment,
+        };
+      });
     } catch (error) {
-      console.warn('AdminService.getCPSKAccounts: backend unavailable, returning mock data', error);
-      return mockAccounts;
+      console.error('AdminService.getCPSKAccounts: Failed to fetch CPSK accounts', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch CPSK accounts: ${error.message}`);
+      }
+      throw new Error('Failed to fetch CPSK accounts');
     }
   }
 
   /**
-   * Suspend a CPSK account
+   * Punish a CPSK user (ban or suspend)
+   * @param userId - ID of the user to punish
+   * @param punishment - Punishment details (type, at, end)
+   * @returns Success message
    */
-  static async suspendCPSKAccount(accountId: number): Promise<{ message: string }> {
+  static async punishCPSK(
+    userId: string,
+    punishment: PunishmentStruct
+  ): Promise<{ message: string }> {
     try {
-      return await apiClient.post(`/admin/cpsk/${accountId}/suspend`);
+      const response = await apiClient.put<{ message: string }>(`/punish/${userId}`, punishment);
+      console.log(`Successfully punished user ${userId}:`, punishment.type);
+      return response;
     } catch (error) {
-      throw new Error(`Failed to suspend account: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('AdminService.punishCPSK: Failed to punish user', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to punish user: ${error.message}`);
+      }
+      throw new Error('Failed to punish user');
     }
   }
 
   /**
-   * Reactivate a CPSK account
+   * Remove punishment from a CPSK user
+   * @param userId - ID of the user to unpunish
+   * @returns Success message
    */
-  static async reactivateCPSKAccount(accountId: number): Promise<{ message: string }> {
+  static async removePunishment(userId: string): Promise<{ message: string }> {
     try {
-      return await apiClient.post(`/admin/cpsk/${accountId}/reactivate`);
+      const response = await apiClient.delete<{ message: string }>(`/punish/${userId}`);
+      console.log(`Successfully removed punishment from user ${userId}`);
+      return response;
     } catch (error) {
-      throw new Error(`Failed to reactivate account: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Get all managed companies
-   */
-  static async getManagedCompanies(): Promise<ManagedCompany[]> {
-    const mockCompanies: ManagedCompany[] = [
-      {
-        id: 1,
-        name: 'Tech Solutions Co.',
-        location: 'Bangkok, Thailand',
-        industry: 'Software Development',
-        verifiedDate: '2024-01-15',
-        activePosts: 5,
-        reports: 0,
-        status: 'Active',
-      },
-      {
-        id: 2,
-        name: 'Digital Marketing Hub',
-        location: 'Chiang Mai, Thailand',
-        industry: 'Marketing',
-        verifiedDate: '2024-01-15',
-        activePosts: 4,
-        reports: 5,
-        status: 'Suspended',
-      },
-      {
-        id: 3,
-        name: 'Spam Corp',
-        location: 'Bangkok, Thailand',
-        industry: 'Unknown',
-        verifiedDate: '2024-01-10',
-        activePosts: 0,
-        reports: 2,
-        status: 'Banned',
-      },
-    ];
-    try {
-      return await apiClient.get<ManagedCompany[]>('/admin/companies');
-    } catch (error) {
-      console.warn('AdminService.getManagedCompanies: backend unavailable, returning mock data', error);
-      return mockCompanies;
-    }
-  }
-
-  /**
-   * Delete a managed company
-   */
-  static async deleteManagedCompany(companyId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.delete(`/admin/companies/${companyId}`);
-    } catch (error) {
-      throw new Error(`Failed to delete company: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Ban a CPSK account
-   */
-  static async banCPSKAccount(accountId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/cpsk/${accountId}/ban`);
-    } catch (error) {
-      throw new Error(`Failed to ban account: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Unban a CPSK account
-   */
-  static async unbanCPSKAccount(accountId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/cpsk/${accountId}/unban`);
-    } catch (error) {
-      throw new Error(`Failed to unban account: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Suspend a managed company
-   */
-  static async suspendManagedCompany(companyId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/companies/${companyId}/suspend`);
-    } catch (error) {
-      throw new Error(`Failed to suspend company: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Cancel suspension of a managed company
-   */
-  static async cancelSuspendManagedCompany(companyId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/companies/${companyId}/cancel-suspend`);
-    } catch (error) {
-      throw new Error(`Failed to cancel suspension: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Ban a managed company
-   */
-  static async banManagedCompany(companyId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/companies/${companyId}/ban`);
-    } catch (error) {
-      throw new Error(`Failed to ban company: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Unban a managed company
-   */
-  static async unbanManagedCompany(companyId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/companies/${companyId}/unban`);
-    } catch (error) {
-      throw new Error(`Failed to unban company: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Get all visitor accounts
-   */
-  static async getVisitorAccounts(): Promise<VisitorAccount[]> {
-    const mockAccounts: VisitorAccount[] = [
-      {
-        id: 1,
-        name: 'Jane Visitor',
-        email: 'jane.v@example.com',
-        reportCount: 0,
-        status: 'Active',
-      },
-      {
-        id: 2,
-        name: 'Bob Reporter',
-        email: 'bob.r@example.com',
-        reportCount: 3,
-        status: 'Active',
-      },
-      {
-        id: 3,
-        name: 'Spam User',
-        email: 'spam@example.com',
-        reportCount: 12,
-        status: 'Suspended',
-      },
-      {
-        id: 4,
-        name: 'Banned Visitor',
-        email: 'banned@example.com',
-        reportCount: 25,
-        status: 'Banned',
-      },
-    ];
-    try {
-      return await apiClient.get<VisitorAccount[]>('/admin/visitors');
-    } catch (error) {
-      console.warn('AdminService.getVisitorAccounts: backend unavailable, returning mock data', error);
-      return mockAccounts;
-    }
-  }
-
-  /**
-   * Suspend a visitor account
-   */
-  static async suspendVisitorAccount(visitorId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/visitors/${visitorId}/suspend`);
-    } catch (error) {
-      throw new Error(`Failed to suspend visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Reactivate a visitor account
-   */
-  static async reactivateVisitorAccount(visitorId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/visitors/${visitorId}/reactivate`);
-    } catch (error) {
-      throw new Error(`Failed to reactivate visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Ban a visitor account
-   */
-  static async banVisitorAccount(visitorId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/visitors/${visitorId}/ban`);
-    } catch (error) {
-      throw new Error(`Failed to ban visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Unban a visitor account
-   */
-  static async unbanVisitorAccount(visitorId: number): Promise<{ message: string }> {
-    try {
-      return await apiClient.post(`/admin/visitors/${visitorId}/unban`);
-    } catch (error) {
-      throw new Error(`Failed to unban visitor: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Get reports submitted by a visitor
-   */
-  static async getVisitorReports(visitorId: number): Promise<VisitorReport[]> {
-    const mockReports: VisitorReport[] = [
-      {
-        id: 1,
-        reportedEntity: 'Software Engineer Position',
-        reportedEntityType: 'Job',
-        reason: 'Misleading job description',
-        submitted: '2025-10-15',
-        status: 'Pending',
-      },
-      {
-        id: 2,
-        reportedEntity: 'Tech Solutions Co.',
-        reportedEntityType: 'Company',
-        reason: 'Spam job postings',
-        submitted: '2025-10-10',
-        status: 'Reviewed',
-      },
-    ];
-    try {
-      return await apiClient.get<VisitorReport[]>(`/admin/visitors/${visitorId}/reports`);
-    } catch (error) {
-      console.warn('AdminService.getVisitorReports: backend unavailable, returning mock data', error);
-      return mockReports;
+      console.error('AdminService.removePunishment: Failed to remove punishment', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to remove punishment: ${error.message}`);
+      }
+      throw new Error('Failed to remove punishment');
     }
   }
 }

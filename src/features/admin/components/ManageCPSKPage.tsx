@@ -16,6 +16,13 @@ export function ManageCPSKPage() {
     unbanAccount,
   } = useCPSK();
 
+  // Debug: Log accounts data to verify status is being set correctly
+  React.useEffect(() => {
+    if (accounts.length > 0) {
+      console.log('CPSK Accounts:', accounts);
+    }
+  }, [accounts]);
+
   const [suspendModal, setSuspendModal] = useState<{
     isOpen: boolean;
     account: CPSKAccount | null;
@@ -47,10 +54,18 @@ export function ManageCPSKPage() {
   const handleSuspend = async (startDate: string, endDate: string) => {
     if (!suspendModal.account) return;
     try {
-      // Note: API call will be updated to include startDate and endDate when backend is ready
-      console.log('Suspending with dates:', { startDate, endDate });
-      await suspendAccount(suspendModal.account.id);
+      // Convert dates to ISO 8601 format if needed
+      const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toISOString();
+      };
+
+      const at = startDate ? formatDate(startDate) : undefined;
+      const end = endDate ? formatDate(endDate) : undefined;
+
+      await suspendAccount(suspendModal.account.id, at, end);
       refetch();
+      setSuspendModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to suspend account:', error);
     }
@@ -61,6 +76,7 @@ export function ManageCPSKPage() {
     try {
       await reactivateAccount(cancelSuspendModal.account.id);
       refetch();
+      setCancelSuspendModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to cancel suspension:', error);
     }
@@ -71,6 +87,7 @@ export function ManageCPSKPage() {
     try {
       await banAccount(banModal.account.id);
       refetch();
+      setBanModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to ban account:', error);
     }
@@ -81,6 +98,7 @@ export function ManageCPSKPage() {
     try {
       await unbanAccount(unbanModal.account.id);
       refetch();
+      setUnbanModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to unban account:', error);
     }
@@ -176,7 +194,7 @@ export function ManageCPSKPage() {
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
-              <thead className="text-gray-400 bg-zinc-800">
+              <thead className="bg-zinc-800 text-gray-400">
                 <tr>
                   <th className="px-6 py-3">CPSK</th>
                   <th className="px-6 py-3">Major</th>
