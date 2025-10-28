@@ -148,50 +148,12 @@ export class JobService {
    */
   static async deleteJobPost(jobId: string): Promise<{ message: string }> {
     try {
-      return await apiClient.delete(`/jobs/${jobId}`);
+      return await apiClient.delete(`/jobpost/${jobId}`);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to delete job post: ${error.message}`);
       }
       throw new Error('Failed to delete job post');
-    }
-  }
-
-  /**
-   * Get applications for a job post (company only)
-   */
-  static async getJobApplications(jobId: string): Promise<
-    Array<{
-      id: string;
-      applicantName: string;
-      email: string;
-      status: string;
-      submittedAt: string;
-      resumeUrl?: string;
-    }>
-  > {
-    try {
-      return await apiClient.get(`/jobs/${jobId}/applications`);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error(`Failed to fetch applications: ${error.message}`);
-      }
-      throw new Error('Failed to fetch applications');
-    }
-  }
-
-  /**
-   * Get company's job posts
-   */
-  static async getCompanyJobs(companyId?: string): Promise<JobPost[]> {
-    try {
-      const endpoint = companyId ? `/company/${companyId}/jobs` : '/jobs/my-posts';
-      return await apiClient.get<JobPost[]>(endpoint);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error(`Failed to fetch company jobs: ${error.message}`);
-      }
-      throw new Error('Failed to fetch company jobs');
     }
   }
 }

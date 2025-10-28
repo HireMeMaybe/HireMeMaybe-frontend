@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Users, Edit, Eye } from 'lucide-react';
+import { Users, Edit, Eye, Trash2 } from 'lucide-react';
 import type { JobOpening } from '@/types/company';
 
 interface JobCardProps {
@@ -10,6 +10,7 @@ interface JobCardProps {
   readonly onApply?: (jobId: number) => void;
   readonly onEdit?: (jobId: number) => void;
   readonly onViewApplications?: (jobId: number) => void;
+  readonly onDelete?: (jobId: number) => void;
 }
 
 export default function JobCard({
@@ -18,6 +19,7 @@ export default function JobCard({
   onApply,
   onEdit,
   onViewApplications,
+  onDelete,
 }: JobCardProps) {
   return (
     <div className="border-gray-cancel bg-very-dark-gray flex items-start justify-between rounded-xl border p-4">
@@ -84,6 +86,13 @@ export default function JobCard({
               >
                 <Eye className="h-4 w-4" />
                 View Applications
+              </Button>
+              <Button
+                onClick={() => onDelete?.(job.id)}
+                className="flex cursor-pointer items-center gap-1 rounded-md bg-red-reject px-4 py-2 text-sm text-white hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
               </Button>
             </>
           ) : viewType === 'cpsk' ? (
