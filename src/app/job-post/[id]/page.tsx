@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
 import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
@@ -141,9 +141,12 @@ export default function JobPostDetailPage() {
             <div className="mb-6 flex items-start justify-between">
               <div className="flex items-center gap-4">
                 {logoUrl ? (
-                  <img
+                  <Image
                     src={logoUrl}
                     alt={company?.name || 'Company logo'}
+                    width={64}
+                    height={64}
+                    unoptimized
                     className="h-16 w-16 rounded object-cover"
                   />
                 ) : (
