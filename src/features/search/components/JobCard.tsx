@@ -3,14 +3,32 @@
 import { ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { JobWithQuestions } from '@/types/application';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 
+export interface JobSearchResult {
+  id: number | string;
+  companyId?: string;
+  title: string;
+  companyName: string;
+  location?: string;
+  industry?: string;
+  description?: string;
+  tags?: string[];
+  postedDate?: string;
+  logoUrl?: string;
+  salary?: string;
+  expLevel?: string;
+  type?: string;
+}
+
 type JobCardProps = {
-  readonly job: JobWithQuestions;
+  readonly job: JobSearchResult;
   readonly selected: boolean;
   readonly onSelect: () => void;
 };
+
+const FALLBACK_LOGO = '/favicon.svg';
 
 export default function JobCard({ job, selected, onSelect }: JobCardProps) {
   return (
@@ -22,10 +40,10 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
       }`}
     >
       {/* Company Logo */}
-      <div className="flex h-14 w-14 items-center justify-center rounded bg-gray-600">
+      <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded bg-gray-600">
         <Image
-          src={job.logoPath as string}
-          alt={job.company}
+          src={job.logoUrl ?? FALLBACK_LOGO}
+          alt={job.companyName}
           width={48}
           height={48}
           className="h-12 w-12 object-contain"
@@ -35,18 +53,35 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
       {/* Job Info */}
       <div className="flex-1">
         <h3 className="font-semibold text-white">{job.title}</h3>
-        <p className="text-sm text-gray-400">{job.company}</p>
-        <p className="text-sm text-gray-400">{job.location}</p>
+        <p className="text-sm text-gray-400">{job.companyName}</p>
+        <p className="text-sm text-gray-400">{job.location || 'Location not specified'}</p>
       </div>
     </button>
   );
 }
 
-export function JobDetails({ job }: { readonly job: JobWithQuestions }) {
+export function JobDetails({ job }: { readonly job: JobSearchResult }) {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const handleApply = () => {
     router.push(`/application/${job.id}`);
+  };
+
+  const handleExternalLink = () => {
+    window.open(`/job-post/${job.id}`, '_blank');
+  };
+
+  const userRole = session?.backendUser?.role;
+  const showApplyButton = userRole !== 'Company' && userRole !== 'Visitor';
+
+  const formatPostedDate = (value?: string): string | undefined => {
+    if (!value) return undefined;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+    return parsed.toLocaleDateString();
   };
 
   return (
@@ -54,28 +89,38 @@ export function JobDetails({ job }: { readonly job: JobWithQuestions }) {
       {/* Header Section with Company Logo and External Link */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600">
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded bg-gray-600">
             <Image
-              src={job.logoPath as string}
-              alt={job.company}
+              src={job.logoUrl ?? FALLBACK_LOGO}
+              alt={job.companyName}
               width={56}
               height={56}
               className="h-14 w-14 object-contain"
             />
           </div>
           <div>
-            <p className="text-lg text-white">{job.company}</p>
-            <p className="text-sm text-white">{job.location}</p>
+            <p className="text-lg text-white">{job.companyName}</p>
+            <p className="text-sm text-white">{job.location || 'Location not specified'}</p>
+            {(job.type || job.expLevel || job.salary) && (
+              <div className="mt-2 flex flex-wrap gap-x-3 text-xs text-gray-400">
+                {job.type && <span>{job.type}</span>}
+                {job.expLevel && <span>Experience: {job.expLevel}</span>}
+                {job.salary && <span>Salary: {job.salary}</span>}
+              </div>
+            )}
           </div>
         </div>
-        <ExternalLink className="hover:text-primary-green mt-2 h-6 w-6 cursor-pointer text-gray-400" />
+        <ExternalLink
+          onClick={handleExternalLink}
+          className="hover:text-primary-green mt-2 h-6 w-6 cursor-pointer text-gray-400"
+        />
       </div>
 
       {/* Job Title */}
       <h1 className="mb-4 text-2xl font-bold text-white">{job.title}</h1>
 
       {/* Tags and Posted Date */}
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex flex-wrap items-center gap-4">
         {job.tags?.map((tag) => (
           <span
             key={tag}
@@ -86,20 +131,24 @@ export function JobDetails({ job }: { readonly job: JobWithQuestions }) {
             {tag}
           </span>
         ))}
-        {job.postedDate && <span className="text-sm text-gray-400">{job.postedDate}</span>}
+        {formatPostedDate(job.postedDate) && (
+          <span className="text-sm text-gray-400">Posted {formatPostedDate(job.postedDate)}</span>
+        )}
       </div>
 
       {/* Apply Button */}
-      <Button
-        onClick={handleApply}
-        className="bg-primary-green mb-6 cursor-pointer rounded-full px-8 py-3 text-sm text-white hover:bg-green-600"
-      >
-        Apply
-      </Button>
+      {showApplyButton && (
+        <Button
+          onClick={handleApply}
+          className="bg-primary-green mb-6 cursor-pointer rounded-full px-8 py-3 text-sm text-white hover:bg-green-600"
+        >
+          Apply
+        </Button>
+      )}
 
       {/* Job Description */}
       <div className="text-sm leading-relaxed whitespace-pre-line text-gray-300">
-        {job.description}
+        {job.description || 'No description provided for this role.'}
       </div>
     </div>
   );
