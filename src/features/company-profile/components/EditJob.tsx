@@ -94,7 +94,6 @@ export default function EditJobModal({ isOpen, onClose, jobId, onSuccess }: Edit
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     reset,
     formState: { errors, isSubmitting },
