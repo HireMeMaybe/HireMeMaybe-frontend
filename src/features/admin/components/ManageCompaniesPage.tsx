@@ -246,11 +246,10 @@ export function ManageCompaniesPage() {
                       <tr key={company.id} className="border-b border-zinc-800 hover:bg-zinc-800">
                         <td className="px-6 py-4 align-top">
                           <div className="font-medium text-white">{company.name}</div>
-                          <div className="mt-1 text-xs text-gray-400">
-                            {company.location || 'N/A'}
-                          </div>
                         </td>
-                        <td className="px-6 py-4 align-top text-gray-200">{company.industry}</td>
+                        <td className="px-6 py-4 align-top text-gray-200">{company.industry
+                          ? company.industry.charAt(0).toUpperCase() + company.industry.slice(1)
+                          : 'N/A'}</td>
                         <td className="px-6 py-4 align-top text-gray-200">{verifiedDate}</td>
                         <td className="px-6 py-4 align-top text-gray-200">0</td>
                         <td className="px-6 py-4 align-top">
