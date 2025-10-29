@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AdminService } from '@/lib/services';
-import type { CompanyVerification } from '@/lib/services';
+import { AdminService, type Company } from '@/lib/services';
 
 export function useCompanyVerification(initialStatus?: 'pending' | 'verified' | 'unverified') {
-  const [companies, setCompanies] = useState<CompanyVerification[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<
@@ -55,5 +54,3 @@ export function useCompanyVerification(initialStatus?: 'pending' | 'verified' | 
     verifyCompany,
   } as const;
 }
-
-export type { CompanyVerification } from '@/lib/services';

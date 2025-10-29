@@ -7,6 +7,9 @@ import { apiClient, ApiError } from './api-client';
 import type { CPSKUserResponse } from '@/types/cpsk';
 import type { CPSKAccount, PunishmentStruct } from '@/types/admin';
 
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved';
+export type VerificationStatus = 'pending' | 'verified' | 'unverified';
+
 export interface Report {
   id: string;
   reporter: string;
@@ -15,11 +18,11 @@ export interface Report {
   reportedEntityType: 'job' | 'company';
   reason: string;
   submitted: string;
-  status: 'pending' | 'reviewed' | 'resolved';
+  status: ReportStatus;
   link?: string;
 }
 
-export interface CompanyVerification {
+export interface Company {
   id: string;
   ID: number;
   name: string;
@@ -36,10 +39,17 @@ export interface CompanyVerification {
     last_name: string;
     email: string;
     tel: string;
+    punishment?: PunishmentInfo;
   };
-  verification_status: 'pending' | 'verified' | 'unverified';
+  verification_status: VerificationStatus;
   created_at: string;
   updated_at: string;
+}
+
+export interface PunishmentInfo {
+  type: 'ban' | 'suspend';
+  at?: string;
+  end?: string;
 }
 
 interface DashboardStats {
@@ -75,7 +85,7 @@ export class AdminService {
   /**
    * Get all reports
    */
-  static async getReports(status?: 'pending' | 'reviewed' | 'resolved'): Promise<Report[]> {
+  static async getReports(status?: ReportStatus): Promise<Report[]> {
     // Fallback to mock data if backend API is not available yet
     const mockReports: Report[] = [
       {
@@ -171,7 +181,7 @@ export class AdminService {
    */
   static async updateReportStatus(
     reportId: string,
-    status: 'reviewed' | 'resolved',
+    status: Exclude<ReportStatus, 'pending'>,
     notes?: string
   ): Promise<Report> {
     try {
@@ -241,13 +251,11 @@ export class AdminService {
    * Get companies based on verification status
    * @param status - Optional status filter: 'pending', 'verified', or 'unverified'
    */
-  static async getCompanies(
-    status?: 'pending' | 'verified' | 'unverified'
-  ): Promise<CompanyVerification[]> {
+  static async getCompanies(status?: VerificationStatus): Promise<Company[]> {
     try {
       console.log('Fetching companies with status:', status || 'all');
       const endpoint = status ? `/get-companies?status=${status}` : '/get-companies';
-      const companies = await apiClient.get<CompanyVerification[]>(endpoint);
+      const companies = await apiClient.get<Company[]>(endpoint);
       console.log('Fetched companies:', companies.length);
       return companies;
     } catch (error) {
@@ -266,12 +274,12 @@ export class AdminService {
    */
   static async verifyCompany(
     companyId: string,
-    status: 'verified' | 'unverified' = 'verified'
-  ): Promise<CompanyVerification> {
+    status: Exclude<VerificationStatus, 'pending'> = 'verified'
+  ): Promise<Company> {
     try {
       console.log(`Updating company ${companyId} status to:`, status);
       const endpoint = `/verify-company/${companyId}?status=${status}`;
-      const company = await apiClient.patch<CompanyVerification>(endpoint);
+      const company = await apiClient.patch<Company>(endpoint);
       console.log('Company verification updated successfully:', company.name);
       return company;
     } catch (error) {
@@ -289,7 +297,7 @@ export class AdminService {
    * @deprecated Use getCompanies() with status filter instead
    * Get rejected companies for verification
    */
-  static async getRejectedCompanies(): Promise<CompanyVerification[]> {
+  static async getRejectedCompanies(): Promise<Company[]> {
     return this.getCompanies('unverified');
   }
 
@@ -385,6 +393,48 @@ export class AdminService {
       return response;
     } catch (error) {
       console.error('AdminService.removePunishment: Failed to remove punishment', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to remove punishment: ${error.message}`);
+      }
+      throw new Error('Failed to remove punishment');
+    }
+  }
+
+  /**
+   * Punish a company user (ban or suspend)
+   * @param userId - ID of the company user to punish
+   * @param punishment - Punishment details (type, at, end)
+   * @returns Success message
+   */
+  static async punishCompany(
+    userId: string,
+    punishment: PunishmentStruct
+  ): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.put<{ message: string }>(`/punish/${userId}`, punishment);
+      console.log(`Successfully punished company user ${userId}:`, punishment.type);
+      return response;
+    } catch (error) {
+      console.error('AdminService.punishCompany: Failed to punish company', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to punish company: ${error.message}`);
+      }
+      throw new Error('Failed to punish company');
+    }
+  }
+
+  /**
+   * Remove punishment from a company user
+   * @param userId - ID of the company user to unpunish
+   * @returns Success message
+   */
+  static async removePunishmentCompany(userId: string): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.delete<{ message: string }>(`/punish/${userId}`);
+      console.log(`Successfully removed punishment from company user ${userId}`);
+      return response;
+    } catch (error) {
+      console.error('AdminService.removePunishmentCompany: Failed to remove punishment', error);
       if (error instanceof ApiError) {
         throw new Error(`Failed to remove punishment: ${error.message}`);
       }

@@ -75,8 +75,53 @@ export interface ManagedCompany {
   industry: string;
   verifiedDate: string;
   activePosts: number;
-  reports: number;
   status: UserStatus;
+  userId?: string;
+}
+
+// Backend API response types for company management
+export interface CompanyUser {
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
+  banner_id: number | null;
+  id: string;
+  industry: string;
+  logo_id: number | null;
+  name: string;
+  overview: string;
+  size: string;
+  user_id: string;
+  verified_status: string;
+  User?: {
+    ID: number;
+    CreatedAt: string;
+    UpdatedAt: string;
+    DeletedAt: string | null;
+    email: string;
+    first_name: string;
+    id: string;
+    last_name: string;
+    password: string;
+    profile_picture: string;
+    tel: string;
+    punishment?: PunishmentInfo;
+  };
+  job_post?: Array<{
+    id: number;
+    title: string;
+    company_id: string;
+    desc: string;
+    exp_lvl: string;
+    expiring: string;
+    location: string;
+    post_time: string;
+    req: string;
+    salary: string;
+    tags: string[];
+    type: string;
+  }>;
 }
 
 export interface VisitorAccount {

@@ -2,19 +2,19 @@
 
 import React, { useState } from 'react';
 import { useCompanyVerification } from '@/features/admin/hooks/useCompanyVerification';
-import type { CompanyVerification } from '@/lib/services';
+import type { Company } from '@/lib/services';
 import { ReconsiderModal, SuccessModal, UnsuccessModal } from '@/components/modals';
 
 export function CompanyVerificationPage() {
   // Initialize with 'unverified' filter to show only unverified companies
   const { companies, isLoading, verifyCompany } = useCompanyVerification('unverified');
-  const [selected, setSelected] = useState<CompanyVerification | null>(null);
+  const [selected, setSelected] = useState<Company | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const openConfirmModal = (company: CompanyVerification) => {
+  const openConfirmModal = (company: Company) => {
     setSelected(company);
     setIsConfirmOpen(true);
   };
@@ -24,7 +24,7 @@ export function CompanyVerificationPage() {
     setSelected(null);
   };
 
-  const handleView = (company: CompanyVerification) => {
+  const handleView = (company: Company) => {
     console.log('View company:', company);
     // Navigate to company details page
     window.open(`/company/${company.id}`, '_blank');
@@ -115,11 +115,15 @@ export function CompanyVerificationPage() {
                         <div className="font-medium text-white">{company.name || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">
-                        {company.industry ? company.industry.charAt(0).toUpperCase() + company.industry.slice(1) : 'N/A'}
+                        {company.industry
+                          ? company.industry.charAt(0).toUpperCase() + company.industry.slice(1)
+                          : 'N/A'}
                       </td>
                       <td className="px-6 py-4 align-top">
                         <div className="text-gray-200">{company.User?.email ?? 'N/A'}</div>
-                        <div className="mt-1 text-xs text-gray-400">{company.User?.tel ?? 'N/A'}</div>
+                        <div className="mt-1 text-xs text-gray-400">
+                          {company.User?.tel ?? 'N/A'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">
                         {formatDate((company.User as any)?.CreatedAt ?? 'N/A')}
