@@ -14,8 +14,7 @@ export function useManageCompanies() {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch all companies for management (all verification statuses)
-      const data = await AdminService.getCompanies();
+      const data = await AdminService.getCompanies('verified');
       setCompanies(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch companies');

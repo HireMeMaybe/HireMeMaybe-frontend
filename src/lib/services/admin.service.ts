@@ -254,7 +254,7 @@ export class AdminService {
   static async getCompanies(status?: VerificationStatus): Promise<Company[]> {
     try {
       console.log('Fetching companies with status:', status || 'all');
-      const endpoint = status ? `/get-companies?status=${status}` : '/get-companies';
+      const endpoint = status ? `/get-companies?verify=${status}` : '/get-companies';
       const companies = await apiClient.get<Company[]>(endpoint);
       console.log('Fetched companies:', companies.length);
       return companies;
