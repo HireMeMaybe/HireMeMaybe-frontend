@@ -24,26 +24,41 @@ export interface Report {
 
 export interface Company {
   id: string;
-  ID: number;
+  User?: {
+    ID: number;
+    CreatedAt: string;
+    UpdatedAt: string;
+    DeletedAt: string | null;
+    tel: string;
+    email: string;
+    id: string;
+    username: string;
+    role: string;
+    punishment?: PunishmentInfo;
+    profile_picture: string;
+  };
+  verified_status: string;
   name: string;
-  about: string;
-  location: string;
+  overview: string;
   industry: string;
   size: string;
-  email: string;
-  phone: string;
-  website: string;
-  User?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    tel: string;
-    punishment?: PunishmentInfo;
-  };
-  verification_status: VerificationStatus;
-  created_at: string;
-  updated_at: string;
+  logo_id: number | null;
+  banner_id: number | null;
+  job_post?: Array<{
+    id: number;
+    company_id: string;
+    title: string;
+    desc: string;
+    req: string;
+    exp_lvl: string;
+    location: string;
+    type: string;
+    salary: string;
+    tags: string[];
+    post_time: string;
+    applications: any;
+  }>;
+  verification_status?: VerificationStatus;
 }
 
 export interface PunishmentInfo {

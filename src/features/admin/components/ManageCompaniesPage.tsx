@@ -234,13 +234,11 @@ export function ManageCompaniesPage() {
                   return companies.map((company) => {
                     const status = getCompanyStatus(company);
                     const verifiedDate =
-                      company.verification_status === 'verified'
-                        ? new Date(company.updated_at).toLocaleDateString('en-US', {
+                         new Date(company.User?.UpdatedAt ?? 'N/A').toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',
-                          })
-                        : 'N/A';
+                          }) ?? 'N/A';
 
                     return (
                       <tr key={company.id} className="border-b border-zinc-800 hover:bg-zinc-800">
@@ -251,7 +249,7 @@ export function ManageCompaniesPage() {
                           ? company.industry.charAt(0).toUpperCase() + company.industry.slice(1)
                           : 'N/A'}</td>
                         <td className="px-6 py-4 align-top text-gray-200">{verifiedDate}</td>
-                        <td className="px-6 py-4 align-top text-gray-200">0</td>
+                        <td className="px-6 py-4 align-top text-gray-200">{company.job_post?.length ?? 0}</td>
                         <td className="px-6 py-4 align-top">
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
