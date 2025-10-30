@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AdminService, type Report } from '@/lib/services';
+import { AdminService, type Report, type ReportStatus, type ReportType } from '@/lib/services';
 
 export function useReport() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchReports = useCallback(async (status?: 'pending' | 'reviewed' | 'resolved') => {
+  const fetchReports = useCallback(async (status?: ReportStatus) => {
     setIsLoading(true);
     setError(null);
 
@@ -44,12 +44,13 @@ export function useReport() {
   };
 
   const updateReportStatus = async (
+    type: ReportType,
     reportId: string,
-    status: 'reviewed' | 'resolved',
-    notes?: string
+    status: ReportStatus,
+    adminNote?: string
   ) => {
     try {
-      await AdminService.updateReportStatus(reportId, status, notes);
+      await AdminService.updateReportStatus(type, reportId, status, adminNote);
       await fetchReports(); // Refresh list
       return true;
     } catch (err) {
@@ -68,4 +69,4 @@ export function useReport() {
   } as const;
 }
 
-export type { Report };
+export { type Report } from '@/lib/services';

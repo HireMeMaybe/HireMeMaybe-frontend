@@ -1,22 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useReport, type Report } from '@/features/admin/hooks/useReport';
 import ReviewReportModal from '@/components/modals/ReviewReportModal';
 import DeleteModal from '@/components/modals/DeleteModal';
-import { useState } from 'react';
 
 export function ReportPage() {
-  const { reports, isLoading, refetch } = useReport();
+  const { reports, isLoading, refetch, updateReportStatus } = useReport();
   const [selected, setSelected] = useState<Report | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const openModal = (r: Report) => {
     setSelected(r);
     setIsModalOpen(true);
   };
-
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const openDeleteModal = (r: Report) => {
     setSelected(r);
@@ -28,23 +26,42 @@ export function ReportPage() {
     setSelected(null);
   };
 
-  const handleReview = (r: Report) => {
-    // implement review logic here (API call etc.)
-    // For now just refetch or log
-    console.log('Reviewed', r);
-    refetch();
-  };
-
-  const handleReject = (r: Report) => {
-    console.log('Rejected', r);
-    refetch();
-  };
-
-  const handleConfirmReject = () => {
+  const handleReview = async (status: 'reviewed' | 'resolved', adminNote?: string) => {
     if (!selected) return;
-    handleReject(selected);
-    setIsDeleteOpen(false);
-    setSelected(null);
+
+    try {
+      await updateReportStatus(selected.type, selected.id, status, adminNote);
+      console.log(`Report ${status === 'reviewed' ? 'reviewed' : 'resolved'} successfully`);
+      closeModal();
+      await refetch();
+    } catch (error) {
+      console.error('Error updating report:', error);
+      alert('Failed to update report. Please try again.');
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!selected) return;
+
+    try {
+      // Reject = mark as resolved with a note
+      await updateReportStatus(selected.type, selected.id, 'resolved', 'Report rejected by admin');
+      console.log('Report rejected successfully');
+      setIsDeleteOpen(false);
+      setSelected(null);
+      await refetch();
+    } catch (error) {
+      console.error('Error rejecting report:', error);
+      alert('Failed to reject report. Please try again.');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -69,21 +86,36 @@ export function ReportPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
+                {isLoading && (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
                       Loading reports...
                     </td>
                   </tr>
-                ) : (
-                  reports.map((r, idx) => (
-                    <tr key={idx} className="border-b border-zinc-800 hover:bg-zinc-800">
+                )}
+                {!isLoading && reports.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                      No reports found
+                    </td>
+                  </tr>
+                )}
+                {!isLoading &&
+                  reports.length > 0 &&
+                  reports.map((r) => (
+                    <tr key={r.id} className="border-b border-zinc-800 hover:bg-zinc-800">
                       <td className="px-6 py-4 align-top">
-                        <div className="font-medium text-white">{r.reporter}</div>
-                        <div className="mt-1 text-xs text-gray-400">{r.reporterRole}</div>
+                        <div className="font-medium text-white">
+                          {r.reporter || r.reporter_id || 'Unknown'}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-400">
+                          {r.reporterRole || r.type || ''}
+                        </div>
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">{r.reason}</td>
-                      <td className="px-6 py-4 align-top text-gray-200">{r.submitted}</td>
+                      <td className="px-6 py-4 align-top text-gray-200">
+                        {formatDate(r.submitted)}
+                      </td>
                       <td className="px-6 py-4 align-top">
                         <div className="flex gap-2">
                           <button
@@ -101,8 +133,7 @@ export function ReportPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ))}
               </tbody>
             </table>
           </div>
@@ -112,14 +143,13 @@ export function ReportPage() {
           onClose={closeModal}
           report={selected}
           onReview={handleReview}
-          onReject={handleReject}
         />
         <DeleteModal
           isOpen={isDeleteOpen}
           onClose={() => setIsDeleteOpen(false)}
           title="Reject Report?"
           message="Are you sure you want to reject this report?"
-          description="Rejecting a report will delete this report."
+          description="Rejecting a report will mark it as resolved."
           onConfirm={handleConfirmReject}
         />
       </div>

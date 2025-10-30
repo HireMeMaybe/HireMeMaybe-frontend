@@ -9,17 +9,25 @@ import type { CPSKAccount, PunishmentStruct } from '@/types/admin';
 
 export type ReportStatus = 'pending' | 'reviewed' | 'resolved';
 export type VerificationStatus = 'pending' | 'verified' | 'unverified';
+export type ReportType = 'user' | 'post';
 
 export interface Report {
   id: string;
-  reporter: string;
-  reporterRole: string;
-  reportedEntityId: string;
-  reportedEntityType: 'job' | 'company';
+  reporter_id: string;
+  reporter?: string;
+  reporterRole?: string;
+  reported_id: string;
+  reportedEntityId?: string;
+  reportedEntityType?: 'job' | 'company' | 'user' | 'post';
+  type: ReportType;
   reason: string;
+  detail?: string;
   submitted: string;
   status: ReportStatus;
+  admin_note?: string;
   link?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Company {
@@ -98,80 +106,100 @@ export class AdminService {
   }
 
   /**
-   * Get all reports
+   * Get all reports with optional status filter
    */
   static async getReports(status?: ReportStatus): Promise<Report[]> {
-    // Fallback to mock data if backend API is not available yet
-    const mockReports: Report[] = [
-      {
-        id: 'rpt-1',
-        reporter: 'Alice Example',
-        reporterRole: 'User',
-        reportedEntityId: 'job-123',
-        reportedEntityType: 'job',
-        reason: 'Inappropriate content',
-        submitted: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        status: 'pending',
-        link: 'https://example.com/job/123',
-      },
-      {
-        id: 'rpt-2',
-        reporter: 'Bob Example',
-        reporterRole: 'Employer',
-        reportedEntityId: 'company-456',
-        reportedEntityType: 'company',
-        reason: 'Spam posting',
-        submitted: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        status: 'reviewed',
-      },
-    ];
-
     try {
-      const endpoint = status ? `/admin/reports?status=${status}` : '/admin/reports';
-      return await apiClient.get<Report[]>(endpoint);
+      const endpoint = status ? `/report?status=${status}` : '/report';
+      console.log('Fetching reports from endpoint:', endpoint);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await apiClient.get<any>(endpoint);
+
+      console.log('Raw API response:', response);
+
+      // Handle different response formats
+      let reports: Report[] = [];
+
+      if (Array.isArray(response)) {
+        console.log('Response is direct array');
+        reports = response;
+      } else if (response && typeof response === 'object') {
+        console.log('Response object keys:', Object.keys(response));
+
+        // Handle the API response structure: { post_reports: [], user_reports: [] }
+        if (response.post_reports || response.user_reports) {
+          console.log('Found post_reports and user_reports structure');
+          const postReports = Array.isArray(response.post_reports) ? response.post_reports : [];
+          const userReports = Array.isArray(response.user_reports) ? response.user_reports : [];
+
+          // Merge both arrays and add type field
+          reports = [
+            ...postReports.map((r: any) => ({ ...r, type: 'post' as ReportType })),
+            ...userReports.map((r: any) => ({ ...r, type: 'user' as ReportType })),
+          ];
+          console.log(
+            `Combined ${postReports.length} post reports and ${userReports.length} user reports`
+          );
+        } else if (Array.isArray(response.reports)) {
+          console.log('Found reports array in response.reports');
+          reports = response.reports;
+        } else if (Array.isArray(response.data)) {
+          console.log('Found reports array in response.data');
+          reports = response.data;
+        } else {
+          console.warn('Unexpected response format. Available keys:', Object.keys(response));
+          return [];
+        }
+      } else {
+        console.warn('Response is not an object or array:', response);
+        return [];
+      }
+
+      console.log('Processing', reports.length, 'reports');
+
+      // Normalize the response to include both old and new field names for compatibility
+      return reports.map((report) => ({
+        ...report,
+        reporter: report.reporter || report.reporter_id || 'Unknown',
+        reporterRole: report.reporterRole || report.type || 'Unknown',
+        reportedEntityId: report.reportedEntityId || report.reported_id,
+        submitted: report.submitted || report.created_at || new Date().toISOString(),
+      }));
     } catch (error) {
-      // If the API client reports an error, return mock data filtered by status (if provided)
-      console.warn('AdminService.getReports: backend unavailable, returning mock data', error);
-      return status ? mockReports.filter((r) => r.status === status) : mockReports;
+      console.error('AdminService.getReports: Failed to fetch reports', error);
+      if (error instanceof ApiError) {
+        console.error('ApiError details:', {
+          message: error.message,
+          status: error.status,
+          data: error.data,
+        });
+        throw new Error(`Failed to fetch reports: ${error.message}`);
+      }
+      throw new Error('Failed to fetch reports');
     }
   }
 
   /**
-   * Get report by ID
+   * Get report by ID and type
    */
-  static async getReport(reportId: string): Promise<Report> {
-    // Mock fallback when backend isn't ready
-    const mockReports: Report[] = [
-      {
-        id: 'rpt-1',
-        reporter: 'Alice Example',
-        reporterRole: 'User',
-        reportedEntityId: 'job-123',
-        reportedEntityType: 'job',
-        reason: 'Inappropriate content',
-        submitted: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        status: 'pending',
-        link: 'https://example.com/job/123',
-      },
-      {
-        id: 'rpt-2',
-        reporter: 'Bob Example',
-        reporterRole: 'Employer',
-        reportedEntityId: 'company-456',
-        reportedEntityType: 'company',
-        reason: 'Spam posting',
-        submitted: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        status: 'reviewed',
-      },
-    ];
-
+  static async getReport(reportId: string, type: ReportType): Promise<Report> {
     try {
-      return await apiClient.get<Report>(`/admin/reports/${reportId}`);
+      const report = await apiClient.get<Report>(`/report/${type}/${reportId}`);
+
+      // Normalize the response
+      return {
+        ...report,
+        reporter: report.reporter || report.reporter_id,
+        reportedEntityId: report.reportedEntityId || report.reported_id,
+        submitted: report.submitted || report.created_at || new Date().toISOString(),
+      };
     } catch (error) {
-      console.warn('AdminService.getReport: backend unavailable, returning mock report', error);
-      const found = mockReports.find((r) => r.id === reportId);
-      if (found) return found;
-      throw new Error('Failed to fetch report and no mock available');
+      console.error('AdminService.getReport: Failed to fetch report', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch report: ${error.message}`);
+      }
+      throw new Error('Failed to fetch report');
     }
   }
 
@@ -193,14 +221,24 @@ export class AdminService {
 
   /**
    * Update report status
+   * @param type - Report type ('user' or 'post')
+   * @param reportId - ID of the report to update
+   * @param status - New status for the report
+   * @param adminNote - Optional admin note
    */
   static async updateReportStatus(
+    type: ReportType,
     reportId: string,
-    status: Exclude<ReportStatus, 'pending'>,
-    notes?: string
-  ): Promise<Report> {
+    status: ReportStatus,
+    adminNote?: string
+  ): Promise<{ message: string }> {
     try {
-      return await apiClient.put<Report>(`/admin/reports/${reportId}`, { status, notes });
+      const payload: { status: string; admin_note?: string } = { status };
+      if (adminNote) {
+        payload.admin_note = adminNote;
+      }
+
+      return await apiClient.put<{ message: string }>(`/report/${type}/${reportId}`, payload);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to update report: ${error.message}`);
