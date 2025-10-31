@@ -80,6 +80,7 @@ export function ReportPage() {
               <thead className="bg-zinc-800 text-gray-400">
                 <tr>
                   <th className="px-6 py-3">Reporter</th>
+                  <th className="px-3 py-3">Type</th>
                   <th className="px-6 py-3">Reason</th>
                   <th className="px-6 py-3">Submitted</th>
                   <th className="px-6 py-3">Actions</th>
@@ -88,14 +89,14 @@ export function ReportPage() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
                       Loading reports...
                     </td>
                   </tr>
                 )}
                 {!isLoading && reports.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
                       No reports found
                     </td>
                   </tr>
@@ -108,9 +109,12 @@ export function ReportPage() {
                         <div className="font-medium text-white">
                           {r.reporter || r.reporter_id || 'Unknown'}
                         </div>
-                        <div className="mt-1 text-xs text-gray-400">
-                          {r.reporterRole || r.type || ''}
-                        </div>
+                        {r.reporterRole && (
+                          <div className="mt-1 text-xs text-gray-400">{r.reporterRole}</div>
+                        )}
+                      </td>
+                      <td className="px-3 py-4 align-top text-gray-200">
+                        {r.type ? r.type.charAt(0).toUpperCase() + r.type.slice(1) : ''}
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">{r.reason}</td>
                       <td className="px-6 py-4 align-top text-gray-200">
