@@ -19,7 +19,7 @@ interface CompanyProfile {
 }
 
 // Full response shape for PATCH /company/profile (simplified types)
-interface CompanyProfileResponse {
+export interface CompanyProfileResponse {
   banner_id: number;
   id: string;
   industry?: string;
@@ -79,37 +79,6 @@ interface AIVerificationResponse {
 }
 
 export class CompanyService {
-  /**
-   * Upload company logo
-   */
-  static async uploadLogo(companyId: string, logo: File): Promise<{ logoUrl: string }> {
-    try {
-      // Validate file
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(logo.type)) {
-        throw new Error('Logo must be a JPEG, PNG, or WebP image');
-      }
-      if (logo.size > 5 * 1024 * 1024) {
-        throw new Error('Logo must be 5 MB or smaller');
-      }
-
-      const formData = new FormData();
-      formData.append('logo', logo);
-
-      return await apiClient.post(`/company/${companyId}/logo`, formData, {
-        useFormData: true,
-      });
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error(`Failed to upload logo: ${error.message}`);
-      }
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('Failed to upload logo');
-    }
-  }
-
   /**
    * Upload company profile logo (with bearer token)
    */
@@ -360,43 +329,6 @@ export class CompanyService {
       }
       throw new Error('Failed to verify company');
     }
-  }
-
-  /**
-   * Get authenticated session with backend token
-   */
-  private static async getAuthSession() {
-    const { getSession } = await import('next-auth/react');
-    const session = await getSession();
-
-    if (!session?.backendToken) {
-      throw new Error('No authentication token found. Please sign in again.');
-    }
-
-    return session;
-  }
-
-  /**
-   * Extract error message from failed response
-   */
-  private static async extractErrorMessage(response: Response): Promise<string> {
-    const errorMessage = `HTTP ${response.status}`;
-
-    try {
-      const errorData = await response.json();
-      console.log('extractErrorMessage: Error data from response:', errorData);
-      return errorData.error || errorData.message || errorMessage;
-    } catch {
-      try {
-        const errorText = await response.text();
-        console.log('extractErrorMessage: Error text from response:', errorText);
-        if (errorText) return errorText;
-      } catch {
-        // Ignore
-      }
-    }
-
-    return errorMessage;
   }
 
   /**

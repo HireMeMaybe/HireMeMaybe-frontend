@@ -263,23 +263,142 @@ export class AdminService {
 
   /**
    * Get all job posts (for admin management)
+   * Uses the standard /jobpost endpoint with admin authentication
    */
-  static async getAllJobPosts(): Promise<
+  static async getAllJobPosts(params?: {
+    search?: string;
+    type?: string;
+    tag?: string;
+    salary?: string;
+    exp?: string;
+    company?: string;
+    industry?: string;
+    location?: string;
+    desc?: boolean;
+  }): Promise<
     Array<{
-      id: string;
+      id: number;
+      company_id: string;
       title: string;
-      company: string;
-      status: string;
-      createdAt: string;
+      desc: string;
+      exp_lvl: string;
+      location: string;
+      type: string;
+      req: string;
+      salary: string;
+      tags: string[];
+      post_time: string;
+      expiring: string;
+      company?: {
+        id?: string;
+        name?: string;
+        industry?: string;
+      };
     }>
   > {
     try {
-      return await apiClient.get('/admin/jobs');
+      const queryParams = new URLSearchParams();
+
+      if (params?.search) queryParams.set('search', params.search);
+      if (params?.type) queryParams.set('type', params.type);
+      if (params?.tag) queryParams.set('tag', params.tag);
+      if (params?.salary) queryParams.set('salary', params.salary);
+      if (params?.exp) queryParams.set('exp', params.exp);
+      if (params?.company) queryParams.set('company', params.company);
+      if (params?.industry) queryParams.set('industry', params.industry);
+      if (params?.location) queryParams.set('location', params.location);
+      if (params?.desc !== undefined) queryParams.set('desc', params.desc ? 'true' : 'false');
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString ? `/jobpost?${queryString}` : '/jobpost';
+
+      return await apiClient.get(endpoint);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to fetch job posts: ${error.message}`);
       }
       throw new Error('Failed to fetch job posts');
+    }
+  }
+
+  /**
+   * Get job post by ID (admin access)
+   */
+  static async getJobPostById(jobId: number): Promise<{
+    id: number;
+    company_id: string;
+    title: string;
+    desc: string;
+    exp_lvl: string;
+    location: string;
+    type: string;
+    req: string;
+    salary: string;
+    tags: string[];
+    post_time: string;
+    expiring: string;
+  }> {
+    try {
+      return await apiClient.get(`/jobpost/${jobId}`);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch job post: ${error.message}`);
+      }
+      throw new Error('Failed to fetch job post');
+    }
+  }
+
+  /**
+   * Delete a job post (admin access)
+   */
+  static async deleteJobPost(jobId: number): Promise<{ message: string }> {
+    try {
+      return await apiClient.delete(`/jobpost/${jobId}`);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to delete job post: ${error.message}`);
+      }
+      throw new Error('Failed to delete job post');
+    }
+  }
+
+  /**
+   * Update a job post (admin access)
+   */
+  static async updateJobPost(
+    jobId: number,
+    data: {
+      title?: string;
+      desc?: string;
+      exp_lvl?: string;
+      location?: string;
+      type?: string;
+      req?: string;
+      salary?: string;
+      tags?: string[];
+      expiring?: string;
+    }
+  ): Promise<{
+    id: number;
+    company_id: string;
+    title: string;
+    desc: string;
+    exp_lvl: string;
+    location: string;
+    type: string;
+    req: string;
+    salary: string;
+    tags: string[];
+    post_time: string;
+    expiring: string;
+  }> {
+    try {
+      return await apiClient.patch(`/jobpost/${jobId}`, data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to update job post: ${error.message}`);
+      }
+      throw new Error('Failed to update job post');
     }
   }
 
