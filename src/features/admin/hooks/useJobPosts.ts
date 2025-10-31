@@ -26,7 +26,30 @@ export function useJobPosts(filters?: JobPostFilters) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await AdminService.getAllJobPosts(filters);
+      const [data, allReports] = await Promise.all([
+        AdminService.getAllJobPosts(filters),
+        AdminService.getReports(), // Fetch all reports to count them
+      ]);
+
+      console.log('All reports:', allReports);
+      console.log('Job posts:', data);
+
+      // Count reports per job post
+      const reportCounts = new Map<number, number>();
+      for (const report of allReports) {
+        // Check both 'reported' and 'reported_id' fields
+        const reportedJobId = (report as any).reported || report.reported_id;
+
+        if (report.type === 'post' && reportedJobId) {
+          const jobId =
+            typeof reportedJobId === 'string' ? Number.parseInt(reportedJobId, 10) : reportedJobId;
+
+          console.log(`Counting report for job ID ${jobId}:`, report);
+          reportCounts.set(jobId, (reportCounts.get(jobId) || 0) + 1);
+        }
+      }
+
+      console.log('Report counts by job ID:', Object.fromEntries(reportCounts));
 
       // Transform API response to JobPostItem format and fetch company names
       const transformedData: JobPostItem[] = await Promise.all(
@@ -53,8 +76,7 @@ export function useJobPosts(filters?: JobPostFilters) {
               month: 'short',
               day: 'numeric',
             }),
-            // Report count not provided by API yet, defaulting to 0
-            reports: 0,
+            reports: reportCounts.get(post.id) || 0, // Get actual report count
           };
         })
       );
