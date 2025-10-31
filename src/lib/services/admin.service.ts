@@ -613,4 +613,141 @@ export class AdminService {
       throw new Error('Failed to remove punishment');
     }
   }
+
+  /**
+   * Get visitor accounts based on punishment status
+   * @param punishment - Optional filter: 'ban' or 'suspend' (case insensitive)
+   * @returns Array of visitor users
+   */
+  static async getVisitorAccounts(punishment?: 'ban' | 'suspend'): Promise<
+    Array<{
+      id: string;
+      User?: {
+        ID: number;
+        CreatedAt: string;
+        UpdatedAt: string;
+        DeletedAt: string | null;
+        tel: string | null;
+        email: string;
+        id: string;
+        username: string;
+        role: string;
+        punishment: PunishmentInfo | null;
+        profile_picture: string;
+      };
+      first_name: string;
+      last_name: string;
+    }>
+  > {
+    try {
+      const endpoint = punishment ? `/get-visitors?punishment=${punishment}` : '/get-visitors';
+      const response = await apiClient.get<
+        Array<{
+          id: string;
+          User?: {
+            ID: number;
+            CreatedAt: string;
+            UpdatedAt: string;
+            DeletedAt: string | null;
+            tel: string | null;
+            email: string;
+            id: string;
+            username: string;
+            role: string;
+            punishment: PunishmentInfo | null;
+            profile_picture: string;
+          };
+          first_name: string;
+          last_name: string;
+        }>
+      >(endpoint);
+      return response;
+    } catch (error) {
+      console.error('AdminService.getVisitorAccounts: Failed to fetch visitor accounts', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch visitor accounts: ${error.message}`);
+      }
+      throw new Error('Failed to fetch visitor accounts');
+    }
+  }
+
+  /**
+   * Get user name by ID and role
+   * Fetches the user's name from the appropriate endpoint based on their role
+   * @param userId - ID of the user
+   * @param role - User role: 'cpsk', 'visitor', or 'company'
+   * @returns User's full name or username
+   */
+  static async getUserName(userId: string, role?: string): Promise<string> {
+    try {
+      // If role is not provided or unknown, try to fetch from all endpoints
+      if (!role || !['cpsk', 'visitor', 'company'].includes(role.toLowerCase())) {
+        // Try CPSK first
+        try {
+          const cpskUsers = await this.getCPSKAccounts();
+          const cpskUser = cpskUsers.find((u) => u.id === userId);
+          if (cpskUser) {
+            return cpskUser.name;
+          }
+        } catch (e) {
+          console.log('User not found in CPSK accounts', e instanceof Error ? e.message : '');
+        }
+
+        // Try Visitor
+        try {
+          const visitorUsers = await this.getVisitorAccounts();
+          const visitorUser = visitorUsers.find((u) => u.id === userId);
+          if (visitorUser) {
+            return (
+              `${visitorUser.first_name} ${visitorUser.last_name}`.trim() ||
+              visitorUser.User?.username ||
+              'Unknown'
+            );
+          }
+        } catch (e) {
+          console.log('User not found in visitor accounts', e instanceof Error ? e.message : '');
+        }
+
+        // Try Company
+        try {
+          const response = await apiClient.get<Company>(`/company/${userId}`);
+          return response.name;
+        } catch (e) {
+          console.log('User not found in company accounts', e instanceof Error ? e.message : '');
+        }
+
+        return userId; // Return ID if name not found
+      }
+
+      // Fetch based on role
+      switch (role.toLowerCase()) {
+        case 'cpsk': {
+          const cpskUsers = await this.getCPSKAccounts();
+          const cpskUser = cpskUsers.find((u) => u.id === userId);
+          return cpskUser?.name || userId;
+        }
+
+        case 'visitor': {
+          const visitorUsers = await this.getVisitorAccounts();
+          const visitorUser = visitorUsers.find((u) => u.id === userId);
+          return (
+            `${visitorUser?.first_name || ''} ${visitorUser?.last_name || ''}`.trim() ||
+            visitorUser?.User?.username ||
+            userId
+          );
+        }
+
+        case 'company': {
+          const response = await apiClient.get<Company>(`/company/${userId}`);
+          return response.name;
+        }
+
+        default:
+          return userId;
+      }
+    } catch (error) {
+      console.error('AdminService.getUserName: Failed to fetch user name', error);
+      return userId; // Return ID if fetching fails
+    }
+  }
 }

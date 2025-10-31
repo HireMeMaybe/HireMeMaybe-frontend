@@ -28,20 +28,36 @@ export function useJobPosts(filters?: JobPostFilters) {
     try {
       const data = await AdminService.getAllJobPosts(filters);
 
-      // Transform API response to JobPostItem format
-      const transformedData: JobPostItem[] = data.map((post) => ({
-        id: post.id,
-        title: post.title,
-        company: post.company_id|| 'Unknown Company',
-        type: post.type as JobPostItem['type'],
-        posted: new Date(post.post_time).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        }),
-        // Report count not provided by API yet, defaulting to 0
-        reports: 0,
-      }));
+      // Transform API response to JobPostItem format and fetch company names
+      const transformedData: JobPostItem[] = await Promise.all(
+        data.map(async (post) => {
+          let companyName = 'Unknown Company';
+
+          // Fetch company name if company_id exists
+          if (post.company_id) {
+            try {
+              companyName = await AdminService.getUserName(post.company_id, 'company');
+            } catch (err) {
+              console.error(`Failed to fetch company name for ${post.company_id}:`, err);
+              companyName = post.company_id; // Fall back to ID
+            }
+          }
+
+          return {
+            id: post.id,
+            title: post.title,
+            company: companyName,
+            type: post.type as JobPostItem['type'],
+            posted: new Date(post.post_time).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            }),
+            // Report count not provided by API yet, defaulting to 0
+            reports: 0,
+          };
+        })
+      );
 
       setJobPosts(transformedData);
     } catch (err) {

@@ -14,7 +14,30 @@ export function useReport() {
 
     try {
       const data = await AdminService.getReports(status);
-      setReports(data);
+
+      // Fetch reporter names for each report
+      const reportsWithNames = await Promise.all(
+        data.map(async (report) => {
+          if (report.reporter_id && !report.reporter) {
+            try {
+              const reporterName = await AdminService.getUserName(
+                report.reporter_id,
+                report.reporterRole
+              );
+              return {
+                ...report,
+                reporter: reporterName,
+              };
+            } catch (err) {
+              console.error(`Failed to fetch name for reporter ${report.reporter_id}:`, err);
+              return report;
+            }
+          }
+          return report;
+        })
+      );
+
+      setReports(reportsWithNames);
     } catch (err) {
       console.error('Error fetching reports:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch reports');
