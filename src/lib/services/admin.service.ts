@@ -163,7 +163,7 @@ export class AdminService {
         ...report,
         reporter_id: report.reporter_id || report.reporter || 'Unknown',
         reporter: undefined, // Clear this so useReport hook will fetch the actual name
-        reporterRole: report.reporterRole || report.type || 'Unknown',
+        reporterRole: report.reporterRole || (report as any).reporter_role || undefined, // Don't use report.type as it's the report type, not user role
         reportedEntityId: report.reportedEntityId || report.reported_id,
         submitted: report.submitted || report.created_at || new Date().toISOString(),
       }));
@@ -669,6 +669,58 @@ export class AdminService {
         throw new Error(`Failed to fetch visitor accounts: ${error.message}`);
       }
       throw new Error('Failed to fetch visitor accounts');
+    }
+  }
+
+  /**
+   * Get user info (name and role) by ID
+   * Fetches the user's name and role from the appropriate endpoint
+   * @param userId - ID of the user
+   * @returns Object with user's name and role
+   */
+  static async getUserInfo(
+    userId: string
+  ): Promise<{ name: string; role: 'cpsk' | 'visitor' | 'company' }> {
+    try {
+      // Try CPSK first
+      try {
+        const cpskUsers = await this.getCPSKAccounts();
+        const cpskUser = cpskUsers.find((u) => u.id === userId);
+        if (cpskUser) {
+          return { name: cpskUser.name, role: 'cpsk' };
+        }
+      } catch (e) {
+        console.log('User not found in CPSK accounts', e instanceof Error ? e.message : '');
+      }
+
+      // Try Visitor
+      try {
+        const visitorUsers = await this.getVisitorAccounts();
+        const visitorUser = visitorUsers.find((u) => u.id === userId);
+        if (visitorUser) {
+          const name =
+            `${visitorUser.first_name} ${visitorUser.last_name}`.trim() ||
+            visitorUser.User?.username ||
+            'Unknown';
+          return { name, role: 'visitor' };
+        }
+      } catch (e) {
+        console.log('User not found in visitor accounts', e instanceof Error ? e.message : '');
+      }
+
+      // Try Company
+      try {
+        const response = await apiClient.get<Company>(`/company/${userId}`);
+        return { name: response.name, role: 'company' };
+      } catch (e) {
+        console.log('User not found in company accounts', e instanceof Error ? e.message : '');
+      }
+
+      // Return ID if name not found
+      return { name: userId, role: 'visitor' };
+    } catch (error) {
+      console.error('AdminService.getUserInfo: Failed to fetch user info', error);
+      return { name: userId, role: 'visitor' };
     }
   }
 

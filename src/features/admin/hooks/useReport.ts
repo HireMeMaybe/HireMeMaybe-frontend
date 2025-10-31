@@ -15,20 +15,20 @@ export function useReport() {
     try {
       const data = await AdminService.getReports(status);
 
-      // Fetch reporter names for each report
+      // Fetch reporter names and roles for each report
       const reportsWithNames = await Promise.all(
         data.map(async (report) => {
           if (report.reporter_id && !report.reporter) {
             try {
-              // Don't pass reporterRole as it might not be the actual user role
-              // Let getUserName search through all user types
-              const reporterName = await AdminService.getUserName(report.reporter_id);
+              // Fetch both name and role from the API
+              const userInfo = await AdminService.getUserInfo(report.reporter_id);
               return {
                 ...report,
-                reporter: reporterName,
+                reporter: userInfo.name,
+                reporterRole: userInfo.role, // Set the actual user role (cpsk/visitor/company)
               };
             } catch (err) {
-              console.error(`Failed to fetch name for reporter ${report.reporter_id}:`, err);
+              console.error(`Failed to fetch info for reporter ${report.reporter_id}:`, err);
               return {
                 ...report,
                 reporter: report.reporter_id, // Fallback to ID if fetching fails
