@@ -11,6 +11,19 @@ export function ReportPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500/20 text-yellow-500';
+      case 'reviewed':
+        return 'bg-blue-500/20 text-blue-500';
+      case 'resolved':
+        return 'bg-green-500/20 text-green-500';
+      default:
+        return 'bg-gray-500/20 text-gray-500';
+    }
+  };
+
   const openModal = (r: Report) => {
     setSelected(r);
     setIsModalOpen(true);
@@ -83,20 +96,21 @@ export function ReportPage() {
                   <th className="px-3 py-3">Type</th>
                   <th className="px-6 py-3">Reason</th>
                   <th className="px-6 py-3">Submitted</th>
+                  <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
                       Loading reports...
                     </td>
                   </tr>
                 )}
                 {!isLoading && reports.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
                       No reports found
                     </td>
                   </tr>
@@ -119,6 +133,15 @@ export function ReportPage() {
                       <td className="px-6 py-4 align-top text-gray-200">{r.reason}</td>
                       <td className="px-6 py-4 align-top text-gray-200">
                         {formatDate(r.submitted)}
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(r.status)}`}
+                        >
+                          {r.status
+                            ? r.status.charAt(0).toUpperCase() + r.status.slice(1)
+                            : 'Unknown'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 align-top">
                         <div className="flex gap-2">
