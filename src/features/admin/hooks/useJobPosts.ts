@@ -32,7 +32,7 @@ export function useJobPosts(filters?: JobPostFilters) {
       const transformedData: JobPostItem[] = data.map((post) => ({
         id: post.id,
         title: post.title,
-        company: post.company?.name || 'Unknown Company',
+        company: post.company_id|| 'Unknown Company',
         type: post.type as JobPostItem['type'],
         posted: new Date(post.post_time).toLocaleDateString('en-US', {
           year: 'numeric',
