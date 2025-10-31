@@ -20,17 +20,19 @@ export function useReport() {
         data.map(async (report) => {
           if (report.reporter_id && !report.reporter) {
             try {
-              const reporterName = await AdminService.getUserName(
-                report.reporter_id,
-                report.reporterRole
-              );
+              // Don't pass reporterRole as it might not be the actual user role
+              // Let getUserName search through all user types
+              const reporterName = await AdminService.getUserName(report.reporter_id);
               return {
                 ...report,
                 reporter: reporterName,
               };
             } catch (err) {
               console.error(`Failed to fetch name for reporter ${report.reporter_id}:`, err);
-              return report;
+              return {
+                ...report,
+                reporter: report.reporter_id, // Fallback to ID if fetching fails
+              };
             }
           }
           return report;

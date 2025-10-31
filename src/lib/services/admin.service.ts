@@ -161,7 +161,8 @@ export class AdminService {
       // Normalize the response to include both old and new field names for compatibility
       return reports.map((report) => ({
         ...report,
-        reporter: report.reporter || report.reporter_id || 'Unknown',
+        reporter_id: report.reporter_id || report.reporter || 'Unknown',
+        reporter: undefined, // Clear this so useReport hook will fetch the actual name
         reporterRole: report.reporterRole || report.type || 'Unknown',
         reportedEntityId: report.reportedEntityId || report.reported_id,
         submitted: report.submitted || report.created_at || new Date().toISOString(),
