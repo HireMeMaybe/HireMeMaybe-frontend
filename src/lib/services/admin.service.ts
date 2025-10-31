@@ -680,14 +680,14 @@ export class AdminService {
    */
   static async getUserInfo(
     userId: string
-  ): Promise<{ name: string; role: 'cpsk' | 'visitor' | 'company' }> {
+  ): Promise<{ name: string; role: 'CPSK' | 'Visitor' | 'Company' }> {
     try {
       // Try CPSK first
       try {
         const cpskUsers = await this.getCPSKAccounts();
         const cpskUser = cpskUsers.find((u) => u.id === userId);
         if (cpskUser) {
-          return { name: cpskUser.name, role: 'cpsk' };
+          return { name: cpskUser.name, role: 'CPSK' };
         }
       } catch (e) {
         console.log('User not found in CPSK accounts', e instanceof Error ? e.message : '');
@@ -702,7 +702,7 @@ export class AdminService {
             `${visitorUser.first_name} ${visitorUser.last_name}`.trim() ||
             visitorUser.User?.username ||
             'Unknown';
-          return { name, role: 'visitor' };
+          return { name, role: 'Visitor' };
         }
       } catch (e) {
         console.log('User not found in visitor accounts', e instanceof Error ? e.message : '');
@@ -711,16 +711,16 @@ export class AdminService {
       // Try Company
       try {
         const response = await apiClient.get<Company>(`/company/${userId}`);
-        return { name: response.name, role: 'company' };
+        return { name: response.name, role: 'Company' };
       } catch (e) {
         console.log('User not found in company accounts', e instanceof Error ? e.message : '');
       }
 
       // Return ID if name not found
-      return { name: userId, role: 'visitor' };
+      return { name: userId, role: 'Visitor' };
     } catch (error) {
       console.error('AdminService.getUserInfo: Failed to fetch user info', error);
-      return { name: userId, role: 'visitor' };
+      return { name: userId, role: 'Visitor' };
     }
   }
 
