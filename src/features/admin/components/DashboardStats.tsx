@@ -8,10 +8,9 @@ interface StatCardProps {
   readonly label: string;
   readonly subtitle: string;
   readonly color: 'purple' | 'red' | 'green' | 'blue' | 'cyan';
-  readonly icon?: string;
 }
 
-function StatCard({ number, label, subtitle, color, icon }: StatCardProps) {
+function StatCard({ number, label, subtitle, color}: StatCardProps) {
   const colorClasses = {
     purple: 'border-t-purple-500 bg-purple-500/5',
     red: 'border-t-red-reject bg-red-500/5',
@@ -76,7 +75,6 @@ export function DashboardStats() {
           label="Total Job Posts"
           subtitle="Active job postings"
           color="blue"
-          icon="💼"
         />
 
         <StatCard
@@ -84,7 +82,6 @@ export function DashboardStats() {
           label="Open Reports"
           subtitle="Pending review"
           color="red"
-          icon="⚠️"
         />
 
         <StatCard
@@ -92,7 +89,6 @@ export function DashboardStats() {
           label="Verified Companies"
           subtitle="Active on platform"
           color="green"
-          icon="✓"
         />
 
         <StatCard
@@ -100,7 +96,6 @@ export function DashboardStats() {
           label="Active CPSK"
           subtitle="CPSK members"
           color="cyan"
-          icon="👨‍🎓"
         />
 
         <StatCard
@@ -108,7 +103,6 @@ export function DashboardStats() {
           label="Total Visitors"
           subtitle="Registered visitors"
           color="green"
-          icon="👥"
         />
 
         <StatCard
@@ -116,7 +110,6 @@ export function DashboardStats() {
           label="Unverified Companies"
           subtitle="Compaies rejected by AI"
           color="purple"
-          icon="⏳"
         />
       </div>
 
