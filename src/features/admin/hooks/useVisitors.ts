@@ -49,18 +49,18 @@ export function useVisitors() {
 
   const suspendAccount = async (visitorId: string, endDate?: string) => {
     // Convert date string to ISO 8601 format if provided
-    let endDateISO = '';
+    const punishment: any = {
+      type: 'suspend' as const,
+      at: new Date().toISOString(),
+    };
+
     if (endDate) {
       // If endDate is in format YYYY-MM-DD, convert to YYYY-MM-DDTHH:mm:ssZ
       const date = new Date(endDate);
-      endDateISO = date.toISOString();
+      punishment.end = date.toISOString();
     }
+    // If no endDate, don't include 'end' field (permanent suspension)
 
-    const punishment = {
-      type: 'suspend' as const,
-      at: new Date().toISOString(),
-      end: endDateISO, // Empty means permanent
-    };
     await AdminService.punishVisitor(visitorId, punishment);
   };
 
@@ -69,11 +69,12 @@ export function useVisitors() {
   };
 
   const banAccount = async (visitorId: string) => {
-    const punishment = {
+    // For permanent ban, don't include 'end' field at all
+    const punishment: any = {
       type: 'ban' as const,
       at: new Date().toISOString(),
-      end: '', // Permanent ban
     };
+    // Don't include 'end' field for permanent ban
     await AdminService.punishVisitor(visitorId, punishment);
   };
 
