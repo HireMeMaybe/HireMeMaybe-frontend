@@ -75,7 +75,7 @@ export function DashboardStats() {
           number={stats.totalJobPosts}
           label="Total Job Posts"
           subtitle="Active job postings"
-          color="purple"
+          color="blue"
           icon="💼"
         />
 
@@ -99,7 +99,7 @@ export function DashboardStats() {
           number={stats.activeCPSK}
           label="Active CPSK"
           subtitle="CPSK members"
-          color="blue"
+          color="cyan"
           icon="👨‍🎓"
         />
 
@@ -107,8 +107,16 @@ export function DashboardStats() {
           number={stats.totalVisitors}
           label="Total Visitors"
           subtitle="Registered visitors"
-          color="cyan"
+          color="green"
           icon="👥"
+        />
+
+        <StatCard
+          number={stats.unverifiedCompanies}
+          label="Unverified Companies"
+          subtitle="Compaies rejected by AI"
+          color="purple"
+          icon="⏳"
         />
       </div>
 
@@ -123,9 +131,19 @@ export function DashboardStats() {
             </span>
           </div>
           <div className="flex items-center justify-between rounded bg-zinc-800/50 p-3">
-            <span>Total Platform Activity</span>
+            <span>Total Companies</span>
             <span className="font-semibold text-white">
-              {stats.totalJobPosts + stats.verifiedCompanies} items
+              {stats.verifiedCompanies + stats.unverifiedCompanies}
+            </span>
+          </div>
+          <div className="flex items-center justify-between rounded bg-zinc-800/50 p-3">
+            <span>Pending Verifications</span>
+            <span
+              className={`font-semibold ${stats.unverifiedCompanies > 0 ? 'text-purple-500' : 'text-primary-green'}`}
+            >
+              {stats.unverifiedCompanies > 0
+                ? `${stats.unverifiedCompanies} companies`
+                : 'All verified'}
             </span>
           </div>
           <div className="flex items-center justify-between rounded bg-zinc-800/50 p-3">
@@ -135,10 +153,6 @@ export function DashboardStats() {
             >
               {stats.openReports > 0 ? `${stats.openReports} pending` : 'All clear'}
             </span>
-          </div>
-          <div className="flex items-center justify-between rounded bg-zinc-800/50 p-3">
-            <span>Platform Health</span>
-            <span className="text-primary-green font-semibold">Operational ✓</span>
           </div>
         </div>
       </div>

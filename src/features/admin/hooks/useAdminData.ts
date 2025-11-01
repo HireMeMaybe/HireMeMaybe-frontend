@@ -7,6 +7,7 @@ interface DashboardStats {
   totalJobPosts: number;
   openReports: number;
   verifiedCompanies: number;
+  unverifiedCompanies: number;
   activeCPSK: number;
   totalVisitors: number;
 }
@@ -16,6 +17,7 @@ export function useAdminData() {
     totalJobPosts: 0,
     openReports: 0,
     verifiedCompanies: 0,
+    unverifiedCompanies: 0,
     activeCPSK: 0,
     totalVisitors: 0,
   });
@@ -29,18 +31,21 @@ export function useAdminData() {
 
     try {
       // Fetch all data in parallel
-      const [jobPosts, reports, companies, cpskAccounts, visitors] = await Promise.all([
-        AdminService.getAllJobPosts(),
-        AdminService.getReports('pending'),
-        AdminService.getCompanies('verified'),
-        AdminService.getCPSKAccounts(),
-        AdminService.getVisitorAccounts(),
-      ]);
+      const [jobPosts, reports, verifiedCompanies, unverifiedCompanies, cpskAccounts, visitors] =
+        await Promise.all([
+          AdminService.getAllJobPosts(),
+          AdminService.getReports('pending'),
+          AdminService.getCompanies('verified'),
+          AdminService.getCompanies('unverified'),
+          AdminService.getCPSKAccounts(),
+          AdminService.getVisitorAccounts(),
+        ]);
 
       setStats({
         totalJobPosts: jobPosts.length,
         openReports: reports.length,
-        verifiedCompanies: companies.length,
+        verifiedCompanies: verifiedCompanies.length,
+        unverifiedCompanies: unverifiedCompanies.length,
         activeCPSK: cpskAccounts.filter((acc) => acc.status === 'Active').length,
         totalVisitors: visitors.length,
       });
