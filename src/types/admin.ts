@@ -125,7 +125,7 @@ export interface CompanyUser {
 }
 
 export interface VisitorAccount {
-  id: number;
+  id: string;
   name: string;
   email: string;
   reportCount: number;

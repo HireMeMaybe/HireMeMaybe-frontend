@@ -673,6 +673,48 @@ export class AdminService {
   }
 
   /**
+   * Punish a visitor user (ban or suspend)
+   * @param userId - ID of the visitor user to punish
+   * @param punishment - Punishment details (type, at, end)
+   * @returns Success message
+   */
+  static async punishVisitor(
+    userId: string,
+    punishment: PunishmentStruct
+  ): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.put<{ message: string }>(`/punish/${userId}`, punishment);
+      console.log(`Successfully punished visitor user ${userId}:`, punishment.type);
+      return response;
+    } catch (error) {
+      console.error('AdminService.punishVisitor: Failed to punish visitor', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to punish visitor: ${error.message}`);
+      }
+      throw new Error('Failed to punish visitor');
+    }
+  }
+
+  /**
+   * Remove punishment from a visitor user
+   * @param userId - ID of the visitor user to unpunish
+   * @returns Success message
+   */
+  static async removePunishmentVisitor(userId: string): Promise<{ message: string }> {
+    try {
+      const response = await apiClient.delete<{ message: string }>(`/punish/${userId}`);
+      console.log(`Successfully removed punishment from visitor user ${userId}`);
+      return response;
+    } catch (error) {
+      console.error('AdminService.removePunishmentVisitor: Failed to remove punishment', error);
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to remove punishment: ${error.message}`);
+      }
+      throw new Error('Failed to remove punishment');
+    }
+  }
+
+  /**
    * Get user info (name and role) by ID
    * Fetches the user's name and role from the appropriate endpoint
    * @param userId - ID of the user
