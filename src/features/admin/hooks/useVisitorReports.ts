@@ -53,6 +53,7 @@ export function useVisitorReports(visitorId: number | string) {
             id: uniqueId,
             reportedEntity: reportedEntityName,
             reportedEntityType: reportedEntityType,
+            reported_id: reportedId,
             reason: report.reason,
             submitted: new Date(report.submitted).toLocaleDateString('en-US', {
               year: 'numeric',

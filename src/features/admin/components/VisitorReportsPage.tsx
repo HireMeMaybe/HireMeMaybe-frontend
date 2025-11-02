@@ -32,7 +32,9 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
 
   const handleViewEntity = (report: any) => {
     const entityType = report.reportedEntityType;
-    const entityId = report.reported_id || report.reportedId;
+    const entityId = report.reported_id;
+
+    console.log('View Entity clicked:', { entityType, entityId, report });
 
     if (entityType === 'Job' && entityId) {
       // Navigate to job post detail page
@@ -44,6 +46,8 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
       // Open CPSK detail modal
       setSelectedCPSKId(entityId);
       setIsCPSKModalOpen(true);
+    } else {
+      console.error('Invalid entity type or missing entity ID:', { entityType, entityId });
     }
   };
 
