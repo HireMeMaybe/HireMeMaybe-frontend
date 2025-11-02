@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface VisitorReportsPageProps {
-  visitorId: number;
+  readonly visitorId: string;
 }
 
 export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {

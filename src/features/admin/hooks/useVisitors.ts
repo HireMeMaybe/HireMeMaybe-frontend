@@ -13,10 +13,22 @@ export function useVisitors() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await AdminService.getVisitorAccounts();
+      const [visitors, allReports] = await Promise.all([
+        AdminService.getVisitorAccounts(),
+        AdminService.getReports(), // Fetch all reports to count by reporter
+      ]);
+
+      // Count reports per visitor (by reporter ID)
+      const reportCounts = new Map<string, number>();
+      for (const report of allReports) {
+        const reporterId = (report as any).reporter || report.reporter_id;
+        if (reporterId) {
+          reportCounts.set(reporterId, (reportCounts.get(reporterId) || 0) + 1);
+        }
+      }
 
       // Transform API response to VisitorAccount format
-      const transformedData: VisitorAccount[] = data.map((visitor) => {
+      const transformedData: VisitorAccount[] = visitors.map((visitor) => {
         let status: 'Active' | 'Suspended' | 'Banned' = 'Active';
 
         if (visitor.User?.punishment) {
@@ -30,7 +42,7 @@ export function useVisitors() {
             visitor.User?.username ||
             'Unknown',
           email: visitor.User?.email || '',
-          reportCount: 0, // Will be populated later if needed
+          reportCount: reportCounts.get(visitor.id) || 0, // Get actual report count
           status,
         };
       });
