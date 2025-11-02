@@ -41,13 +41,17 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
     >
       {/* Company Logo */}
       <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded bg-gray-600">
-        <Image
-          src={job.logoUrl ?? FALLBACK_LOGO}
-          alt={job.companyName}
-          width={48}
-          height={48}
-          className="h-12 w-12 object-contain"
-        />
+        {job.logoUrl ? (
+          <Image
+            src={job.logoUrl}
+            alt={job.companyName}
+            width={48}
+            height={48}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <div aria-hidden className="h-12 w-12 animate-pulse rounded bg-zinc-700" />
+        )}
       </div>
 
       {/* Job Info */}
@@ -90,13 +94,17 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded bg-gray-600">
-            <Image
-              src={job.logoUrl ?? FALLBACK_LOGO}
-              alt={job.companyName}
-              width={56}
-              height={56}
-              className="h-14 w-14 object-contain"
-            />
+            {job.logoUrl ? (
+              <Image
+                src={job.logoUrl}
+                alt={job.companyName}
+                width={56}
+                height={56}
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              <div aria-hidden className="h-14 w-14 animate-pulse rounded bg-zinc-600" />
+            )}
           </div>
           <div>
             <p className="text-lg text-white">{job.companyName}</p>
