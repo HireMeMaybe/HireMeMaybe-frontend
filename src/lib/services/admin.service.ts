@@ -13,6 +13,7 @@ export type ReportType = 'user' | 'post';
 
 export interface Report {
   id: string;
+  originalId?: string | number; // Original ID from API before unique transformation
   reporter_id: string;
   reporter?: string;
   reporterRole?: string;
@@ -159,14 +160,25 @@ export class AdminService {
       console.log('Processing', reports.length, 'reports');
 
       // Normalize the response to include both old and new field names for compatibility
-      return reports.map((report) => ({
-        ...report,
-        reporter_id: report.reporter_id || report.reporter || 'Unknown',
-        reporter: undefined, // Clear this so useReport hook will fetch the actual name
-        reporterRole: report.reporterRole || (report as any).reporter_role || undefined, // Don't use report.type as it's the report type, not user role
-        reportedEntityId: report.reportedEntityId || report.reported_id,
-        submitted: report.submitted || report.created_at || new Date().toISOString(),
-      }));
+      // Generate unique IDs by adding prefix based on type to avoid collisions between post_reports and user_reports
+      return reports.map((report) => {
+        // Generate unique ID by combining type prefix with original ID
+        const originalId =
+          typeof report.id === 'string' ? Number.parseInt(report.id, 10) : report.id;
+        const typePrefix = report.type === 'post' ? 1000000 : 2000000;
+        const uniqueId = typePrefix + originalId;
+
+        return {
+          ...report,
+          id: uniqueId.toString(), // Convert to string as Report type expects string
+          originalId: report.id, // Keep original ID for API calls
+          reporter_id: report.reporter_id || report.reporter || 'Unknown',
+          reporter: undefined, // Clear this so useReport hook will fetch the actual name
+          reporterRole: report.reporterRole || (report as any).reporter_role || undefined, // Don't use report.type as it's the report type, not user role
+          reportedEntityId: report.reportedEntityId || report.reported_id,
+          submitted: report.submitted || report.created_at || new Date().toISOString(),
+        };
+      });
     } catch (error) {
       console.error('AdminService.getReports: Failed to fetch reports', error);
       if (error instanceof ApiError) {

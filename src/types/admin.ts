@@ -135,7 +135,7 @@ export interface VisitorAccount {
 export interface VisitorReport {
   id: number;
   reportedEntity: string;
-  reportedEntityType: 'Job' | 'Company';
+  reportedEntityType: 'Job' | 'Company' | 'CPSK';
   reason: string;
   submitted: string;
   status: 'Pending' | 'Reviewed' | 'Resolved';

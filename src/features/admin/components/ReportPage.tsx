@@ -43,7 +43,9 @@ export function ReportPage() {
     if (!selected) return;
 
     try {
-      await updateReportStatus(selected.type, selected.id, status, adminNote);
+      // Use originalId for API call (the ID before unique transformation)
+      const reportId = selected.originalId?.toString() || selected.id;
+      await updateReportStatus(selected.type, reportId, status, adminNote);
       console.log(`Report ${status === 'reviewed' ? 'reviewed' : 'resolved'} successfully`);
       closeModal();
       await refetch();
@@ -58,7 +60,9 @@ export function ReportPage() {
 
     try {
       // Reject = mark as resolved with a note
-      await updateReportStatus(selected.type, selected.id, 'resolved', 'Report rejected by admin');
+      // Use originalId for API call (the ID before unique transformation)
+      const reportId = selected.originalId?.toString() || selected.id;
+      await updateReportStatus(selected.type, reportId, 'resolved', 'Report rejected by admin');
       console.log('Report rejected successfully');
       setIsDeleteOpen(false);
       setSelected(null);
