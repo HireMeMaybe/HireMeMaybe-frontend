@@ -14,15 +14,16 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
   const { reports, isLoading } = useVisitorReports(visitorId);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Pending':
-        return 'bg-bright-yellow text-black';
-      case 'Reviewed':
-        return 'bg-sky-blue text-white';
-      case 'Resolved':
-        return 'bg-primary-green text-white';
+    const lowerStatus = status.toLowerCase();
+    switch (lowerStatus) {
+      case 'pending':
+        return 'bg-yellow-500/20 text-yellow-500';
+      case 'reviewed':
+        return 'bg-blue-500/20 text-blue-500';
+      case 'resolved':
+        return 'bg-green-500/20 text-green-500';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-gray-500/20 text-gray-500';
     }
   };
 

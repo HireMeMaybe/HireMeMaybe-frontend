@@ -131,8 +131,10 @@ export function ReportPage() {
                           <div className="mt-1 text-xs text-gray-400">{r.reporterRole}</div>
                         )}
                       </td>
-                      <td className="px-3 py-4 align-top text-gray-200">
-                        {r.type ? r.type.charAt(0).toUpperCase() + r.type.slice(1) : ''}
+                      <td className="px-3 py-4 align-top">
+                        <span className="rounded-full bg-zinc-700 px-3 py-1 text-xs font-medium text-white">
+                          {r.type ? r.type.charAt(0).toUpperCase() + r.type.slice(1) : ''}
+                        </span>
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">{r.reason}</td>
                       <td className="px-6 py-4 align-top text-gray-200">
