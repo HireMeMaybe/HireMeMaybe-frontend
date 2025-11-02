@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Users, Edit, Eye, Trash2 } from 'lucide-react';
+import { Users, Edit, Eye, Trash2, ExternalLink } from 'lucide-react';
 import type { JobOpening } from '@/types/company';
 
 interface JobCardProps {
@@ -37,7 +37,20 @@ export default function JobCard({
             </span>
           )}
         </div>
-        <h3 className="mb-1 text-lg font-semibold text-white">{job.title}</h3>
+        <h3 className="mb-1 flex items-center gap-2 text-lg font-semibold text-white">
+          <span>{job.title}</span>
+          {job.id ? (
+            <a
+              href={`/job-post/${job.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${job.title} in a new tab`}
+              className="text-zinc-400 hover:text-white"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          ) : null}
+        </h3>
         <p className="text-lighter-gray-text mb-2 text-sm">
           {job.location} | {job.type}
         </p>
