@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useVisitorReports } from '@/features/admin/hooks/useVisitorReports';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import CPSKDetailModal from '@/components/modals/CPSKDetailModal';
 
 interface VisitorReportsPageProps {
   readonly visitorId: string;
@@ -12,6 +13,8 @@ interface VisitorReportsPageProps {
 export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
   const router = useRouter();
   const { reports, isLoading } = useVisitorReports(visitorId);
+  const [isCPSKModalOpen, setIsCPSKModalOpen] = useState(false);
+  const [selectedCPSKId, setSelectedCPSKId] = useState<string>('');
 
   const getStatusColor = (status: string) => {
     const lowerStatus = status.toLowerCase();
@@ -27,9 +30,21 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
     }
   };
 
-  const handleViewEntity = (entityType: string, entityName: string) => {
-    console.log('View entity:', entityType, entityName);
-    // You can implement navigation to the specific job or company here
+  const handleViewEntity = (report: any) => {
+    const entityType = report.reportedEntityType;
+    const entityId = report.reported_id || report.reportedId;
+
+    if (entityType === 'Job' && entityId) {
+      // Navigate to job post detail page
+      router.push(`/job-post/${entityId}`);
+    } else if (entityType === 'Company' && entityId) {
+      // Navigate to company profile page
+      router.push(`/company/${entityId}`);
+    } else if (entityType === 'CPSK' && entityId) {
+      // Open CPSK detail modal
+      setSelectedCPSKId(entityId);
+      setIsCPSKModalOpen(true);
+    }
   };
 
   return (
@@ -107,9 +122,7 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
                       </td>
                       <td className="px-6 py-4 align-top">
                         <button
-                          onClick={() =>
-                            handleViewEntity(report.reportedEntityType, report.reportedEntity)
-                          }
+                          onClick={() => handleViewEntity(report)}
                           className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                         >
                           View Entity
@@ -122,6 +135,11 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
             </table>
           </div>
         </section>
+        <CPSKDetailModal
+          isOpen={isCPSKModalOpen}
+          onClose={() => setIsCPSKModalOpen(false)}
+          cpskId={selectedCPSKId}
+        />
       </div>
     </div>
   );

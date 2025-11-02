@@ -19,6 +19,7 @@ interface ReviewReportModalProps {
   readonly report?: Report | null;
   readonly onReview?: (status: 'reviewed' | 'resolved', adminNote?: string) => Promise<void>;
   readonly onReject?: (status: 'reviewed' | 'resolved', adminNote?: string) => Promise<void>;
+  readonly onViewEntity?: () => void;
 }
 
 export default function ReviewReportModal({
@@ -27,6 +28,7 @@ export default function ReviewReportModal({
   report,
   onReview,
   onReject,
+  onViewEntity,
 }: ReviewReportModalProps) {
   const [adminNote, setAdminNote] = useState('');
 
@@ -83,6 +85,27 @@ export default function ReviewReportModal({
             <div className="text-sm text-gray-300">
               Submitted: <span className="text-gray-200">{formattedDate}</span>
             </div>
+          </div>
+
+          {/* Reported Entity */}
+          <div className="flex items-center justify-between rounded-lg border border-zinc-700 bg-zinc-800 p-3">
+            <div>
+              <div className="text-sm text-gray-400">Reported Entity</div>
+              <div className="mt-1 font-medium text-white">{report?.reportedEntity || '—'}</div>
+              {report?.reportedEntityType && (
+                <span className="mt-1 inline-block rounded-full bg-zinc-700 px-2 py-0.5 text-xs text-white">
+                  {report.reportedEntityType}
+                </span>
+              )}
+            </div>
+            {onViewEntity && (
+              <Button
+                onClick={onViewEntity}
+                className="cursor-pointer rounded-md bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+              >
+                View Entity
+              </Button>
+            )}
           </div>
 
           {/* Reason */}

@@ -1,15 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useReport, type Report } from '@/features/admin/hooks/useReport';
 import ReviewReportModal from '@/components/modals/ReviewReportModal';
 import DeleteModal from '@/components/modals/DeleteModal';
+import CPSKDetailModal from '@/components/modals/CPSKDetailModal';
 
 export function ReportPage() {
+  const router = useRouter();
   const { reports, isLoading, refetch, updateReportStatus } = useReport();
   const [selected, setSelected] = useState<Report | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isCPSKModalOpen, setIsCPSKModalOpen] = useState(false);
+  const [selectedCPSKId, setSelectedCPSKId] = useState<string>('');
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -81,6 +86,23 @@ export function ReportPage() {
     }
   };
 
+  const handleViewEntity = (report: Report) => {
+    const entityType = report.reportedEntityType;
+    const entityId = report.reported_id;
+
+    if (entityType === 'Job' && entityId) {
+      // Navigate to job post detail page
+      router.push(`/job-post/${entityId}`);
+    } else if (entityType === 'Company' && entityId) {
+      // Navigate to company profile page
+      router.push(`/company/${entityId}`);
+    } else if (entityType === 'CPSK' && entityId) {
+      // Open CPSK detail modal
+      setSelectedCPSKId(entityId);
+      setIsCPSKModalOpen(true);
+    }
+  };
+
   return (
     <div className="ml-64 flex-1">
       <div className="p-8">
@@ -143,7 +165,8 @@ export function ReportPage() {
                       </td>
                       <td className="px-3 py-4 align-top">
                         <span className="rounded-full bg-zinc-700 px-3 py-1 text-xs font-medium text-white">
-                          {r.type ? r.type.charAt(0).toUpperCase() + r.type.slice(1) : ''}
+                          {r.reportedEntityType ||
+                            (r.type ? r.type.charAt(0).toUpperCase() + r.type.slice(1) : '')}
                         </span>
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">{r.reason}</td>
@@ -160,18 +183,26 @@ export function ReportPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 align-top">
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openModal(r)}
+                              className="bg-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
+                            >
+                              Review
+                            </button>
+                            <button
+                              onClick={() => openDeleteModal(r)}
+                              className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-gray-200 hover:bg-red-700"
+                            >
+                              Reject
+                            </button>
+                          </div>
                           <button
-                            onClick={() => openModal(r)}
-                            className="bg-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
+                            onClick={() => handleViewEntity(r)}
+                            className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                           >
-                            Review
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(r)}
-                            className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-gray-200 hover:bg-red-700"
-                          >
-                            Reject
+                            View Entity
                           </button>
                         </div>
                       </td>
@@ -186,6 +217,7 @@ export function ReportPage() {
           onClose={closeModal}
           report={selected}
           onReview={handleReview}
+          onViewEntity={selected ? () => handleViewEntity(selected) : undefined}
         />
         <DeleteModal
           isOpen={isDeleteOpen}
@@ -194,6 +226,11 @@ export function ReportPage() {
           message="Are you sure you want to reject this report?"
           description="Rejecting a report will mark it as resolved."
           onConfirm={handleConfirmReject}
+        />
+        <CPSKDetailModal
+          isOpen={isCPSKModalOpen}
+          onClose={() => setIsCPSKModalOpen(false)}
+          cpskId={selectedCPSKId}
         />
       </div>
     </div>
