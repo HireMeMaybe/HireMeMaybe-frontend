@@ -28,17 +28,19 @@ export function useVisitorReports(visitorId: number | string) {
           // Get reported entity info
           const reportedId = (report as any).reported || report.reported_id;
 
-          // Determine the type of reported entity
-          let reportedEntityType: 'Job' | 'Company' | 'CPSK' = 'Job';
-          if (report.type === 'user') {
-            // Check if the reported user is CPSK or Company
-            try {
-              const userInfo = await AdminService.getUserInfo(reportedId);
-              reportedEntityType = userInfo.role === 'CPSK' ? 'CPSK' : 'Company';
-            } catch {
-              // Default to Company if we can't determine
-              reportedEntityType = 'Company';
-            }
+          // Fetch reported entity name and type
+          let reportedEntityName: string;
+          let reportedEntityType: 'Job' | 'Company' | 'CPSK';
+
+          try {
+            const entityInfo = await AdminService.getReportedEntityName(reportedId, report.type);
+            reportedEntityName = entityInfo.name;
+            reportedEntityType = entityInfo.entityType;
+          } catch (error) {
+            console.error(`Failed to fetch entity info for ${reportedId}:`, error);
+            // Fallback to ID display
+            reportedEntityName = `${report.type === 'post' ? 'Job Post' : 'User'} #${reportedId}`;
+            reportedEntityType = report.type === 'post' ? 'Job' : 'Company';
           }
 
           // Generate unique ID by combining type prefix with original ID
@@ -49,8 +51,8 @@ export function useVisitorReports(visitorId: number | string) {
 
           return {
             id: uniqueId,
-            reportedEntity: `${report.type === 'post' ? 'Job Post' : reportedEntityType} #${reportedId}`,
-            reportedEntityType: report.type === 'post' ? 'Job' : reportedEntityType,
+            reportedEntity: reportedEntityName,
+            reportedEntityType: reportedEntityType,
             reason: report.reason,
             submitted: new Date(report.submitted).toLocaleDateString('en-US', {
               year: 'numeric',

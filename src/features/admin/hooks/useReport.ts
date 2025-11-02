@@ -15,27 +15,42 @@ export function useReport() {
     try {
       const data = await AdminService.getReports(status);
 
-      // Fetch reporter names and roles for each report
+      // Fetch reporter names, roles, and reported entity names for each report
       const reportsWithNames = await Promise.all(
         data.map(async (report) => {
+          let updatedReport = { ...report };
+
+          // Fetch reporter info
           if (report.reporter_id && !report.reporter) {
             try {
-              // Fetch both name and role from the API
               const userInfo = await AdminService.getUserInfo(report.reporter_id);
-              return {
-                ...report,
-                reporter: userInfo.name,
-                reporterRole: userInfo.role, // Set the actual user role (cpsk/visitor/company)
-              };
+              updatedReport.reporter = userInfo.name;
+              updatedReport.reporterRole = userInfo.role;
             } catch (err) {
               console.error(`Failed to fetch info for reporter ${report.reporter_id}:`, err);
-              return {
-                ...report,
-                reporter: report.reporter_id, // Fallback to ID if fetching fails
-              };
+              updatedReport.reporter = report.reporter_id;
             }
           }
-          return report;
+
+          // Fetch reported entity info
+          if (report.reported_id && !report.reportedEntity) {
+            try {
+              const entityInfo = await AdminService.getReportedEntityName(
+                report.reported_id,
+                report.type
+              );
+              updatedReport.reportedEntity = entityInfo.name;
+              updatedReport.reportedEntityType = entityInfo.entityType;
+            } catch (err) {
+              console.error(`Failed to fetch info for reported entity ${report.reported_id}:`, err);
+              updatedReport.reportedEntity =
+                report.type === 'post'
+                  ? `Job Post #${report.reported_id}`
+                  : `User #${report.reported_id}`;
+            }
+          }
+
+          return updatedReport;
         })
       );
 

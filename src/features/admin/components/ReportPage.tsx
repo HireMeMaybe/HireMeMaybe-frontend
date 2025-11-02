@@ -97,6 +97,7 @@ export function ReportPage() {
               <thead className="bg-zinc-800 text-gray-400">
                 <tr>
                   <th className="px-6 py-3">Reporter</th>
+                  <th className="px-6 py-3">Reported Entity</th>
                   <th className="px-3 py-3">Type</th>
                   <th className="px-6 py-3">Reason</th>
                   <th className="px-6 py-3">Submitted</th>
@@ -107,14 +108,14 @@ export function ReportPage() {
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
                       Loading reports...
                     </td>
                   </tr>
                 )}
                 {!isLoading && reports.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
                       No reports found
                     </td>
                   </tr>
@@ -129,6 +130,15 @@ export function ReportPage() {
                         </div>
                         {r.reporterRole && (
                           <div className="mt-1 text-xs text-gray-400">{r.reporterRole}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 align-top">
+                        <div className="font-medium text-white">
+                          {r.reportedEntity ||
+                            `${r.type === 'post' ? 'Job Post' : 'User'} #${r.reported_id}`}
+                        </div>
+                        {r.reportedEntityType && (
+                          <div className="mt-1 text-xs text-gray-400">{r.reportedEntityType}</div>
                         )}
                       </td>
                       <td className="px-3 py-4 align-top">

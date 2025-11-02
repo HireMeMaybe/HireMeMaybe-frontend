@@ -18,8 +18,8 @@ export interface Report {
   reporter?: string;
   reporterRole?: string;
   reported_id: string;
-  reportedEntityId?: string;
-  reportedEntityType?: 'job' | 'company' | 'user' | 'post';
+  reportedEntity?: string; // Name of the reported entity (job title, company name, CPSK name)
+  reportedEntityType?: 'Job' | 'Company' | 'CPSK';
   type: ReportType;
   reason: string;
   detail?: string;
@@ -175,7 +175,7 @@ export class AdminService {
           reporter_id: report.reporter_id || report.reporter || 'Unknown',
           reporter: undefined, // Clear this so useReport hook will fetch the actual name
           reporterRole: report.reporterRole || (report as any).reporter_role || undefined, // Don't use report.type as it's the report type, not user role
-          reportedEntityId: report.reportedEntityId || report.reported_id,
+          reported_id: (report as any).reported || report.reported_id,
           submitted: report.submitted || report.created_at || new Date().toISOString(),
         };
       });
@@ -204,7 +204,7 @@ export class AdminService {
       return {
         ...report,
         reporter: report.reporter || report.reporter_id,
-        reportedEntityId: report.reportedEntityId || report.reported_id,
+        reported_id: (report as any).reported || report.reported_id,
         submitted: report.submitted || report.created_at || new Date().toISOString(),
       };
     } catch (error) {
@@ -855,6 +855,43 @@ export class AdminService {
     } catch (error) {
       console.error('AdminService.getUserName: Failed to fetch user name', error);
       return userId; // Return ID if fetching fails
+    }
+  }
+
+  /**
+   * Get reported entity name by ID and type
+   * @param entityId - ID of the reported entity
+   * @param type - Type of entity ('post' or 'user')
+   * @returns Entity name (job title, company name, or CPSK name)
+   */
+  static async getReportedEntityName(
+    entityId: string,
+    type: 'post' | 'user'
+  ): Promise<{ name: string; entityType: 'Job' | 'Company' | 'CPSK' }> {
+    try {
+      if (type === 'post') {
+        // Fetch job post title
+        try {
+          const jobPost = await this.getJobPostById(Number.parseInt(entityId, 10));
+          return { name: jobPost.title, entityType: 'Job' };
+        } catch (error) {
+          console.error(`Failed to fetch job post ${entityId}:`, error);
+          return { name: `Job Post #${entityId}`, entityType: 'Job' };
+        }
+      } else {
+        // type === 'user', determine if CPSK or Company
+        const userInfo = await this.getUserInfo(entityId);
+        return {
+          name: userInfo.name,
+          entityType: userInfo.role === 'CPSK' ? 'CPSK' : 'Company',
+        };
+      }
+    } catch (error) {
+      console.error('AdminService.getReportedEntityName: Failed to fetch entity name', error);
+      return {
+        name: type === 'post' ? `Job Post #${entityId}` : `User #${entityId}`,
+        entityType: type === 'post' ? 'Job' : 'Company',
+      };
     }
   }
 }
