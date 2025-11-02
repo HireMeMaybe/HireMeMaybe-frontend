@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
-import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
+import { CompanyService } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
 import Loading from '@/app/loading';
 
@@ -22,7 +22,6 @@ export default function JobPostDetailPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [jobPost, setJobPost] = useState<JobPostDetail | null>(null);
-  const [company, setCompany] = useState<CompanyProfileResponse | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,8 +45,19 @@ export default function JobPostDetailPage() {
     }
   }, [status, session, router]);
 
-  // Fetch job post data and company data
+  const setSafeLogoUrl = (newUrl: string | null) => {
+    setLogoUrl((previous) => {
+      if (previous && previous !== newUrl) {
+        URL.revokeObjectURL(previous);
+      }
+      return newUrl;
+    });
+  };
+
+  // Fetch job post data directly (company info comes embedded in response)
   useEffect(() => {
+    let isActive = true;
+
     const fetchJobPostAndCompany = async () => {
       try {
         setLoading(true);
@@ -55,36 +65,49 @@ export default function JobPostDetailPage() {
 
         // Fetch job post data
         const jobPostData = await JobService.getJobPostById(jobPostId);
+        if (!isActive) return;
+
         setJobPost(jobPostData);
 
-        // Fetch company data using company_id from job post
-        if (jobPostData.company_id) {
-          const companyData = await CompanyService.getCompany(jobPostData.company_id);
-          setCompany(companyData);
-
-          // Fetch company logo if logo_id exists
-          if (companyData.logo_id) {
-            try {
-              const logoBlob = await CompanyService.fetchLogo(companyData.logo_id);
-              const url = URL.createObjectURL(logoBlob);
-              setLogoUrl(url);
-            } catch (logoError) {
-              console.error('Error fetching company logo:', logoError);
-              // Continue without logo
+        // Fetch company logo if logo_id exists on embedded company data
+        const logoId = jobPostData.company_user?.logo_id;
+        if (logoId) {
+          try {
+            const logoBlob = await CompanyService.fetchLogo(logoId);
+            const url = URL.createObjectURL(logoBlob);
+            if (!isActive) {
+              URL.revokeObjectURL(url);
+              return;
             }
+            setSafeLogoUrl(url);
+          } catch (logoError) {
+            console.error('Error fetching company logo:', logoError);
+            if (!isActive) return;
+            setSafeLogoUrl(null);
           }
+        } else {
+          setSafeLogoUrl(null);
         }
       } catch (err) {
+        if (!isActive) return;
         console.error('Error fetching job post:', err);
         setError(err instanceof Error ? err.message : 'Failed to load job post');
+        setJobPost(null);
+        setSafeLogoUrl(null);
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     if (jobPostId) {
       fetchJobPostAndCompany();
     }
+
+    return () => {
+      isActive = false;
+    };
   }, [jobPostId]);
 
   // Cleanup logo URL on unmount
@@ -120,6 +143,13 @@ export default function JobPostDetailPage() {
     throw new Error('Job post not found');
   }
 
+  const companyUser = jobPost.company_user;
+  const companyName = companyUser?.name ?? 'Company';
+  const companyIndustry = companyUser?.industry ?? null;
+  const metadataParts = [companyIndustry, jobPost.location].filter(Boolean);
+  const companyMetadata = metadataParts.join(' • ');
+  const companyInitials = companyName.slice(0, 2).toUpperCase();
+
   return (
     <div className="bg-background text-foreground min-h-screen">
       {/* Header */}
@@ -143,7 +173,7 @@ export default function JobPostDetailPage() {
                 {logoUrl ? (
                   <Image
                     src={logoUrl}
-                    alt={company?.name || 'Company logo'}
+                    alt={companyName}
                     width={64}
                     height={64}
                     unoptimized
@@ -151,12 +181,14 @@ export default function JobPostDetailPage() {
                   />
                 ) : (
                   <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
-                    {company?.name?.substring(0, 2).toUpperCase() || 'CO'}
+                    {companyInitials}
                   </div>
                 )}
                 <div>
-                  <p className="text-lg font-semibold text-white">{company?.name || 'Company'}</p>
-                  <p className="text-sm text-gray-400">{jobPost.location}</p>
+                  <p className="text-lg font-semibold text-white">{companyName}</p>
+                  <p className="text-sm text-gray-400">
+                    {companyMetadata || jobPost.location || 'Location not specified'}
+                  </p>
                 </div>
               </div>
             </div>
