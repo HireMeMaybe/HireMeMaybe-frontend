@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Image from 'next/image';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
 import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
@@ -21,6 +22,7 @@ export default function JobPostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
   const [jobPost, setJobPost] = useState<JobPostDetail | null>(null);
   const [company, setCompany] = useState<CompanyProfileResponse | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -29,8 +31,11 @@ export default function JobPostDetailPage() {
 
   const jobPostId = params.id as string;
 
-  // Protect page: redirect unauthenticated and unregistered users
+  // Protect page: redirect unauthenticated and unregistered users (but allow admins)
   useEffect(() => {
+    // Allow admin users to access this page
+    if (isAdminAuthenticated) return;
+
     if (status === 'loading') return;
 
     // If user is not authenticated, send to sign-in
@@ -44,7 +49,7 @@ export default function JobPostDetailPage() {
     if (status === 'authenticated' && isRegistered === false) {
       router.push('/');
     }
-  }, [status, session, router]);
+  }, [status, session, router, isAdminAuthenticated]);
 
   // Fetch job post data and company data
   useEffect(() => {
@@ -205,9 +210,9 @@ export default function JobPostDetailPage() {
               <div className="mb-6">
                 <h3 className="mb-3 text-base font-semibold text-white">Tags</h3>
                 <div className="flex flex-wrap gap-2">
-                  {jobPost.tags.map((tag, index) => (
+                  {jobPost.tags.map((tag) => (
                     <span
-                      key={index}
+                      key={tag}
                       className="rounded-full border border-gray-600 bg-gray-700 px-3 py-1 text-sm text-gray-300"
                     >
                       {tag}
@@ -233,8 +238,8 @@ export default function JobPostDetailPage() {
               </p>
             </div>
 
-            {/* Action Button - Only show for non-Company users */}
-            {session?.role !== 'Company' && (
+            {/* Action Button - Only show for non-Company users and non-Admin users */}
+            {session?.role !== 'Company' && !isAdminAuthenticated && (
               <div className="mt-8">
                 <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
                   Apply Now
