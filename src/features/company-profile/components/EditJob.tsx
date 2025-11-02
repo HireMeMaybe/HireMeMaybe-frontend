@@ -458,7 +458,7 @@ export default function EditJobModal({ isOpen, onClose, jobId, onSuccess }: Edit
                   {...register('expiringTime')}
                   onChange={handleExpiringTimeChange}
                   min={minDateTime}
-                  className="bg-darker-gray mt-2 border-gray-600 text-white placeholder-gray-400"
+                  className="bg-darker-gray relative mt-2 border-gray-600 pr-10 text-white placeholder-gray-400"
                 />
                 {errors.expiringTime && (
                   <p className="mt-2 text-sm text-red-500">{errors.expiringTime.message}</p>
@@ -475,14 +475,14 @@ export default function EditJobModal({ isOpen, onClose, jobId, onSuccess }: Edit
                 type="button"
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="bg-gray-600 px-6 text-white hover:bg-gray-700"
+                className="cursor-pointer bg-gray-600 px-6 text-white hover:bg-gray-700"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-primary-green px-6 text-white hover:bg-green-700"
+                className="bg-primary-green cursor-pointer px-6 text-white hover:bg-green-700"
               >
                 {isSubmitting ? 'Updating...' : 'Update Job Post'}
               </Button>
