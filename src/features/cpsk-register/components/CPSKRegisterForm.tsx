@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import type { ProfileData } from '@/types/cpsk';
 import {
@@ -34,6 +35,7 @@ export default function CPSKRegisterForm({
 }): React.JSX.Element {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const router = useRouter();
+  const { update: updateSession } = useSession();
 
   // Resume preview state
   const [isResumePreviewOpen, setIsResumePreviewOpen] = useState(false);
@@ -81,7 +83,7 @@ export default function CPSKRegisterForm({
   const watchedResume = watch('resume');
 
   // Extracted hooks
-  const { isPending, status, submitForm } = useFormSubmission({ session });
+  const { isPending, status, submitForm } = useFormSubmission({ session, updateSession });
 
   const { skillInput, skills, setSkillInput, setSkills, addSkill, removeSkill, onSkillKeyDown } =
     useSoftSkills({
@@ -164,19 +166,21 @@ export default function CPSKRegisterForm({
 
   // Handle success modal and navigation when status changes
   useEffect(() => {
-    if (status?.ok) {
-      setIsSuccessOpen(true);
+    if (!status?.ok) return;
 
-      // Reset form and clear skills after success
-      reset();
-      setSkills([]);
+    setIsSuccessOpen(true);
 
-      // Redirect to profile page after successful submission
-      // Reload the window to force NextAuth to fetch updated session data from backend
-      setTimeout(() => {
-        window.location.href = '/profile'; // Use window.location instead of router.push to force session refresh
-      }, 2000);
-    }
+    // Reset form and clear skills after success
+    reset();
+    setSkills([]);
+
+    const timer = window.setTimeout(() => {
+      router.push('/profile');
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [status, reset, setSkills, router]);
 
   const handleConfirm = () => {
