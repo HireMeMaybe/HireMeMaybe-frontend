@@ -8,7 +8,7 @@ export const FRONTEND_TO_BACKEND_SIZE: Record<string, string> = {
   '11-50 employees': 'S',
   '51-200 employees': 'M',
   '201-500 employees': 'L',
-  '501-1000 employees': 'XL',
+  '501+ employees': 'XL',
 };
 
 // Human-friendly display version for backend enum values (if needed)
@@ -17,7 +17,7 @@ export const BACKEND_TO_DISPLAY_SIZE: Record<string, string> = {
   S: '11-50 employees',
   M: '51-200 employees',
   L: '201-500 employees',
-  XL: '501-1000 employees',
+  XL: '501+ employees',
 };
 
 export function mapFrontendToBackend(size?: string) {

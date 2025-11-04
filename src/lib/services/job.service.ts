@@ -19,29 +19,114 @@ interface JobPost {
   updatedAt: string;
 }
 
-interface JobSearchParams {
-  query?: string;
-  location?: string;
-  type?: string;
-  page?: number;
-  limit?: number;
+export interface JobPostApplication {
+  id: number;
+  post_id: number;
+  cpsk_id: string;
+  answer_id: number;
+  status: string;
+  applied_at: string;
+  resume_id: number;
+  answer: {
+    id: number;
+    expected_salary: string;
+    programming_languages: string[];
+    right_to_work: string;
+    year_of_experience: number;
+  };
 }
 
-interface JobSearchResponse {
-  jobs: JobPost[];
-  total: number;
-  page: number;
-  totalPages: number;
+export interface CompanyUserAccount {
+  ID?: number;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+  DeletedAt?: { Time?: string; Valid?: boolean } | null;
+  tel?: string;
+  email?: string;
+  id?: string;
+  username?: string;
+  role?: string;
+  punishment?: unknown;
+  profile_picture?: string;
 }
+
+export interface CompanyUserDetail {
+  id?: string;
+  verified_status?: string;
+  name?: string;
+  overview?: string;
+  industry?: string;
+  size?: string;
+  logo_id?: number | null;
+  banner_id?: number | null;
+  job_post?: unknown;
+  User?: CompanyUserAccount;
+  user?: CompanyUserAccount;
+}
+
+export interface JobPostDetail {
+  id: number;
+  company_id: string;
+  title: string;
+  desc: string;
+  exp_lvl: string;
+  location: string;
+  type: string;
+  req: string;
+  salary: string;
+  tags: string[];
+  post_time: string;
+  expiring: string;
+  applications: JobPostApplication[] | null;
+  company_user?: CompanyUserDetail;
+}
+
+interface JobSearchParams {
+  search?: string;
+  query?: string;
+  type?: string;
+  tag?: string;
+  salary?: string;
+  exp?: string;
+  company?: string;
+  industry?: string;
+  location?: string;
+  desc?: boolean;
+}
+
+export interface JobPostSummary {
+  id?: number;
+  company_id?: string;
+  title?: string;
+  desc?: string;
+  exp_lvl?: string;
+  location?: string;
+  type?: string;
+  req?: string | string[];
+  salary?: string;
+  tags?: string[];
+  post_time?: string;
+  expiring?: string;
+  company?: {
+    id?: string;
+    name?: string;
+    industry?: string;
+    location?: string;
+  };
+}
+
+type JobSearchResponse = JobPostSummary[];
 
 interface JobPostCreateData {
   title: string;
-  description: string;
+  desc: string;
+  exp_lvl: string;
   location: string;
   type: string;
+  req: string;
+  tags: string[];
+  expiring?: string;
   salary?: string;
-  requirements?: string[];
-  benefits?: string[];
 }
 
 export class JobService {
@@ -50,33 +135,55 @@ export class JobService {
    */
   static async searchJobs(params: JobSearchParams = {}): Promise<JobSearchResponse> {
     try {
-      const queryString = new URLSearchParams(
-        Object.entries(params)
-          .filter(([, value]) => value !== undefined)
-          .map(([key, value]) => [key, String(value)])
-      ).toString();
+      const {
+        search,
+        query: searchAlias,
+        type,
+        tag,
+        salary,
+        exp,
+        company,
+        industry,
+        location,
+        desc,
+      } = params;
 
-      const endpoint = queryString ? `/jobs?${queryString}` : '/jobs';
-      return await apiClient.get<JobSearchResponse>(endpoint, { requireAuth: false });
+      const queryParams = new URLSearchParams();
+      const searchValue = search ?? searchAlias;
+
+      if (searchValue) queryParams.set('search', searchValue);
+      if (type) queryParams.set('type', type);
+      if (tag) queryParams.set('tag', tag);
+      if (salary) queryParams.set('salary', salary);
+      if (exp) queryParams.set('exp', exp);
+      if (company) queryParams.set('company', company);
+      if (industry) queryParams.set('industry', industry);
+      if (location) queryParams.set('location', location);
+      if (desc !== undefined) queryParams.set('desc', desc ? 'true' : 'false');
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString ? `/jobpost?${queryString}` : '/jobpost';
+
+      return await apiClient.get<JobSearchResponse>(endpoint, { requireAuth: true });
     } catch (error) {
       if (error instanceof ApiError) {
-        throw new Error(`Failed to search jobs: ${error.message}`);
+        throw new Error(`Failed to search job posts: ${error.message}`);
       }
-      throw new Error('Failed to search jobs');
+      throw new Error('Failed to search job posts');
     }
   }
 
   /**
-   * Get job details by ID
+   * Get job post details by ID with applications (requires authentication)
    */
-  static async getJobById(jobId: string): Promise<JobPost> {
+  static async getJobPostById(jobPostId: string): Promise<JobPostDetail> {
     try {
-      return await apiClient.get<JobPost>(`/jobs/${jobId}`, { requireAuth: false });
+      return await apiClient.get<JobPostDetail>(`/jobpost/${jobPostId}`, { requireAuth: true });
     } catch (error) {
       if (error instanceof ApiError) {
-        throw new Error(`Failed to fetch job details: ${error.message}`);
+        throw new Error(`Failed to fetch job post details: ${error.message}`);
       }
-      throw new Error('Failed to fetch job details');
+      throw new Error('Failed to fetch job post details');
     }
   }
 
@@ -85,7 +192,7 @@ export class JobService {
    */
   static async createJobPost(data: JobPostCreateData): Promise<JobPost> {
     try {
-      return await apiClient.post<JobPost>('/jobs', data);
+      return await apiClient.post<JobPost>('/jobpost', data);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to create job post: ${error.message}`);
@@ -95,11 +202,11 @@ export class JobService {
   }
 
   /**
-   * Update a job post
+   * Update a job post (PATCH)
    */
   static async updateJobPost(jobId: string, data: Partial<JobPostCreateData>): Promise<JobPost> {
     try {
-      return await apiClient.put<JobPost>(`/jobs/${jobId}`, data);
+      return await apiClient.patch<JobPost>(`/jobpost/${jobId}`, data);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to update job post: ${error.message}`);
@@ -113,50 +220,12 @@ export class JobService {
    */
   static async deleteJobPost(jobId: string): Promise<{ message: string }> {
     try {
-      return await apiClient.delete(`/jobs/${jobId}`);
+      return await apiClient.delete(`/jobpost/${jobId}`);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to delete job post: ${error.message}`);
       }
       throw new Error('Failed to delete job post');
-    }
-  }
-
-  /**
-   * Get applications for a job post (company only)
-   */
-  static async getJobApplications(jobId: string): Promise<
-    Array<{
-      id: string;
-      applicantName: string;
-      email: string;
-      status: string;
-      submittedAt: string;
-      resumeUrl?: string;
-    }>
-  > {
-    try {
-      return await apiClient.get(`/jobs/${jobId}/applications`);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error(`Failed to fetch applications: ${error.message}`);
-      }
-      throw new Error('Failed to fetch applications');
-    }
-  }
-
-  /**
-   * Get company's job posts
-   */
-  static async getCompanyJobs(companyId?: string): Promise<JobPost[]> {
-    try {
-      const endpoint = companyId ? `/company/${companyId}/jobs` : '/jobs/my-posts';
-      return await apiClient.get<JobPost[]>(endpoint);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error(`Failed to fetch company jobs: ${error.message}`);
-      }
-      throw new Error('Failed to fetch company jobs');
     }
   }
 }

@@ -95,10 +95,13 @@ export const authOptions: AuthOptions = {
       // On initial sign-in, store backend data
       if (user && typeof user === 'object') {
         const u = user as unknown as Record<string, unknown>;
+        const backendUser = u['backendUser'] as BackendUser | undefined;
+
         token.accessToken = account?.access_token;
         token.backendToken = (u['backendToken'] as string | undefined) ?? undefined;
-        token.backendUser = (u['backendUser'] as BackendUser | undefined) ?? undefined;
+        token.backendUser = backendUser ?? undefined;
         token.isRegistered = (u['isRegistered'] as boolean | undefined) ?? undefined;
+        token.role = backendUser?.role ?? undefined;
       }
 
       // Handle session updates (when updateSession is called)
@@ -106,14 +109,23 @@ export const authOptions: AuthOptions = {
         const updateData = updatedSession as Record<string, unknown>;
         // Merge updated backendUser data
         if (updateData['backendUser']) {
+          const updatedBackendUser = updateData['backendUser'] as BackendUser;
           token.backendUser = {
             ...(token.backendUser as BackendUser | undefined),
-            ...(updateData['backendUser'] as BackendUser),
+            ...updatedBackendUser,
           };
+          // Update role if present in backendUser
+          if (updatedBackendUser.role) {
+            token.role = updatedBackendUser.role;
+          }
         }
         // Update isRegistered flag if explicitly set
         if (typeof updateData['isRegistered'] === 'boolean') {
           token.isRegistered = updateData['isRegistered'];
+        }
+        // Update role if explicitly set
+        if (updateData['role']) {
+          token.role = updateData['role'] as 'Company' | 'CPSK' | 'Visitor';
         }
       }
 
@@ -127,6 +139,10 @@ export const authOptions: AuthOptions = {
       s['accessToken'] = (t['accessToken'] as string | undefined) ?? undefined;
       s['backendToken'] = (t['backendToken'] as string | undefined) ?? undefined;
       s['backendUser'] = backendUser ?? undefined;
+
+      // Set role at top level from token
+      s['role'] =
+        (t['role'] as 'Company' | 'CPSK' | 'Visitor' | undefined) ?? backendUser?.role ?? undefined;
 
       // Use explicit isRegistered from token if set, otherwise calculate from user data
       const explicitIsRegistered = t['isRegistered'] as boolean | undefined;

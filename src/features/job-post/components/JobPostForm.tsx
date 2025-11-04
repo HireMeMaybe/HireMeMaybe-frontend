@@ -17,16 +17,44 @@ import { Card } from '@/components/ui/card';
 import { refinedJobPostSchema } from '@/lib/validations/job-post';
 import type { JobPostFormData } from '@/lib/validations/job-post';
 import DefaultApplicationFormQuestions from '@/features/job-post/components/DefaultApplicationFormQuestions';
-import { useState, KeyboardEvent } from 'react';
+import { useState, KeyboardEvent, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { JobService } from '@/lib/services/job.service';
+import { useRouter } from 'next/navigation';
 
-const HIRING_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
+const JOB_TYPES = ['Onsite', 'Hybrid', 'Remote'];
 
 const EXPERIENCE_LEVELS = ['Entry Level', 'Junior', 'Mid-Level', 'Senior', 'Lead', 'Executive'];
 
+const SALARY_RANGES = [
+  'Less than 15,000',
+  '15,000 - 30,000',
+  '30,000 - 50,000',
+  '50,000 - 80,000',
+  '80,000 - 120,000',
+  'More than 120,000',
+];
+
 export default function JobPostForm() {
+  const router = useRouter();
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState('');
+  const [minDateTime, setMinDateTime] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // Update minimum date/time periodically to prevent selecting past times
+  useEffect(() => {
+    const updateMinDateTime = () => {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      setMinDateTime(now.toISOString().slice(0, 16));
+    };
+
+    updateMinDateTime(); // Set initial value
+    const interval = setInterval(updateMinDateTime, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   const {
     register,
@@ -46,7 +74,6 @@ export default function JobPostForm() {
       salary: '',
       experienceLevel: '',
       tags: '',
-      postTime: '',
       expiringTime: '',
       includeDefaultForm: false,
       includeCustomForm: false,
@@ -56,6 +83,23 @@ export default function JobPostForm() {
 
   const includeDefaultForm = watch('includeDefaultForm');
   const includeCustomForm = watch('includeCustomForm');
+
+  const handleExpiringTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedValue = e.target.value;
+    if (selectedValue) {
+      const selectedDate = new Date(selectedValue);
+      const now = new Date();
+
+      if (selectedDate <= now) {
+        // Clear the invalid value
+        setValue('expiringTime', '');
+        // You could also show an alert or toast here
+        alert('Please select a future date and time');
+        return;
+      }
+    }
+    setValue('expiringTime', selectedValue);
+  };
 
   const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && currentTag.trim()) {
@@ -76,14 +120,57 @@ export default function JobPostForm() {
     setValue('tags', updatedTags.join(', '));
   };
 
-  const onSubmit = (data: JobPostFormData) => {
-    console.log('Form submitted:', data);
-    // Handle form submission
+  const onSubmit = async (data: JobPostFormData) => {
+    try {
+      setError(null);
+
+      // Convert expiring time to ISO 8601 format with timezone if provided
+      let expiringISO: string | undefined;
+      if (data.expiringTime) {
+        const expiringDate = new Date(data.expiringTime);
+        expiringISO = expiringDate.toISOString(); // Converts to "2006-01-02T15:04:05.000Z" format
+      }
+
+      // Map form data to API format
+      const jobPostData = {
+        title: data.openingPosition,
+        desc: data.description,
+        exp_lvl: data.experienceLevel,
+        location: data.workLocation,
+        type: data.hiringType,
+        req: data.requirements,
+        tags: data.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+        ...(expiringISO && { expiring: expiringISO }),
+        ...(data.salary && { salary: data.salary }),
+      };
+
+      // Call the API
+      const result = await JobService.createJobPost(jobPostData);
+
+      // Success - redirect or show success message
+      console.log('Job post created successfully:', result);
+
+      // Redirect to job details page or company dashboard
+      router.push(`/job-post/${result.id}`);
+    } catch (err) {
+      console.error('Error creating job post:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create job post');
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <h1 className="mb-8 text-3xl font-bold text-white">Job Posting</h1>
+
+      {/* Error message */}
+      {error && (
+        <div className="rounded-lg border border-red-500 bg-red-900/20 p-4">
+          <p className="text-red-500">{error}</p>
+        </div>
+      )}
 
       {/* Job Details Card */}
       <Card className="bg-very-dark-gray border-background p-9">
@@ -102,7 +189,7 @@ export default function JobPostForm() {
               placeholder="e.g. Senior Software Engineer"
             />
             {errors.openingPosition && (
-              <p className="mt-2 text-sm text-red-reject">{errors.openingPosition.message}</p>
+              <p className="text-red-reject mt-2 text-sm">{errors.openingPosition.message}</p>
             )}
           </div>
 
@@ -118,7 +205,7 @@ export default function JobPostForm() {
               placeholder="Provide a detailed description of the role, responsibilities, and what you're looking for..."
             />
             {errors.description && (
-              <p className="mt-2 text-sm text-red-reject">{errors.description.message}</p>
+              <p className="text-red-reject mt-2 text-sm">{errors.description.message}</p>
             )}
           </div>
 
@@ -134,7 +221,7 @@ export default function JobPostForm() {
               placeholder="List the required qualifications, skills, experience, and education..."
             />
             {errors.requirements && (
-              <p className="mt-2 text-sm text-red-reject">{errors.requirements.message}</p>
+              <p className="text-red-reject mt-2 text-sm">{errors.requirements.message}</p>
             )}
           </div>
 
@@ -150,14 +237,14 @@ export default function JobPostForm() {
               placeholder="e.g. Bangkok, Thailand"
             />
             {errors.workLocation && (
-              <p className="mt-2 text-sm text-red-reject">{errors.workLocation.message}</p>
+              <p className="text-red-reject mt-2 text-sm">{errors.workLocation.message}</p>
             )}
           </div>
 
-          {/* Hiring Type */}
+          {/* Job Type */}
           <div>
             <Label htmlFor="hiringType" className="text-white">
-              Hiring Type <span className="text-red-reject">*</span>
+              Job Type <span className="text-red-reject">*</span>
             </Label>
             <Controller
               name="hiringType"
@@ -165,10 +252,10 @@ export default function JobPostForm() {
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger className="bg-darker-gray mt-4 border-gray-600 text-white">
-                    <SelectValue placeholder="Select Hiring Type" />
+                    <SelectValue placeholder="Select Job Type" />
                   </SelectTrigger>
                   <SelectContent className="bg-darker-gray border-gray-600">
-                    {HIRING_TYPES.map((type) => (
+                    {JOB_TYPES.map((type) => (
                       <SelectItem key={type} value={type} className="text-white hover:bg-gray-600">
                         {type}
                       </SelectItem>
@@ -178,7 +265,7 @@ export default function JobPostForm() {
               )}
             />
             {errors.hiringType && (
-              <p className="mt-2 text-sm text-red-reject">{errors.hiringType.message}</p>
+              <p className="text-red-reject mt-2 text-sm">{errors.hiringType.message}</p>
             )}
           </div>
 
@@ -187,13 +274,31 @@ export default function JobPostForm() {
             <Label htmlFor="salary" className="text-white">
               Salary (Optional)
             </Label>
-            <Input
-              id="salary"
-              {...register('salary')}
-              className="bg-darker-gray mt-4 border-gray-600 text-white placeholder-gray-400"
-              placeholder="e.g. 50000"
+            <Controller
+              name="salary"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="bg-darker-gray mt-4 border-gray-600 text-white">
+                    <SelectValue placeholder="Select Salary Range" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-darker-gray border-gray-600">
+                    {SALARY_RANGES.map((range) => (
+                      <SelectItem
+                        key={range}
+                        value={range}
+                        className="text-white hover:bg-gray-600"
+                      >
+                        {range}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             />
-            {errors.salary && <p className="mt-2 text-sm text-red-reject">{errors.salary.message}</p>}
+            {errors.salary && (
+              <p className="text-red-reject mt-2 text-sm">{errors.salary.message}</p>
+            )}
           </div>
 
           {/* Experience Level */}
@@ -224,7 +329,7 @@ export default function JobPostForm() {
               )}
             />
             {errors.experienceLevel && (
-              <p className="mt-2 text-sm text-red-reject">{errors.experienceLevel.message}</p>
+              <p className="text-red-reject mt-2 text-sm">{errors.experienceLevel.message}</p>
             )}
           </div>
 
@@ -268,7 +373,7 @@ export default function JobPostForm() {
               {/* Hidden input for form submission */}
               <input type="hidden" {...register('tags')} />
             </div>
-            {errors.tags && <p className="mt-2 text-sm text-red-reject">{errors.tags.message}</p>}
+            {errors.tags && <p className="text-red-reject mt-2 text-sm">{errors.tags.message}</p>}
           </div>
         </div>
       </Card>
@@ -277,24 +382,7 @@ export default function JobPostForm() {
       <Card className="bg-very-dark-gray border-background p-9">
         <h2 className="text-2xl font-semibold text-white">Job Timing</h2>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Post time */}
-          <div className="relative">
-            <Label htmlFor="postTime" className="text-white">
-              Post time
-            </Label>
-            <Input
-              id="postTime"
-              type="datetime-local"
-              {...register('postTime')}
-              className="bg-darker-gray mt-4 border-gray-600 text-white"
-              placeholder="16 Aug 2025 07:00 AM"
-            />
-            {errors.postTime && (
-              <p className="mt-2 text-sm text-red-reject">{errors.postTime.message}</p>
-            )}
-          </div>
-
+        <div className="grid grid-cols-1 gap-6">
           {/* Expiring Time */}
           <div className="relative">
             <Label htmlFor="expiringTime" className="text-white">
@@ -304,11 +392,13 @@ export default function JobPostForm() {
               id="expiringTime"
               type="datetime-local"
               {...register('expiringTime')}
+              onChange={handleExpiringTimeChange}
+              min={minDateTime}
               className="bg-darker-gray mt-4 border-gray-600 text-white"
               placeholder="dd/mm/yyyy HH:MM AM"
             />
             {errors.expiringTime && (
-              <p className="mt-2 text-sm text-red-reject">{errors.expiringTime.message}</p>
+              <p className="text-red-reject mt-2 text-sm">{errors.expiringTime.message}</p>
             )}
           </div>
         </div>
@@ -359,7 +449,7 @@ export default function JobPostForm() {
                   placeholder="Add link to your custom application form"
                 />
                 {errors.customFormLink && (
-                  <p className="mt-2 text-sm text-red-reject">{errors.customFormLink.message}</p>
+                  <p className="text-red-reject mt-2 text-sm">{errors.customFormLink.message}</p>
                 )}
               </div>
             )}

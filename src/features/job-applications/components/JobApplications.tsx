@@ -4,19 +4,33 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ApplicationCard from './ApplicationCard';
-import { useJobApplications } from '@/features/job-applications/hooks/useJobApplications';
-import { useCompanyProfile } from '@/features/company-profile/hooks/useCompanyProfile'; // Import useCompanyProfile
+import { JobService } from '@/lib/services/job.service';
 import type { JobApplicationsProps } from '@/types/application';
+import { useState, useEffect } from 'react';
+import type { JobPostDetail } from '@/lib/services/job.service';
 
 export default function JobApplications({ jobId, companyId }: Readonly<JobApplicationsProps>) {
   const router = useRouter();
-  const { applications, totalApplications, isLoading, error } = useJobApplications({ jobId });
+  const [jobPost, setJobPost] = useState<JobPostDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Use the useCompanyProfile hook to get jobOpenings (viewing own company, so isOwner = true)
-  const { jobOpenings } = useCompanyProfile(companyId, true);
+  useEffect(() => {
+    const fetchJobPost = async () => {
+      try {
+        setIsLoading(true);
+        const data = await JobService.getJobPostById(jobId.toString());
+        setJobPost(data);
+      } catch (err) {
+        console.error('Failed to fetch job post:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load job applications');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Get job data from jobOpenings
-  const jobData = jobOpenings.find((job) => job.id === jobId);
+    fetchJobPost();
+  }, [jobId]);
 
   const handleViewPost = () => {
     console.log('View job post:', jobId);
@@ -43,7 +57,7 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
     );
   }
 
-  if (error || !jobData) {
+  if (error || !jobPost) {
     return (
       <div className="bg-background flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -62,6 +76,9 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
     );
   }
 
+  const applications = jobPost.applications || [];
+  const totalApplications = applications.length;
+
   return (
     <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-6xl px-6 py-8">
@@ -78,7 +95,7 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
           </Button>
 
           {/* Page Title */}
-          <h1 className="mb-2 text-3xl font-bold text-white">{jobData.title} Applications</h1>
+          <h1 className="mb-2 text-3xl font-bold text-white">{jobPost.title} Applications</h1>
           <p className="text-gray-400">{totalApplications} applications received</p>
         </div>
 
@@ -88,7 +105,16 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
             applications.map((application) => (
               <ApplicationCard
                 key={application.id}
-                application={application}
+                application={{
+                  id: application.id,
+                  jobId: jobPost.id,
+                  candidateName: `Applicant ${application.cpsk_id}`, // Display CPSK ID as name for now
+                  university: 'Information not available',
+                  program: 'Information not available',
+                  skills: application.answer?.programming_languages || [],
+                  appliedDate: application.applied_at,
+                  profilePicture: undefined,
+                }}
                 onViewPost={handleViewPost}
                 onViewApplication={() => handleViewApplication(application.id)}
               />

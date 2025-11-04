@@ -1,8 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Users, Edit, Eye } from 'lucide-react';
-import Image from 'next/image';
+import { Users, Edit, Eye, Trash2, ExternalLink } from 'lucide-react';
 import type { JobOpening } from '@/types/company';
 
 interface JobCardProps {
@@ -11,6 +10,7 @@ interface JobCardProps {
   readonly onApply?: (jobId: number) => void;
   readonly onEdit?: (jobId: number) => void;
   readonly onViewApplications?: (jobId: number) => void;
+  readonly onDelete?: (jobId: number) => void;
 }
 
 export default function JobCard({
@@ -19,6 +19,7 @@ export default function JobCard({
   onApply,
   onEdit,
   onViewApplications,
+  onDelete,
 }: JobCardProps) {
   return (
     <div className="border-gray-cancel bg-very-dark-gray flex items-start justify-between rounded-xl border p-4">
@@ -36,7 +37,20 @@ export default function JobCard({
             </span>
           )}
         </div>
-        <h3 className="mb-1 text-lg font-semibold text-white">{job.title}</h3>
+        <h3 className="mb-1 flex items-center gap-2 text-lg font-semibold text-white">
+          <span>{job.title}</span>
+          {job.id ? (
+            <a
+              href={`/job-post/${job.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${job.title} in a new tab`}
+              className="text-zinc-400 hover:text-white"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          ) : null}
+        </h3>
         <p className="text-lighter-gray-text mb-2 text-sm">
           {job.location} | {job.type}
         </p>
@@ -80,6 +94,13 @@ export default function JobCard({
                 Edit
               </Button>
               <Button
+                onClick={() => onDelete?.(job.id)}
+                className="bg-red-reject flex cursor-pointer items-center gap-1 rounded-md px-4 py-2 text-sm text-white hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+              <Button
                 onClick={() => onViewApplications?.(job.id)}
                 className="flex cursor-pointer items-center gap-1 rounded-md bg-[#02BC77] px-4 py-2 text-sm text-white hover:bg-green-700"
               >
@@ -87,53 +108,28 @@ export default function JobCard({
                 View Applications
               </Button>
             </>
-          ) : (
+          ) : viewType === 'cpsk' ? (
             <Button
               onClick={() => onApply?.(job.id)}
               className="rounded-md bg-[#02BC77] px-6 py-2 text-sm text-white hover:bg-green-700"
             >
               Apply
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* Right Side - Job Image/Info */}
+      {/* Right Side - Job Info */}
       <div className="ml-6 flex-shrink-0">
-        <div className="relative h-40 w-60 overflow-hidden rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900">
-          {job.imageUrl ? (
-            <Image
-              src={job.imageUrl}
-              alt={job.title}
-              fill
-              className="object-cover"
-              sizes="240px"
-            />
-          ) : (
-            <div className="flex h-full flex-col justify-between p-4">
-              {/* Job Stats */}
-              <div className="space-y-2">
-                {job.postedDate && (
-                  <div className="text-xs text-zinc-400">
-                    Posted: {new Date(job.postedDate).toLocaleDateString()}
-                  </div>
-                )}
-                {job.expiring && (
-                  <div className="text-xs text-orange-400">
-                    Expires: {new Date(job.expiring).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-
-              {/* Description Preview */}
-              {job.description && (
-                <div className="mt-auto">
-                  <p className="line-clamp-3 text-xs text-zinc-400">
-                    {job.description.substring(0, 120)}
-                    {job.description.length > 120 && '...'}
-                  </p>
-                </div>
-              )}
+        <div className="space-y-2">
+          {job.postedDate && (
+            <div className="text-xs text-zinc-400">
+              Posted: {new Date(job.postedDate).toLocaleDateString()}
+            </div>
+          )}
+          {job.expiring && (
+            <div className="text-xs text-orange-400">
+              Expires: {new Date(job.expiring).toLocaleDateString()}
             </div>
           )}
         </div>

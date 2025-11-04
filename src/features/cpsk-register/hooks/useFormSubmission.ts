@@ -27,7 +27,10 @@ interface UseFormSubmissionReturn {
   submitForm: (data: FormData) => Promise<void>;
 }
 
-export function useFormSubmission({ session, updateSession }: UseFormSubmissionProps): UseFormSubmissionReturn {
+export function useFormSubmission({
+  session,
+  updateSession,
+}: UseFormSubmissionProps): UseFormSubmissionReturn {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<null | { ok: boolean; message: string }>(null);
   const router = useRouter();
@@ -45,7 +48,7 @@ export function useFormSubmission({ session, updateSession }: UseFormSubmissionP
         ? formData.soft_skill
         : formData.soft_skill
           ? [formData.soft_skill]
-          : existingBackendUser.soft_skill ?? [];
+          : (existingBackendUser.soft_skill ?? []);
 
     const telFromProfile = profile.User?.tel ?? existingBackendUser.User?.tel ?? formData.phone;
 
