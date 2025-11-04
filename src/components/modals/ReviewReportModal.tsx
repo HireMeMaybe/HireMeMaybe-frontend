@@ -101,7 +101,7 @@ export default function ReviewReportModal({
                 onClick={onViewEntity}
                 className="cursor-pointer rounded-md bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
               >
-                View Entity
+                View
               </Button>
             )}
           </div>
