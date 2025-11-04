@@ -3,34 +3,48 @@
 import React, { useState } from 'react';
 import { useJobPosts } from '@/features/admin';
 import type { JobPostItem } from '@/types/admin';
-import DeleteModal from '@/components/modals/DeleteModal';
+import { DeleteModal, SuccessModal, UnsuccessModal } from '@/components/modals';
 
 export function ManageJobPostsPage() {
-  const { jobPosts, isLoading, refetch } = useJobPosts();
+  const { jobPosts, isLoading, deleteJobPost } = useJobPosts();
   const [selectedPost, setSelectedPost] = useState<JobPostItem | null>(null);
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleView = (post: JobPostItem) => {
-    console.log('View post:', post);
-    window.open(`/jobs/${post.id}`, '_blank');
+    // Open job post detail page in new tab
+    window.open(`/job-post/${post.id}`, '_blank');
   };
 
   const handleDelete = (post: JobPostItem) => {
     setSelectedPost(post);
-    setDeleteModalOpen(true);
+    setIsDeleteModalOpen(true);
   };
 
   const confirmDelete = async () => {
     if (!selectedPost) return;
 
+    setIsDeleting(true);
     try {
-      console.log('Delete post:', selectedPost);
-      // Add your delete logic here (e.g., API call)
-      refetch();
+      const result = await deleteJobPost(selectedPost.id);
+      setIsDeleteModalOpen(false);
+
+      if (result.success) {
+        setShowSuccessModal(true);
+      } else {
+        setErrorMessage(result.message);
+        setShowErrorModal(true);
+      }
     } catch (error) {
       console.error('Failed to delete job post:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete job post');
+      setShowErrorModal(true);
+      setIsDeleteModalOpen(false);
     } finally {
-      setDeleteModalOpen(false);
+      setIsDeleting(false);
       setSelectedPost(null);
     }
   };
@@ -124,9 +138,28 @@ export function ManageJobPostsPage() {
       {/* Delete Modal */}
       <DeleteModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
+        onClose={() => {
+          if (!isDeleting) {
+            setIsDeleteModalOpen(false);
+            setSelectedPost(null);
+          }
+        }}
         onConfirm={confirmDelete}
         title={`Delete Job Post?`}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        message="Job post has been successfully deleted"
+      />
+
+      {/* Error Modal */}
+      <UnsuccessModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        message={errorMessage || 'Failed to delete job post'}
       />
     </div>
   );

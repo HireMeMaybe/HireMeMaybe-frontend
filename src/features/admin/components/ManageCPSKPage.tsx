@@ -16,6 +16,13 @@ export function ManageCPSKPage() {
     unbanAccount,
   } = useCPSK();
 
+  // Debug: Log accounts data to verify status is being set correctly
+  React.useEffect(() => {
+    if (accounts.length > 0) {
+      console.log('CPSK Accounts:', accounts);
+    }
+  }, [accounts]);
+
   const [suspendModal, setSuspendModal] = useState<{
     isOpen: boolean;
     account: CPSKAccount | null;
@@ -39,18 +46,21 @@ export function ManageCPSKPage() {
     account: null,
   });
 
-  const handleView = (account: CPSKAccount) => {
-    console.log('View account:', account);
-    window.open(`/student/${account.id}`, '_blank');
-  };
-
   const handleSuspend = async (startDate: string, endDate: string) => {
     if (!suspendModal.account) return;
     try {
-      // Note: API call will be updated to include startDate and endDate when backend is ready
-      console.log('Suspending with dates:', { startDate, endDate });
-      await suspendAccount(suspendModal.account.id);
+      // Convert dates to ISO 8601 format if needed
+      const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toISOString();
+      };
+
+      const at = startDate ? formatDate(startDate) : undefined;
+      const end = endDate ? formatDate(endDate) : undefined;
+
+      await suspendAccount(suspendModal.account.id, at, end);
       refetch();
+      setSuspendModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to suspend account:', error);
     }
@@ -61,6 +71,7 @@ export function ManageCPSKPage() {
     try {
       await reactivateAccount(cancelSuspendModal.account.id);
       refetch();
+      setCancelSuspendModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to cancel suspension:', error);
     }
@@ -71,6 +82,7 @@ export function ManageCPSKPage() {
     try {
       await banAccount(banModal.account.id);
       refetch();
+      setBanModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to ban account:', error);
     }
@@ -81,6 +93,7 @@ export function ManageCPSKPage() {
     try {
       await unbanAccount(unbanModal.account.id);
       refetch();
+      setUnbanModal({ isOpen: false, account: null });
     } catch (error) {
       console.error('Failed to unban account:', error);
     }
@@ -105,12 +118,6 @@ export function ManageCPSKPage() {
         return (
           <div className="flex gap-2">
             <button
-              onClick={() => handleView(account)}
-              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-            >
-              View
-            </button>
-            <button
               onClick={() => setSuspendModal({ isOpen: true, account })}
               className="bg-bright-yellow hover:bg-bright-yellow/85 cursor-pointer rounded-full px-4 py-2 text-sm text-black"
             >
@@ -128,12 +135,6 @@ export function ManageCPSKPage() {
         return (
           <div className="flex gap-2">
             <button
-              onClick={() => handleView(account)}
-              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-            >
-              View
-            </button>
-            <button
               onClick={() => setCancelSuspendModal({ isOpen: true, account })}
               className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
             >
@@ -144,12 +145,6 @@ export function ManageCPSKPage() {
       case 'Banned':
         return (
           <div className="flex gap-2">
-            <button
-              onClick={() => handleView(account)}
-              className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-            >
-              View
-            </button>
             <button
               onClick={() => setUnbanModal({ isOpen: true, account })}
               className="border-primary-green text-primary-green hover:bg-background/85 cursor-pointer rounded-full border px-4 py-2 text-sm"
@@ -168,7 +163,7 @@ export function ManageCPSKPage() {
       <div className="p-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-white">Manage CPSK</h1>
-          <p className="text-gray-400">View and manage CPSK accounts</p>
+          <p className="text-gray-400">Manage CPSK accounts</p>
         </div>
 
         <section className="rounded-lg bg-zinc-900/40 p-4">
@@ -176,7 +171,7 @@ export function ManageCPSKPage() {
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
-              <thead className="text-gray-400 bg-zinc-800">
+              <thead className="bg-zinc-800 text-gray-400">
                 <tr>
                   <th className="px-6 py-3">CPSK</th>
                   <th className="px-6 py-3">Major</th>

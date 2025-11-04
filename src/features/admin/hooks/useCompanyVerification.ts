@@ -1,22 +1,25 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AdminService, type CompanyVerification } from '@/lib/services';
+import { AdminService, type Company } from '@/lib/services';
 
-export function useCompanyVerification() {
-  const [companies, setCompanies] = useState<CompanyVerification[]>([]);
+export function useCompanyVerification(initialStatus?: 'pending' | 'verified' | 'unverified') {
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<
+    'pending' | 'verified' | 'unverified' | undefined
+  >(initialStatus);
 
-  const fetchCompanies = useCallback(async () => {
+  const fetchCompanies = useCallback(async (status?: 'pending' | 'verified' | 'unverified') => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const data = await AdminService.getRejectedCompanies();
+      const data = await AdminService.getCompanies(status);
       setCompanies(data);
     } catch (err) {
-      console.error('Error fetching rejected companies:', err);
+      console.error('Error fetching companies:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch companies');
     } finally {
       setIsLoading(false);
@@ -24,16 +27,19 @@ export function useCompanyVerification() {
   }, []);
 
   useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
+    fetchCompanies(statusFilter);
+  }, [fetchCompanies, statusFilter]);
 
-  const reconsiderCompany = async (companyId: number) => {
+  const verifyCompany = async (
+    companyId: string,
+    status: 'verified' | 'unverified' = 'verified'
+  ) => {
     try {
-      await AdminService.reconsiderCompany(companyId);
-      await fetchCompanies(); // Refresh list
+      await AdminService.verifyCompany(companyId, status);
+      await fetchCompanies(statusFilter); // Refresh list with current filter
       return true;
     } catch (err) {
-      console.error('Error reconsidering company:', err);
+      console.error('Error verifying company:', err);
       throw err;
     }
   };
@@ -42,9 +48,9 @@ export function useCompanyVerification() {
     companies,
     isLoading,
     error,
-    refetch: fetchCompanies,
-    reconsiderCompany,
+    statusFilter,
+    setStatusFilter,
+    refetch: () => fetchCompanies(statusFilter),
+    verifyCompany,
   } as const;
 }
-
-export type { CompanyVerification };

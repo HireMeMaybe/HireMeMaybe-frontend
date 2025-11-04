@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AdminService } from '@/lib/services';
-import type { ManagedCompany } from '@/types/admin';
+import { AdminService, type Company } from '@/lib/services';
+import type { PunishmentStruct } from '@/types/admin';
 
 export function useManageCompanies() {
-  const [companies, setCompanies] = useState<ManagedCompany[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,7 +14,7 @@ export function useManageCompanies() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await AdminService.getManagedCompanies();
+      const data = await AdminService.getCompanies('verified');
       setCompanies(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch companies');
@@ -27,20 +27,29 @@ export function useManageCompanies() {
     fetchCompanies();
   }, [fetchCompanies]);
 
-  const suspendCompany = async (companyId: number) => {
-    await AdminService.suspendManagedCompany(companyId);
+  const suspendCompany = async (userId: string, startDate?: string, endDate?: string) => {
+    const punishment: PunishmentStruct = {
+      type: 'suspend',
+      at: startDate, // Optional, defaults to current time on backend
+      end: endDate, // Optional, empty means permanent
+    };
+    await AdminService.punishCompany(userId, punishment);
   };
 
-  const cancelSuspendCompany = async (companyId: number) => {
-    await AdminService.cancelSuspendManagedCompany(companyId);
+  const cancelSuspendCompany = async (userId: string) => {
+    await AdminService.removePunishmentCompany(userId);
   };
 
-  const banCompany = async (companyId: number) => {
-    await AdminService.banManagedCompany(companyId);
+  const banCompany = async (userId: string) => {
+    const punishment: PunishmentStruct = {
+      type: 'ban',
+      // at and end are optional, backend will use defaults
+    };
+    await AdminService.punishCompany(userId, punishment);
   };
 
-  const unbanCompany = async (companyId: number) => {
-    await AdminService.unbanManagedCompany(companyId);
+  const unbanCompany = async (userId: string) => {
+    await AdminService.removePunishmentCompany(userId);
   };
 
   return {

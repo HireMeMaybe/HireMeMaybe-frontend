@@ -19,7 +19,7 @@ export interface Report {
   reportedEntity: string;
   reason: string;
   submittedAt: Date;
-  status: "pending" | "reviewed" | "resolved";
+  status: 'pending' | 'reviewed' | 'resolved';
 }
 
 export interface AdminNavItem {
@@ -38,13 +38,34 @@ export type JobPostItem = {
   reports: number;
 };
 
+export type UserStatus = 'Active' | 'Suspended' | 'Banned';
+
 export interface CPSKAccount {
-  id: number;
+  id: string;
   name: string;
   email: string;
   major: string;
   year: string;
-  status: 'Active' | 'Suspended' | 'Banned';
+  status: UserStatus;
+  tel?: string;
+  first_name?: string;
+  last_name?: string;
+  program?: string;
+  punishment?: PunishmentInfo;
+}
+
+export type PunishmentType = 'ban' | 'suspend';
+
+export interface PunishmentInfo {
+  type: PunishmentType;
+  at?: string; // ISO 8601 format: YYYY-MM-DDTHH:mm:ssZ
+  end?: string; // ISO 8601 format: YYYY-MM-DDTHH:mm:ssZ (empty means permanent)
+}
+
+export interface PunishmentStruct {
+  type: PunishmentType;
+  at?: string;
+  end?: string;
 }
 
 export interface ManagedCompany {
@@ -54,22 +75,68 @@ export interface ManagedCompany {
   industry: string;
   verifiedDate: string;
   activePosts: number;
-  reports: number;
-  status: 'Active' | 'Suspended' | 'Banned';
+  status: UserStatus;
+  userId?: string;
+}
+
+// Backend API response types for company management
+export interface CompanyUser {
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
+  banner_id: number | null;
+  id: string;
+  industry: string;
+  logo_id: number | null;
+  name: string;
+  overview: string;
+  size: string;
+  user_id: string;
+  verified_status: string;
+  User?: {
+    ID: number;
+    CreatedAt: string;
+    UpdatedAt: string;
+    DeletedAt: string | null;
+    email: string;
+    first_name: string;
+    id: string;
+    last_name: string;
+    password: string;
+    profile_picture: string;
+    tel: string;
+    punishment?: PunishmentInfo;
+  };
+  job_post?: Array<{
+    id: number;
+    title: string;
+    company_id: string;
+    desc: string;
+    exp_lvl: string;
+    expiring: string;
+    location: string;
+    post_time: string;
+    req: string;
+    salary: string;
+    tags: string[];
+    type: string;
+  }>;
 }
 
 export interface VisitorAccount {
-  id: number;
+  id: string;
   name: string;
   email: string;
   reportCount: number;
-  status: 'Active' | 'Suspended' | 'Banned';
+  status: UserStatus;
 }
 
 export interface VisitorReport {
   id: number;
   reportedEntity: string;
-  reportedEntityType: 'Job' | 'Company';
+  reportedEntityType: 'Job' | 'Company' | 'CPSK';
+  reported_id: string;
   reason: string;
   submitted: string;
   status: 'Pending' | 'Reviewed' | 'Resolved';

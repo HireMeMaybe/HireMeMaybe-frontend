@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AdminService } from '@/lib/services';
-import type { CPSKAccount } from '@/types/admin';
+import type { CPSKAccount, PunishmentStruct } from '@/types/admin';
 
 export function useCPSK() {
   const [accounts, setAccounts] = useState<CPSKAccount[]>([]);
@@ -27,20 +27,28 @@ export function useCPSK() {
     fetchAccounts();
   }, [fetchAccounts]);
 
-  const suspendAccount = async (accountId: number) => {
-    await AdminService.suspendCPSKAccount(accountId);
+  const suspendAccount = async (accountId: string, startDate?: string, endDate?: string) => {
+    const punishment: PunishmentStruct = {
+      type: 'suspend',
+      at: startDate,
+      end: endDate,
+    };
+    await AdminService.punishCPSK(accountId, punishment);
   };
 
-  const reactivateAccount = async (accountId: number) => {
-    await AdminService.reactivateCPSKAccount(accountId);
+  const reactivateAccount = async (accountId: string) => {
+    await AdminService.removePunishment(accountId);
   };
 
-  const banAccount = async (accountId: number) => {
-    await AdminService.banCPSKAccount(accountId);
+  const banAccount = async (accountId: string) => {
+    const punishment: PunishmentStruct = {
+      type: 'ban',
+    };
+    await AdminService.punishCPSK(accountId, punishment);
   };
 
-  const unbanAccount = async (accountId: number) => {
-    await AdminService.unbanCPSKAccount(accountId);
+  const unbanAccount = async (accountId: string) => {
+    await AdminService.removePunishment(accountId);
   };
 
   return {

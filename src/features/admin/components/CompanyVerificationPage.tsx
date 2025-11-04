@@ -2,30 +2,31 @@
 
 import React, { useState } from 'react';
 import { useCompanyVerification } from '@/features/admin/hooks/useCompanyVerification';
-import type { CompanyVerification } from '@/lib/services';
-import ReconsiderModal from '@/components/modals/ReconsiderModal';
-import SuccessModal from '@/components/modals/SuccessModal'; // Import the success modal component
-import { capitalize } from '@/lib/utils/string';
+import type { Company } from '@/lib/services';
+import { ReconsiderModal, SuccessModal, UnsuccessModal } from '@/components/modals';
 
 export function CompanyVerificationPage() {
-  const { companies, isLoading, refetch } = useCompanyVerification();
-  const [selected, setSelected] = useState<CompanyVerification | null>(null);
-  const [isReconsiderOpen, setIsReconsiderOpen] = useState(false);
-  const [isSuccessOpen, setIsSuccessOpen] = useState(false); // State for success modal
+  // Initialize with 'unverified' filter to show only unverified companies
+  const { companies, isLoading, verifyCompany } = useCompanyVerification('unverified');
+  const [selected, setSelected] = useState<Company | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const openReconsiderModal = (company: CompanyVerification) => {
+  const openConfirmModal = (company: Company) => {
     setSelected(company);
-    setIsReconsiderOpen(true);
+    setIsConfirmOpen(true);
   };
 
   const closeModal = () => {
-    setIsReconsiderOpen(false);
+    setIsConfirmOpen(false);
     setSelected(null);
   };
 
-  const handleView = (company: CompanyVerification) => {
+  const handleView = (company: Company) => {
     console.log('View company:', company);
-    // In a real app, navigate to company details page
+    // Navigate to company details page
     window.open(`/company/${company.id}`, '_blank');
   };
 
@@ -33,13 +34,12 @@ export function CompanyVerificationPage() {
     if (!selected) return;
 
     try {
-      // implement review logic here (API call etc.)
-      // For now just refetch or log
-      // await reconsiderCompany(selected.id);
-      refetch();
-      setIsSuccessOpen(true); // Open success modal on success
+      await verifyCompany(selected.id, 'verified');
+      setIsSuccessOpen(true);
     } catch (error) {
-      console.error('Failed to reconsider company:', error);
+      console.error('Failed to verify company:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to verify company');
+      setIsErrorOpen(true);
     } finally {
       closeModal();
     }
@@ -49,16 +49,34 @@ export function CompanyVerificationPage() {
     setIsSuccessOpen(false);
   };
 
+  const closeErrorModal = () => {
+    setIsErrorOpen(false);
+    setErrorMessage('');
+  };
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
   return (
     <div className="ml-64 flex-1">
       <div className="p-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-white">Company Verification</h1>
-          <p className="text-gray-400">Review and reconsider company registrations</p>
+          <p className="text-gray-400">Review and reconsider unverified company registrations</p>
         </div>
 
         <section className="rounded-lg bg-zinc-900/40 p-4">
-          <h2 className="text-primary-green mb-4 text-xl font-semibold">Rejected Companies</h2>
+          <h2 className="text-primary-green mb-4 text-xl font-semibold">Unverified Companies</h2>
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
@@ -86,7 +104,7 @@ export function CompanyVerificationPage() {
                     return (
                       <tr>
                         <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
-                          No rejected companies found
+                          No unverified companies found
                         </td>
                       </tr>
                     );
@@ -94,14 +112,24 @@ export function CompanyVerificationPage() {
                   return companies.map((company) => (
                     <tr key={company.id} className="border-b border-zinc-800 hover:bg-zinc-800">
                       <td className="px-6 py-4 align-top">
-                        <div className="font-medium text-white">{company.name}</div>
-                        <div className="mt-1 text-xs text-gray-400">{company.location}</div>
+                        <div className="font-medium text-white">{company.name || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">
-                        {capitalize(company.industry)}
+                        {company.industry
+                          ? company.industry.charAt(0).toUpperCase() + company.industry.slice(1)
+                          : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 align-top text-gray-200">{company.contact}</td>
-                      <td className="px-6 py-4 align-top text-gray-200">{company.submitted}</td>
+                      <td className="px-6 py-4 align-top">
+                        <div className="text-gray-200">{company.User?.email ?? 'N/A'}</div>
+                        <div className="mt-1 text-xs text-gray-400">
+                          {company.User?.tel ?? 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 align-top text-gray-200">
+                        {formatDate(
+                          (company.User as { CreatedAt?: string } | undefined)?.CreatedAt ?? 'N/A'
+                        )}
+                      </td>
                       <td className="px-6 py-4 align-top">
                         <div className="flex gap-2">
                           <button
@@ -111,7 +139,7 @@ export function CompanyVerificationPage() {
                             View
                           </button>
                           <button
-                            onClick={() => openReconsiderModal(company)}
+                            onClick={() => openConfirmModal(company)}
                             className="bg-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
                           >
                             Reconsider
@@ -128,7 +156,7 @@ export function CompanyVerificationPage() {
 
         {/* Reconsider Modal */}
         <ReconsiderModal
-          isOpen={isReconsiderOpen}
+          isOpen={isConfirmOpen}
           onClose={closeModal}
           onConfirm={handleReconsider}
           companyName={selected?.name}
@@ -138,7 +166,14 @@ export function CompanyVerificationPage() {
         <SuccessModal
           isOpen={isSuccessOpen}
           onClose={closeSuccessModal}
-          message="Company approved successfully"
+          message="Company verified successfully"
+        />
+
+        {/* Error Modal */}
+        <UnsuccessModal
+          isOpen={isErrorOpen}
+          onClose={closeErrorModal}
+          message={errorMessage || 'An error occurred while verifying the company'}
         />
       </div>
     </div>

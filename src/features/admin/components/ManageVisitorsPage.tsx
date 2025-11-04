@@ -51,7 +51,8 @@ export function ManageVisitorsPage() {
     if (!suspendModal.account) return;
     try {
       console.log('Suspending with dates:', { startDate, endDate });
-      await suspendAccount(suspendModal.account.id);
+      await suspendAccount(suspendModal.account.id, endDate);
+      setSuspendModal({ isOpen: false, account: null });
       refetch();
     } catch (error) {
       console.error('Failed to suspend account:', error);
@@ -62,6 +63,7 @@ export function ManageVisitorsPage() {
     if (!cancelSuspendModal.account) return;
     try {
       await reactivateAccount(cancelSuspendModal.account.id);
+      setCancelSuspendModal({ isOpen: false, account: null });
       refetch();
     } catch (error) {
       console.error('Failed to cancel suspension:', error);
@@ -72,6 +74,7 @@ export function ManageVisitorsPage() {
     if (!banModal.account) return;
     try {
       await banAccount(banModal.account.id);
+      setBanModal({ isOpen: false, account: null });
       refetch();
     } catch (error) {
       console.error('Failed to ban account:', error);
@@ -82,6 +85,7 @@ export function ManageVisitorsPage() {
     if (!unbanModal.account) return;
     try {
       await unbanAccount(unbanModal.account.id);
+      setUnbanModal({ isOpen: false, account: null });
       refetch();
     } catch (error) {
       console.error('Failed to unban account:', error);
@@ -184,7 +188,7 @@ export function ManageVisitorsPage() {
 
           <div className="overflow-hidden rounded-md">
             <table className="w-full text-left text-sm">
-              <thead className="text-gray-400 bg-zinc-800">
+              <thead className="bg-zinc-800 text-gray-400">
                 <tr>
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">Email</th>

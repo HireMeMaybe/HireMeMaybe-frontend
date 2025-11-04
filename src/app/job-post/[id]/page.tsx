@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Image from 'next/image';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
-import { CompanyService } from '@/lib/services/company.service';
+import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
 import Loading from '@/app/loading';
 
@@ -21,15 +22,20 @@ export default function JobPostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
   const [jobPost, setJobPost] = useState<JobPostDetail | null>(null);
+  const [company, setCompany] = useState<CompanyProfileResponse | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const jobPostId = params.id as string;
 
-  // Protect page: redirect unauthenticated and unregistered users
+  // Protect page: redirect unauthenticated and unregistered users (but allow admins)
   useEffect(() => {
+    // Allow admin users to access this page
+    if (isAdminAuthenticated) return;
+
     if (status === 'loading') return;
 
     // If user is not authenticated, send to sign-in
@@ -239,7 +245,7 @@ export default function JobPostDetailPage() {
                 <div className="flex flex-wrap gap-2">
                   {jobPost.tags.map((tag, index) => (
                     <span
-                      key={index}
+                      key={`${tag}-${index}`}
                       className="rounded-full border border-gray-600 bg-gray-700 px-3 py-1 text-sm text-gray-300"
                     >
                       {tag}
@@ -265,8 +271,8 @@ export default function JobPostDetailPage() {
               </p>
             </div>
 
-            {/* Action Button - Only show for non-Company users */}
-            {session?.role !== 'Company' && (
+            {/* Action Button - Only show for non-Company users and non-Admin users */}
+            {session?.role !== 'Company' && !isAdminAuthenticated && (
               <div className="mt-8">
                 <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
                   Apply Now

@@ -37,3 +37,47 @@ export const EDUCATION_OPTIONS = [
   { value: 'PhD', label: 'PhD' },
   { value: 'Graduate (Alumni)', label: 'Graduate (Alumni)' },
 ] as const;
+
+export interface CPSKUserResponse {
+  id: string;
+  first_name: string;
+  last_name: string;
+  program: string | null;
+  year: string | null;
+  resume_id: number | null;
+  soft_skill: string[];
+  User: {
+    id: string;
+    email: string;
+    tel: string;
+    username: string;
+    profile_picture: string | null;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: {
+      time: string;
+      valid: boolean;
+    } | null;
+    punishment?: {
+      type: 'ban' | 'suspend';
+      at?: string;
+      end?: string;
+    };
+  };
+  applications?: Array<{
+    id: number;
+    cpsk_id: string;
+    post_id: number;
+    answer_id: number;
+    resume_id: number;
+    status: string;
+    applied_at: string;
+    answer: {
+      id: number;
+      programming_languages: string[];
+      year_of_experience: number;
+      expected_salary: string;
+      right_to_work: string;
+    };
+  }>;
+}

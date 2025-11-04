@@ -1,34 +1,56 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useVisitorReports } from '@/features/admin/hooks/useVisitorReports';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import CPSKDetailModal from '@/components/modals/CPSKDetailModal';
 
 interface VisitorReportsPageProps {
-  visitorId: number;
+  readonly visitorId: string;
 }
 
 export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
   const router = useRouter();
   const { reports, isLoading } = useVisitorReports(visitorId);
+  const [isCPSKModalOpen, setIsCPSKModalOpen] = useState(false);
+  const [selectedCPSKId, setSelectedCPSKId] = useState<string>('');
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Pending':
-        return 'bg-bright-yellow text-black';
-      case 'Reviewed':
-        return 'bg-sky-blue text-white';
-      case 'Resolved':
-        return 'bg-primary-green text-white';
+    const lowerStatus = status.toLowerCase();
+    switch (lowerStatus) {
+      case 'pending':
+        return 'bg-yellow-500/20 text-yellow-500';
+      case 'reviewed':
+        return 'bg-blue-500/20 text-blue-500';
+      case 'resolved':
+        return 'bg-green-500/20 text-green-500';
+      case 'rejected':
+        return 'bg-red-500/20 text-red-500';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-gray-500/20 text-gray-500';
     }
   };
 
-  const handleViewEntity = (entityType: string, entityName: string) => {
-    console.log('View entity:', entityType, entityName);
-    // You can implement navigation to the specific job or company here
+  const handleViewEntity = (report: { reportedEntityType?: string; reported_id?: string }) => {
+    const entityType = report.reportedEntityType;
+    const entityId = report.reported_id;
+
+    console.log('View Entity clicked:', { entityType, entityId, report });
+
+    if (entityType === 'Job' && entityId) {
+      // Navigate to job post detail page
+      router.push(`/job-post/${entityId}`);
+    } else if (entityType === 'Company' && entityId) {
+      // Navigate to company profile page
+      router.push(`/company/${entityId}`);
+    } else if (entityType === 'CPSK' && entityId) {
+      // Open CPSK detail modal
+      setSelectedCPSKId(entityId);
+      setIsCPSKModalOpen(true);
+    } else {
+      console.error('Invalid entity type or missing entity ID:', { entityType, entityId });
+    }
   };
 
   return (
@@ -106,12 +128,10 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
                       </td>
                       <td className="px-6 py-4 align-top">
                         <button
-                          onClick={() =>
-                            handleViewEntity(report.reportedEntityType, report.reportedEntity)
-                          }
+                          onClick={() => handleViewEntity(report)}
                           className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                         >
-                          View Entity
+                          View
                         </button>
                       </td>
                     </tr>
@@ -121,6 +141,11 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
             </table>
           </div>
         </section>
+        <CPSKDetailModal
+          isOpen={isCPSKModalOpen}
+          onClose={() => setIsCPSKModalOpen(false)}
+          cpskId={selectedCPSKId}
+        />
       </div>
     </div>
   );

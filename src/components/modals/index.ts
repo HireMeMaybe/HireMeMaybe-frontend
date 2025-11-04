@@ -13,3 +13,4 @@ export { default as SuspendModal } from './SuspendModal';
 export { default as BanModal } from './BanModal';
 export { default as CancelSuspendModal } from './CancelSuspendModal';
 export { default as UnbanModal } from './UnbanModal';
+export { default as CPSKDetailModal } from './CPSKDetailModal';
