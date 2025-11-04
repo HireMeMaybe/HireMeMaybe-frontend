@@ -51,8 +51,24 @@ export default function JobPostDetailPage() {
     }
   }, [status, session, router, isAdminAuthenticated]);
 
+  // Helper function to fetch company logo
+  const fetchCompanyLogo = async (logoId: number, isActive: () => boolean) => {
+    try {
+      const logoBlob = await CompanyService.fetchLogo(logoId);
+      if (!isActive()) return;
+      const url = URL.createObjectURL(logoBlob);
+      setLogoUrl(url);
+    } catch (logoError) {
+      console.error('Error fetching company logo:', logoError);
+      // Continue without logo
+    }
+  };
+
   // Fetch job post data and company data
   useEffect(() => {
+    let isActive = true;
+    const checkActive = () => isActive;
+
     const fetchJobPostAndCompany = async () => {
       try {
         setLoading(true);
@@ -60,36 +76,40 @@ export default function JobPostDetailPage() {
 
         // Fetch job post data
         const jobPostData = await JobService.getJobPostById(jobPostId);
+        if (!checkActive()) return;
+
         setJobPost(jobPostData);
 
         // Fetch company data using company_id from job post
         if (jobPostData.company_id) {
           const companyData = await CompanyService.getCompany(jobPostData.company_id);
+          if (!checkActive()) return;
+
           setCompany(companyData);
 
           // Fetch company logo if logo_id exists
           if (companyData.logo_id) {
-            try {
-              const logoBlob = await CompanyService.fetchLogo(companyData.logo_id);
-              const url = URL.createObjectURL(logoBlob);
-              setLogoUrl(url);
-            } catch (logoError) {
-              console.error('Error fetching company logo:', logoError);
-              // Continue without logo
-            }
+            await fetchCompanyLogo(companyData.logo_id, checkActive);
           }
         }
       } catch (err) {
+        if (!checkActive()) return;
         console.error('Error fetching job post:', err);
         setError(err instanceof Error ? err.message : 'Failed to load job post');
       } finally {
-        setLoading(false);
+        if (checkActive()) {
+          setLoading(false);
+        }
       }
     };
 
     if (jobPostId) {
       fetchJobPostAndCompany();
     }
+
+    return () => {
+      isActive = false;
+    };
   }, [jobPostId]);
 
   // Cleanup logo URL on unmount
@@ -125,6 +145,16 @@ export default function JobPostDetailPage() {
     throw new Error('Job post not found');
   }
 
+  // Prepare company display data
+  const companyName = company?.name || 'Company';
+  const companyIndustry = company?.industry || null;
+  const metadataParts = [companyIndustry, jobPost.location].filter(Boolean);
+  const companyMetadata =
+    metadataParts.length > 0
+      ? metadataParts.join(' • ')
+      : jobPost.location || 'Location not specified';
+  const companyInitials = companyName.substring(0, 2).toUpperCase();
+
   return (
     <div className="bg-background text-foreground min-h-screen">
       {/* Header */}
@@ -148,7 +178,7 @@ export default function JobPostDetailPage() {
                 {logoUrl ? (
                   <Image
                     src={logoUrl}
-                    alt={company?.name || 'Company logo'}
+                    alt={companyName}
                     width={64}
                     height={64}
                     unoptimized
@@ -156,12 +186,12 @@ export default function JobPostDetailPage() {
                   />
                 ) : (
                   <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
-                    {company?.name?.substring(0, 2).toUpperCase() || 'CO'}
+                    {companyInitials}
                   </div>
                 )}
                 <div>
-                  <p className="text-lg font-semibold text-white">{company?.name || 'Company'}</p>
-                  <p className="text-sm text-gray-400">{jobPost.location}</p>
+                  <p className="text-lg font-semibold text-white">{companyName}</p>
+                  <p className="text-sm text-gray-400">{companyMetadata}</p>
                 </div>
               </div>
             </div>
@@ -210,9 +240,9 @@ export default function JobPostDetailPage() {
               <div className="mb-6">
                 <h3 className="mb-3 text-base font-semibold text-white">Tags</h3>
                 <div className="flex flex-wrap gap-2">
-                  {jobPost.tags.map((tag) => (
+                  {jobPost.tags.map((tag, index) => (
                     <span
-                      key={tag}
+                      key={`${tag}-${index}`}
                       className="rounded-full border border-gray-600 bg-gray-700 px-3 py-1 text-sm text-gray-300"
                     >
                       {tag}
