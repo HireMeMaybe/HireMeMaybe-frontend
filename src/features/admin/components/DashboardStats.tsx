@@ -78,12 +78,12 @@ export function DashboardStats() {
     );
   }
 
-  const totalUsers = stats.activeCPSK + stats.totalVisitors;
   const totalCompanies = stats.verifiedCompanies + stats.unverifiedCompanies;
+  const totalUsers = stats.activeCPSK + stats.totalVisitors + totalCompanies;
   const verificationRate =
     totalCompanies > 0 ? ((stats.verifiedCompanies / totalCompanies) * 100).toFixed(1) : '0';
   const avgJobsPerCompany =
-    stats.verifiedCompanies > 0 ? (stats.totalJobPosts / stats.verifiedCompanies).toFixed(1) : '0';
+    stats.verifiedCompanies > 0 ? Math.round(stats.totalJobPosts / stats.verifiedCompanies) : 0;
 
   return (
     <div className="space-y-8">
@@ -145,7 +145,7 @@ export function DashboardStats() {
           <div className="flex flex-col rounded bg-zinc-800/50 p-4">
             <span className="mb-2 text-sm text-gray-400">Total Platform Users</span>
             <span className="text-2xl font-bold text-white">{totalUsers.toLocaleString()}</span>
-            <span className="mt-1 text-xs text-gray-500">CPSK + Visitors combined</span>
+            <span className="mt-1 text-xs text-gray-500">CPSK + Visitors + Companies</span>
           </div>
           <div className="flex flex-col rounded bg-zinc-800/50 p-4">
             <span className="mb-2 text-sm text-gray-400">Company Verification Rate</span>
