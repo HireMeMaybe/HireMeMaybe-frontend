@@ -25,6 +25,8 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
         return 'bg-blue-500/20 text-blue-500';
       case 'resolved':
         return 'bg-green-500/20 text-green-500';
+      case 'rejected':
+        return 'bg-red-500/20 text-red-500';
       default:
         return 'bg-gray-500/20 text-gray-500';
     }
@@ -129,7 +131,7 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
                           onClick={() => handleViewEntity(report)}
                           className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
                         >
-                          View Entity
+                          View
                         </button>
                       </td>
                     </tr>
