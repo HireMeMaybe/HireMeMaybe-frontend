@@ -49,25 +49,20 @@ export default function JobPostDetailPage() {
     if (status === 'authenticated' && isRegistered === false) {
       router.push('/');
     }
-  }, [status, session, router, isAdminAuthenticated]);
+  }, [status, session, router]);
 
-  // Helper function to fetch company logo
-  const fetchCompanyLogo = async (logoId: number, isActive: () => boolean) => {
-    try {
-      const logoBlob = await CompanyService.fetchLogo(logoId);
-      if (!isActive()) return;
-      const url = URL.createObjectURL(logoBlob);
-      setLogoUrl(url);
-    } catch (logoError) {
-      console.error('Error fetching company logo:', logoError);
-      // Continue without logo
-    }
+  const setSafeLogoUrl = (newUrl: string | null) => {
+    setLogoUrl((previous) => {
+      if (previous && previous !== newUrl) {
+        URL.revokeObjectURL(previous);
+      }
+      return newUrl;
+    });
   };
 
-  // Fetch job post data and company data
+  // Fetch job post data directly (company info comes embedded in response)
   useEffect(() => {
     let isActive = true;
-    const checkActive = () => isActive;
 
     const fetchJobPostAndCompany = async () => {
       try {
@@ -76,28 +71,37 @@ export default function JobPostDetailPage() {
 
         // Fetch job post data
         const jobPostData = await JobService.getJobPostById(jobPostId);
-        if (!checkActive()) return;
+        if (!isActive) return;
 
         setJobPost(jobPostData);
 
-        // Fetch company data using company_id from job post
-        if (jobPostData.company_id) {
-          const companyData = await CompanyService.getCompany(jobPostData.company_id);
-          if (!checkActive()) return;
-
-          setCompany(companyData);
-
-          // Fetch company logo if logo_id exists
-          if (companyData.logo_id) {
-            await fetchCompanyLogo(companyData.logo_id, checkActive);
+        // Fetch company logo if logo_id exists on embedded company data
+        const logoId = jobPostData.company_user?.logo_id;
+        if (logoId) {
+          try {
+            const logoBlob = await CompanyService.fetchLogo(logoId);
+            const url = URL.createObjectURL(logoBlob);
+            if (!isActive) {
+              URL.revokeObjectURL(url);
+              return;
+            }
+            setSafeLogoUrl(url);
+          } catch (logoError) {
+            console.error('Error fetching company logo:', logoError);
+            if (!isActive) return;
+            setSafeLogoUrl(null);
           }
+        } else {
+          setSafeLogoUrl(null);
         }
       } catch (err) {
-        if (!checkActive()) return;
+        if (!isActive) return;
         console.error('Error fetching job post:', err);
         setError(err instanceof Error ? err.message : 'Failed to load job post');
+        setJobPost(null);
+        setSafeLogoUrl(null);
       } finally {
-        if (checkActive()) {
+        if (isActive) {
           setLoading(false);
         }
       }
@@ -145,15 +149,12 @@ export default function JobPostDetailPage() {
     throw new Error('Job post not found');
   }
 
-  // Prepare company display data
-  const companyName = company?.name || 'Company';
-  const companyIndustry = company?.industry || null;
+  const companyUser = jobPost.company_user;
+  const companyName = companyUser?.name ?? 'Company';
+  const companyIndustry = companyUser?.industry ?? null;
   const metadataParts = [companyIndustry, jobPost.location].filter(Boolean);
-  const companyMetadata =
-    metadataParts.length > 0
-      ? metadataParts.join(' • ')
-      : jobPost.location || 'Location not specified';
-  const companyInitials = companyName.substring(0, 2).toUpperCase();
+  const companyMetadata = metadataParts.join(' • ');
+  const companyInitials = companyName.slice(0, 2).toUpperCase();
 
   return (
     <div className="bg-background text-foreground min-h-screen">
@@ -191,7 +192,9 @@ export default function JobPostDetailPage() {
                 )}
                 <div>
                   <p className="text-lg font-semibold text-white">{companyName}</p>
-                  <p className="text-sm text-gray-400">{companyMetadata}</p>
+                  <p className="text-sm text-gray-400">
+                    {companyMetadata || jobPost.location || 'Location not specified'}
+                  </p>
                 </div>
               </div>
             </div>

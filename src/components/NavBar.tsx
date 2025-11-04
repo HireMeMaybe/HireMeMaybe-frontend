@@ -5,15 +5,17 @@ import { Search, User, UserPen, History, LogOut, Shield } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function Navbar() {
   const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ?? '/';
   const [open, setOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
 
@@ -54,6 +56,21 @@ export default function Navbar() {
     } else {
       const base = frontendUrl.replace(/\/$/, '');
       window.location.href = `${base}#login-section`;
+    }
+  };
+
+  const handleSearch = () => {
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
+      router.push(`/search?query=${encodeURIComponent(trimmedQuery)}`);
+    } else {
+      router.push('/search');
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
@@ -220,20 +237,28 @@ export default function Navbar() {
       </a>
 
       {/* Center - Search bar */}
-      {!(pathname && (pathname.startsWith('/search') || pathname.startsWith('/admin'))) && (
-        <div className="mx-8 max-w-md flex-1">
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="bg-component w-full rounded-full border-none text-white placeholder-zinc-500 focus:ring-purple-500"
-            />
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3">
-              <Search className="h-5 w-5 text-zinc-500" />
-            </span>
+      {isRegistered &&
+        !(pathname && (pathname.startsWith('/search') || pathname.startsWith('/admin'))) && (
+          <div className="mx-8 max-w-md flex-1">
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                className="bg-component w-full rounded-full border-none text-white placeholder-zinc-500 focus:ring-purple-500"
+              />
+              <button
+                onClick={handleSearch}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 hover:opacity-80"
+                aria-label="Search"
+              >
+                <Search className="h-5 w-5 text-zinc-500" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Right side - User icon and dropdown */}
       <div className="user-dropdown-container relative ml-auto">

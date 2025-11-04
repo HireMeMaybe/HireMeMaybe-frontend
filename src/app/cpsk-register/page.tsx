@@ -14,9 +14,13 @@ export default function CPSKRegisterPage() {
   useEffect(() => {
     if (status === 'loading') return; // Still loading, don't redirect yet
 
-    // Redirect if unauthenticated OR if user already has a program (already registered)
-    if (status === 'unauthenticated' || !session?.backendToken || session?.backendUser?.program) {
+    if (status === 'unauthenticated' || !session?.backendToken) {
       router.push('/');
+      return;
+    }
+
+    if (session?.backendUser?.program) {
+      router.push('/profile');
     }
   }, [status, session, router]);
 

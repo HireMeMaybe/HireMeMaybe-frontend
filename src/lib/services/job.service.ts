@@ -36,6 +36,34 @@ export interface JobPostApplication {
   };
 }
 
+export interface CompanyUserAccount {
+  ID?: number;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+  DeletedAt?: { Time?: string; Valid?: boolean } | null;
+  tel?: string;
+  email?: string;
+  id?: string;
+  username?: string;
+  role?: string;
+  punishment?: unknown;
+  profile_picture?: string;
+}
+
+export interface CompanyUserDetail {
+  id?: string;
+  verified_status?: string;
+  name?: string;
+  overview?: string;
+  industry?: string;
+  size?: string;
+  logo_id?: number | null;
+  banner_id?: number | null;
+  job_post?: unknown;
+  User?: CompanyUserAccount;
+  user?: CompanyUserAccount;
+}
+
 export interface JobPostDetail {
   id: number;
   company_id: string;
@@ -49,7 +77,8 @@ export interface JobPostDetail {
   tags: string[];
   post_time: string;
   expiring: string;
-  applications: JobPostApplication[];
+  applications: JobPostApplication[] | null;
+  company_user?: CompanyUserDetail;
 }
 
 interface JobSearchParams {
