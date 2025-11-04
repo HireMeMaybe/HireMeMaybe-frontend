@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import type { CPSKAccount } from '@/types/admin';
 import { Button } from '@/components/ui/button';
 import { AdminService } from '@/lib/services/admin.service';
 
@@ -18,17 +19,11 @@ interface CPSKDetailModalProps {
 }
 
 export default function CPSKDetailModal({ isOpen, onClose, cpskId }: CPSKDetailModalProps) {
-  const [cpskData, setCpskData] = useState<any>(null);
+  const [cpskData, setCpskData] = useState<CPSKAccount | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen && cpskId) {
-      fetchCPSKData();
-    }
-  }, [isOpen, cpskId]);
-
-  const fetchCPSKData = async () => {
+  const fetchCPSKData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -47,7 +42,13 @@ export default function CPSKDetailModal({ isOpen, onClose, cpskId }: CPSKDetailM
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cpskId]);
+
+  useEffect(() => {
+    if (isOpen && cpskId) {
+      fetchCPSKData();
+    }
+  }, [isOpen, cpskId, fetchCPSKData]);
 
   const handleClose = () => {
     setCpskData(null);

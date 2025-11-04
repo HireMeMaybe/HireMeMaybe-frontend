@@ -18,15 +18,15 @@ export function useVisitorReports(visitorId: number | string) {
 
       // Filter reports where reporter matches visitorId
       const visitorReports = allReports.filter((report) => {
-        const reporterId = (report as any).reporter || report.reporter_id;
+        const reporterId = (report as { reporter?: string }).reporter || report.reporter_id;
         return reporterId === visitorId.toString();
       });
 
       // Transform to VisitorReport format with unique keys
       const transformedReports: VisitorReport[] = await Promise.all(
-        visitorReports.map(async (report, index) => {
+        visitorReports.map(async (report) => {
           // Get reported entity info
-          const reportedId = (report as any).reported || report.reported_id;
+          const reportedId = (report as { reported?: string }).reported || report.reported_id;
 
           // Fetch reported entity name and type
           let reportedEntityName: string;

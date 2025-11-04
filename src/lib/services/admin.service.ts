@@ -65,7 +65,7 @@ export interface Company {
     salary: string;
     tags: string[];
     post_time: string;
-    applications: any;
+    applications: unknown;
   }>;
   verification_status?: VerificationStatus;
 }
@@ -136,8 +136,14 @@ export class AdminService {
 
           // Merge both arrays and add type field
           reports = [
-            ...postReports.map((r: any) => ({ ...r, type: 'post' as ReportType })),
-            ...userReports.map((r: any) => ({ ...r, type: 'user' as ReportType })),
+            ...postReports.map((r: Record<string, unknown>) => ({
+              ...r,
+              type: 'post' as ReportType,
+            })),
+            ...userReports.map((r: Record<string, unknown>) => ({
+              ...r,
+              type: 'user' as ReportType,
+            })),
           ];
           console.log(
             `Combined ${postReports.length} post reports and ${userReports.length} user reports`
@@ -174,8 +180,11 @@ export class AdminService {
           originalId: report.id, // Keep original ID for API calls
           reporter_id: report.reporter_id || report.reporter || 'Unknown',
           reporter: undefined, // Clear this so useReport hook will fetch the actual name
-          reporterRole: report.reporterRole || (report as any).reporter_role || undefined, // Don't use report.type as it's the report type, not user role
-          reported_id: (report as any).reported || report.reported_id,
+          reporterRole:
+            report.reporterRole ||
+            (report as { reporter_role?: string }).reporter_role ||
+            undefined, // Don't use report.type as it's the report type, not user role
+          reported_id: (report as { reported?: string }).reported || report.reported_id,
           submitted: report.submitted || report.created_at || new Date().toISOString(),
         };
       });
@@ -204,7 +213,7 @@ export class AdminService {
       return {
         ...report,
         reporter: report.reporter || report.reporter_id,
-        reported_id: (report as any).reported || report.reported_id,
+        reported_id: (report as { reported?: string }).reported || report.reported_id,
         submitted: report.submitted || report.created_at || new Date().toISOString(),
       };
     } catch (error) {

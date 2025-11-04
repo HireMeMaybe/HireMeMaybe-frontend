@@ -126,7 +126,9 @@ export function CompanyVerificationPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 align-top text-gray-200">
-                        {formatDate((company.User as any)?.CreatedAt ?? 'N/A')}
+                        {formatDate(
+                          (company.User as { CreatedAt?: string } | undefined)?.CreatedAt ?? 'N/A'
+                        )}
                       </td>
                       <td className="px-6 py-4 align-top">
                         <div className="flex gap-2">

@@ -32,7 +32,7 @@ export function VisitorReportsPage({ visitorId }: VisitorReportsPageProps) {
     }
   };
 
-  const handleViewEntity = (report: any) => {
+  const handleViewEntity = (report: { reportedEntityType?: string; reported_id?: string }) => {
     const entityType = report.reportedEntityType;
     const entityId = report.reported_id;
 

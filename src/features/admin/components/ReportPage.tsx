@@ -157,9 +157,6 @@ export function ReportPage() {
                           {r.reportedEntity ||
                             `${r.type === 'post' ? 'Job Post' : 'User'} #${r.reported_id}`}
                         </div>
-                        {r.reportedEntityType && (
-                          <div className="mt-1 text-xs text-gray-400">{r.reportedEntityType}</div>
-                        )}
                       </td>
                       <td className="px-3 py-4 align-top">
                         <span className="rounded-full bg-zinc-700 px-3 py-1 text-xs font-medium text-white">

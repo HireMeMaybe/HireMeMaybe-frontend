@@ -35,7 +35,7 @@ export function useJobPosts(filters?: JobPostFilters) {
       const reportCounts = new Map<number, number>();
       for (const report of allReports) {
         // Check both 'reported' and 'reported_id' fields
-        const reportedJobId = (report as any).reported || report.reported_id;
+        const reportedJobId = (report as { reported?: string }).reported || report.reported_id;
 
         if (report.type === 'post' && reportedJobId) {
           const jobId =

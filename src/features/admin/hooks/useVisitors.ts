@@ -21,7 +21,7 @@ export function useVisitors() {
       // Count reports per visitor (by reporter ID)
       const reportCounts = new Map<string, number>();
       for (const report of allReports) {
-        const reporterId = (report as any).reporter || report.reporter_id;
+        const reporterId = (report as { reporter?: string }).reporter || report.reporter_id;
         if (reporterId) {
           reportCounts.set(reporterId, (reportCounts.get(reporterId) || 0) + 1);
         }
@@ -61,7 +61,11 @@ export function useVisitors() {
 
   const suspendAccount = async (visitorId: string, endDate?: string) => {
     // Convert date string to ISO 8601 format if provided
-    const punishment: any = {
+    const punishment: {
+      type: 'suspend';
+      at: string;
+      end?: string;
+    } = {
       type: 'suspend' as const,
       at: new Date().toISOString(),
     };
@@ -82,7 +86,10 @@ export function useVisitors() {
 
   const banAccount = async (visitorId: string) => {
     // For permanent ban, don't include 'end' field at all
-    const punishment: any = {
+    const punishment: {
+      type: 'ban';
+      at: string;
+    } = {
       type: 'ban' as const,
       at: new Date().toISOString(),
     };

@@ -18,7 +18,7 @@ export function useReport() {
       // Fetch reporter names, roles, and reported entity names for each report
       const reportsWithNames = await Promise.all(
         data.map(async (report) => {
-          let updatedReport = { ...report };
+          const updatedReport = { ...report };
 
           // Fetch reporter info
           if (report.reporter_id && !report.reporter) {
