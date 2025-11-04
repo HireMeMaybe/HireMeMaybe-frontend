@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReport, type Report } from '@/features/admin/hooks/useReport';
 import ReviewReportModal from '@/components/modals/ReviewReportModal';
-import DeleteModal from '@/components/modals/DeleteModal';
 import CPSKDetailModal from '@/components/modals/CPSKDetailModal';
 
 export function ReportPage() {
@@ -12,7 +11,6 @@ export function ReportPage() {
   const { reports, isLoading, refetch, updateReportStatus } = useReport();
   const [selected, setSelected] = useState<Report | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isCPSKModalOpen, setIsCPSKModalOpen] = useState(false);
   const [selectedCPSKId, setSelectedCPSKId] = useState<string>('');
 
@@ -24,6 +22,8 @@ export function ReportPage() {
         return 'bg-blue-500/20 text-blue-500';
       case 'resolved':
         return 'bg-green-500/20 text-green-500';
+      case 'rejected':
+        return 'bg-red-500/20 text-red-500';
       default:
         return 'bg-gray-500/20 text-gray-500';
     }
@@ -32,11 +32,6 @@ export function ReportPage() {
   const openModal = (r: Report) => {
     setSelected(r);
     setIsModalOpen(true);
-  };
-
-  const openDeleteModal = (r: Report) => {
-    setSelected(r);
-    setIsDeleteOpen(true);
   };
 
   const closeModal = () => {
@@ -60,17 +55,20 @@ export function ReportPage() {
     }
   };
 
-  const handleConfirmReject = async () => {
+  const handleReject = async (status: 'reviewed' | 'resolved' | 'rejected', adminNote?: string) => {
     if (!selected) return;
 
     try {
-      // Reject = mark as resolved with a note
       // Use originalId for API call (the ID before unique transformation)
       const reportId = selected.originalId?.toString() || selected.id;
-      await updateReportStatus(selected.type, reportId, 'resolved', 'Report rejected by admin');
+      await updateReportStatus(
+        selected.type,
+        reportId,
+        'rejected',
+        adminNote || 'Report rejected by admin'
+      );
       console.log('Report rejected successfully');
-      setIsDeleteOpen(false);
-      setSelected(null);
+      closeModal();
       await refetch();
     } catch (error) {
       console.error('Error rejecting report:', error);
@@ -183,27 +181,21 @@ export function ReportPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 align-top">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex gap-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleViewEntity(r)}
+                            className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
+                          >
+                            View
+                          </button>
+                          {r.status === 'pending' && (
                             <button
                               onClick={() => openModal(r)}
                               className="bg-primary-green cursor-pointer rounded-full px-4 py-2 text-sm text-white hover:bg-green-700"
                             >
                               Review
                             </button>
-                            <button
-                              onClick={() => openDeleteModal(r)}
-                              className="bg-red-reject cursor-pointer rounded-full px-4 py-2 text-sm text-gray-200 hover:bg-red-700"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                          <button
-                            onClick={() => handleViewEntity(r)}
-                            className="cursor-pointer rounded-full bg-zinc-700 px-4 py-2 text-sm text-white hover:bg-zinc-600"
-                          >
-                            View Entity
-                          </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -217,15 +209,8 @@ export function ReportPage() {
           onClose={closeModal}
           report={selected}
           onReview={handleReview}
+          onReject={handleReject}
           onViewEntity={selected ? () => handleViewEntity(selected) : undefined}
-        />
-        <DeleteModal
-          isOpen={isDeleteOpen}
-          onClose={() => setIsDeleteOpen(false)}
-          title="Reject Report?"
-          message="Are you sure you want to reject this report?"
-          description="Rejecting a report will mark it as resolved."
-          onConfirm={handleConfirmReject}
         />
         <CPSKDetailModal
           isOpen={isCPSKModalOpen}

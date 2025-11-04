@@ -18,7 +18,10 @@ interface ReviewReportModalProps {
   readonly onClose: () => void;
   readonly report?: Report | null;
   readonly onReview?: (status: 'reviewed' | 'resolved', adminNote?: string) => Promise<void>;
-  readonly onReject?: (status: 'reviewed' | 'resolved', adminNote?: string) => Promise<void>;
+  readonly onReject?: (
+    status: 'reviewed' | 'resolved' | 'rejected',
+    adminNote?: string
+  ) => Promise<void>;
   readonly onViewEntity?: () => void;
 }
 
@@ -38,11 +41,6 @@ export default function ReviewReportModal({
     }
   }, [isOpen]);
 
-  const handleReview = async () => {
-    if (!report) return;
-    await onReview?.('reviewed', adminNote || undefined);
-  };
-
   const handleResolve = async () => {
     if (!report) return;
     await onReview?.('resolved', adminNote || undefined);
@@ -50,7 +48,7 @@ export default function ReviewReportModal({
 
   const handleReject = async () => {
     if (!report) return;
-    await onReject?.('resolved', adminNote || 'Report rejected by admin');
+    await onReject?.('rejected', adminNote || 'Report rejected by admin');
   };
 
   const formattedDate = (() => {
@@ -156,14 +154,6 @@ export default function ReviewReportModal({
               disabled={!report}
             >
               Reject
-            </Button>
-
-            <Button
-              onClick={handleReview}
-              className="bg-bright-yellow hover:bg-bright-yellow/85 cursor-pointer rounded-md px-4 py-2 text-black"
-              disabled={!report}
-            >
-              Mark Reviewed
             </Button>
 
             <Button

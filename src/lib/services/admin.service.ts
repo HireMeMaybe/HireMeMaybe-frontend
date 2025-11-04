@@ -7,7 +7,7 @@ import { apiClient, ApiError } from './api-client';
 import type { CPSKUserResponse } from '@/types/cpsk';
 import type { CPSKAccount, PunishmentStruct } from '@/types/admin';
 
-export type ReportStatus = 'pending' | 'reviewed' | 'resolved';
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'rejected';
 export type VerificationStatus = 'pending' | 'verified' | 'unverified';
 export type ReportType = 'user' | 'post';
 
