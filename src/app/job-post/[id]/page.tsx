@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
 import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
+import { capitalize } from '@/lib/utils/string';
 import Loading from '@/app/loading';
 
 // Extend the Session type to include isRegistered
@@ -235,7 +236,7 @@ export default function JobPostDetailPage() {
                     <p className="text-lg font-semibold text-white">{companyName}</p>
                   )}
                   <p className="text-sm text-gray-400">
-                    {companyMetadata || jobPost.location || 'Location not specified'}
+                    { capitalize(companyMetadata) || jobPost.location || 'Location not specified'}
                   </p>
                 </div>
               </div>
