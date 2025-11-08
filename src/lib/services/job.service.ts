@@ -115,18 +115,70 @@ export interface JobPostSummary {
   };
 }
 
-type JobSearchResponse = JobPostSummary[];
+interface JobSearchResponse {
+  jobs: JobPost[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+interface JobPostAnswerPayload {
+  expected_salary: string;
+  id: number;
+  programming_languages: string[];
+  right_to_work: string;
+  year_of_experience: number;
+}
 
 interface JobPostCreateData {
-  title: string;
-  desc: string;
-  exp_lvl: string;
-  location: string;
-  type: string;
-  req: string;
-  tags: string[];
-  expiring?: string;
-  salary?: string;
+  answer: JobPostAnswerPayload;
+  cpsk_id: string;
+  post_id: number;
+  resume_id: number;
+}
+
+interface ApplicationResponse {
+  applications: Array<{
+    answer: {
+      expected_salary: string;
+      id: number;
+      programming_languages: string[];
+      right_to_work: string;
+      year_of_experience: number;
+    };
+    answer_id: number;
+    applied_at: string;
+    cpsk_id: string;
+    id: number;
+    post_id: number;
+    resume_id: number;
+    status: string;
+  }>;
+  first_name: string;
+  id: string;
+  last_name: string;
+  program: string;
+  resume_id: number;
+  soft_skill: string[];
+  user: {
+    createdAt: string;
+    deletedAt: {
+      time: string;
+      valid: boolean;
+    };
+    email: string;
+    id: string;
+    profile_picture: string;
+    punishment: {
+      at: string;
+      end: string;
+      type: string;
+    };
+    tel: string;
+    updatedAt: string;
+    username: string;
+  };
+  year: string;
 }
 
 export class JobService {
@@ -192,7 +244,7 @@ export class JobService {
    */
   static async createJobPost(data: JobPostCreateData): Promise<JobPost> {
     try {
-      return await apiClient.post<JobPost>('/jobpost', data);
+      return await apiClient.post<JobPost>('/application', data);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to create job post: ${error.message}`);
@@ -202,7 +254,21 @@ export class JobService {
   }
 
   /**
-   * Update a job post (PATCH)
+   * Create a new application
+   */
+  static async createApplication(data: JobPostCreateData): Promise<ApplicationResponse> {
+    try {
+      return await apiClient.post<ApplicationResponse>('/application', data);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to create application: ${error.message}`);
+      }
+      throw new Error('Failed to create application');
+    }
+  }
+
+  /**
+   * Update a job post
    */
   static async updateJobPost(jobId: string, data: Partial<JobPostCreateData>): Promise<JobPost> {
     try {
