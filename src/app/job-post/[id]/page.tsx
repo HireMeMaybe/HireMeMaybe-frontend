@@ -151,10 +151,17 @@ export default function JobPostDetailPage() {
 
   const companyUser = jobPost.company_user;
   const companyName = companyUser?.name ?? 'Company';
+  const companyId = companyUser?.id;
   const companyIndustry = companyUser?.industry ?? null;
   const metadataParts = [companyIndustry, jobPost.location].filter(Boolean);
   const companyMetadata = metadataParts.join(' • ');
   const companyInitials = companyName.slice(0, 2).toUpperCase();
+
+  const handleCompanyClick = () => {
+    if (companyId) {
+      router.push(`/company/${companyId}`);
+    }
+  };
 
   return (
     <div className="bg-background text-foreground min-h-screen">
@@ -176,22 +183,57 @@ export default function JobPostDetailPage() {
             {/* Header Section with Company Logo */}
             <div className="mb-6 flex items-start justify-between">
               <div className="flex items-center gap-4">
-                {logoUrl ? (
-                  <Image
-                    src={logoUrl}
-                    alt={companyName}
-                    width={64}
-                    height={64}
-                    unoptimized
-                    className="h-16 w-16 rounded object-cover"
-                  />
+                {companyId ? (
+                  <button
+                    type="button"
+                    onClick={handleCompanyClick}
+                    className="flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80"
+                  >
+                    {logoUrl ? (
+                      <Image
+                        src={logoUrl}
+                        alt={companyName}
+                        width={64}
+                        height={64}
+                        unoptimized
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
+                        {companyInitials}
+                      </div>
+                    )}
+                  </button>
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
-                    {companyInitials}
+                  <div className="flex-shrink-0">
+                    {logoUrl ? (
+                      <Image
+                        src={logoUrl}
+                        alt={companyName}
+                        width={64}
+                        height={64}
+                        unoptimized
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
+                        {companyInitials}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div>
-                  <p className="text-lg font-semibold text-white">{companyName}</p>
+                  {companyId ? (
+                    <button
+                      type="button"
+                      onClick={handleCompanyClick}
+                      className="hover:text-primary-green cursor-pointer text-left text-lg font-semibold text-white transition-colors"
+                    >
+                      {companyName}
+                    </button>
+                  ) : (
+                    <p className="text-lg font-semibold text-white">{companyName}</p>
+                  )}
                   <p className="text-sm text-gray-400">
                     {companyMetadata || jobPost.location || 'Location not specified'}
                   </p>
