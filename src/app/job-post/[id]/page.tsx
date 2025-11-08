@@ -313,14 +313,16 @@ export default function JobPostDetailPage() {
               </p>
             </div>
 
-            {/* Action Button - Only show for non-Company users and non-Admin users */}
-            {session?.role !== 'Company' && !isAdminAuthenticated && (
-              <div className="mt-8">
-                <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
-                  Apply Now
-                </Button>
-              </div>
-            )}
+            {/* Action Button - Only show for CPSK users (not Company, Visitor, or Admin) */}
+            {session?.role !== 'Company' &&
+              session?.role !== 'Visitor' &&
+              !isAdminAuthenticated && (
+                <div className="mt-8">
+                  <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
+                    Apply Now
+                  </Button>
+                </div>
+              )}
           </div>
         </div>
       </div>

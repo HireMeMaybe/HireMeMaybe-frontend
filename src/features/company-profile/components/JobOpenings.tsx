@@ -8,6 +8,7 @@ import type { JobOpening } from '@/types/company';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import EditJobModal from './EditJob';
 import JobCard from './JobCard';
 
@@ -19,6 +20,7 @@ interface JobOpeningsProps {
 
 export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpeningsProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [jobs, setJobs] = useState<JobOpening[]>(jobOpenings);
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
   const [successModalType, setSuccessModalType] = useState<'edit' | 'delete' | null>(null);
@@ -30,9 +32,10 @@ export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpe
     setJobs(jobOpenings);
   }, [jobOpenings]);
 
+  const userRole = session?.backendUser?.role;
+
   const handleApply = (jobId: number) => {
-    console.log('Applied to job:', jobId);
-    // Implement actual application logic
+    router.push(`/application/${jobId}`);
   };
 
   const handleEdit = (jobId: number) => {
@@ -49,7 +52,7 @@ export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpe
 
     if (lastAction === 'edit') {
       // Reload the page to show updated job data
-      window.location.reload();
+      globalThis.location.reload();
     }
   };
 
@@ -111,7 +114,7 @@ export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpe
             key={job.id}
             job={job}
             viewType={viewType}
-            onApply={handleApply}
+            onApply={userRole === 'Visitor' ? undefined : handleApply}
             onEdit={handleEdit}
             onViewApplications={handleViewApplications}
             onDelete={handleDelete}
@@ -139,7 +142,9 @@ export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpe
       <SuccessModal
         isOpen={successModalType !== null}
         onClose={handleSuccessModalClose}
-        title={successModalType === 'delete' ? 'Job Deleted Successfully' : 'Job Updated Successfully'}
+        title={
+          successModalType === 'delete' ? 'Job Deleted Successfully' : 'Job Updated Successfully'
+        }
         message={
           successModalType === 'delete'
             ? 'Your job post has been deleted'
