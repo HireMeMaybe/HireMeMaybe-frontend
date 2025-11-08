@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
 import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
+import { capitalize } from '@/lib/utils/string';
 import Loading from '@/app/loading';
 
 // Extend the Session type to include isRegistered
@@ -151,10 +152,17 @@ export default function JobPostDetailPage() {
 
   const companyUser = jobPost.company_user;
   const companyName = companyUser?.name ?? 'Company';
+  const companyId = companyUser?.id;
   const companyIndustry = companyUser?.industry ?? null;
   const metadataParts = [companyIndustry, jobPost.location].filter(Boolean);
   const companyMetadata = metadataParts.join(' • ');
   const companyInitials = companyName.slice(0, 2).toUpperCase();
+
+  const handleCompanyClick = () => {
+    if (companyId) {
+      router.push(`/company/${companyId}`);
+    }
+  };
 
   return (
     <div className="bg-background text-foreground min-h-screen">
@@ -176,24 +184,59 @@ export default function JobPostDetailPage() {
             {/* Header Section with Company Logo */}
             <div className="mb-6 flex items-start justify-between">
               <div className="flex items-center gap-4">
-                {logoUrl ? (
-                  <Image
-                    src={logoUrl}
-                    alt={companyName}
-                    width={64}
-                    height={64}
-                    unoptimized
-                    className="h-16 w-16 rounded object-cover"
-                  />
+                {companyId ? (
+                  <button
+                    type="button"
+                    onClick={handleCompanyClick}
+                    className="flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80"
+                  >
+                    {logoUrl ? (
+                      <Image
+                        src={logoUrl}
+                        alt={companyName}
+                        width={64}
+                        height={64}
+                        unoptimized
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
+                        {companyInitials}
+                      </div>
+                    )}
+                  </button>
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
-                    {companyInitials}
+                  <div className="flex-shrink-0">
+                    {logoUrl ? (
+                      <Image
+                        src={logoUrl}
+                        alt={companyName}
+                        width={64}
+                        height={64}
+                        unoptimized
+                        className="h-16 w-16 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
+                        {companyInitials}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div>
-                  <p className="text-lg font-semibold text-white">{companyName}</p>
+                  {companyId ? (
+                    <button
+                      type="button"
+                      onClick={handleCompanyClick}
+                      className="hover:text-primary-green cursor-pointer text-left text-lg font-semibold text-white transition-colors"
+                    >
+                      {companyName}
+                    </button>
+                  ) : (
+                    <p className="text-lg font-semibold text-white">{companyName}</p>
+                  )}
                   <p className="text-sm text-gray-400">
-                    {companyMetadata || jobPost.location || 'Location not specified'}
+                    { capitalize(companyMetadata) || jobPost.location || 'Location not specified'}
                   </p>
                 </div>
               </div>
@@ -271,14 +314,16 @@ export default function JobPostDetailPage() {
               </p>
             </div>
 
-            {/* Action Button - Only show for non-Company users and non-Admin users */}
-            {session?.role !== 'Company' && !isAdminAuthenticated && (
-              <div className="mt-8">
-                <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
-                  Apply Now
-                </Button>
-              </div>
-            )}
+            {/* Action Button - Only show for CPSK users (not Company, Visitor, or Admin) */}
+            {session?.role !== 'Company' &&
+              session?.role !== 'Visitor' &&
+              !isAdminAuthenticated && (
+                <div className="mt-8">
+                  <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
+                    Apply Now
+                  </Button>
+                </div>
+              )}
           </div>
         </div>
       </div>

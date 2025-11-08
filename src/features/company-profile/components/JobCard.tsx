@@ -21,6 +21,49 @@ export default function JobCard({
   onViewApplications,
   onDelete,
 }: JobCardProps) {
+  const renderActionButtons = () => {
+    if (viewType === 'owner') {
+      return (
+        <>
+          <Button
+            onClick={() => onEdit?.(job.id)}
+            className="hover:bg-gray-cancel flex cursor-pointer items-center gap-1 rounded-md bg-[#595256] px-4 py-2 text-sm text-white"
+          >
+            <Edit className="h-4 w-4" />
+            Edit
+          </Button>
+          <Button
+            onClick={() => onDelete?.(job.id)}
+            className="bg-red-reject flex cursor-pointer items-center gap-1 rounded-md px-4 py-2 text-sm text-white hover:bg-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </Button>
+          <Button
+            onClick={() => onViewApplications?.(job.id)}
+            className="flex cursor-pointer items-center gap-1 rounded-md bg-[#02BC77] px-4 py-2 text-sm text-white hover:bg-green-700"
+          >
+            <Eye className="h-4 w-4" />
+            View Applications
+          </Button>
+        </>
+      );
+    }
+
+    if (viewType === 'cpsk' && onApply) {
+      return (
+        <Button
+          onClick={() => onApply(job.id)}
+          className="rounded-md bg-[#02BC77] px-6 py-2 text-sm text-white hover:bg-green-700"
+        >
+          Apply
+        </Button>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="border-gray-cancel bg-very-dark-gray flex items-start justify-between rounded-xl border p-4">
       {/* Left Side - Job Info */}
@@ -83,40 +126,7 @@ export default function JobCard({
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
-          {viewType === 'owner' ? (
-            <>
-              <Button
-                onClick={() => onEdit?.(job.id)}
-                className="hover:bg-gray-cancel flex cursor-pointer items-center gap-1 rounded-md bg-[#595256] px-4 py-2 text-sm text-white"
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </Button>
-              <Button
-                onClick={() => onDelete?.(job.id)}
-                className="bg-red-reject flex cursor-pointer items-center gap-1 rounded-md px-4 py-2 text-sm text-white hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-              <Button
-                onClick={() => onViewApplications?.(job.id)}
-                className="flex cursor-pointer items-center gap-1 rounded-md bg-[#02BC77] px-4 py-2 text-sm text-white hover:bg-green-700"
-              >
-                <Eye className="h-4 w-4" />
-                View Applications
-              </Button>
-            </>
-          ) : viewType === 'cpsk' ? (
-            <Button
-              onClick={() => onApply?.(job.id)}
-              className="rounded-md bg-[#02BC77] px-6 py-2 text-sm text-white hover:bg-green-700"
-            >
-              Apply
-            </Button>
-          ) : null}
-        </div>
+        <div className="flex gap-2">{renderActionButtons()}</div>
       </div>
 
       {/* Right Side - Job Info */}

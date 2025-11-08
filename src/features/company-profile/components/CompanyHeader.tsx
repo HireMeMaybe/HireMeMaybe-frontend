@@ -208,8 +208,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                   <div>
                     <h1 className="mb-2 text-3xl font-bold text-white">{company.name}</h1>
                     <p className="text-lighter-gray-text mb-4">
-                      {capitalize(company.industry)} | {mapBackendToDisplay(company.size)} |{' '}
-                      {company.location}
+                      {capitalize(company.industry)} | {mapBackendToDisplay(company.size)} 
                     </p>
 
                     {/* Contact Info */}

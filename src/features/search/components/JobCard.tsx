@@ -76,6 +76,12 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
     window.open(`/job-post/${job.id}`, '_blank');
   };
 
+  const handleCompanyClick = () => {
+    if (job.companyId) {
+      router.push(`/company/${job.companyId}`);
+    }
+  };
+
   const userRole = session?.backendUser?.role;
   const showApplyButton = userRole !== 'Company' && userRole !== 'Visitor';
 
@@ -93,21 +99,51 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
       {/* Header Section with Company Logo and External Link */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded bg-gray-600">
-            {job.logoUrl ? (
-              <Image
-                src={job.logoUrl}
-                alt={job.companyName}
-                width={56}
-                height={56}
-                className="h-full w-full object-contain"
-              />
-            ) : (
-              <div aria-hidden className="h-14 w-14 animate-pulse rounded bg-zinc-600" />
-            )}
-          </div>
+          {job.companyId ? (
+            <button
+              type="button"
+              onClick={handleCompanyClick}
+              className="flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded bg-gray-600 transition-opacity hover:opacity-80"
+            >
+              {job.logoUrl ? (
+                <Image
+                  src={job.logoUrl}
+                  alt={job.companyName}
+                  width={56}
+                  height={56}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <div aria-hidden className="h-14 w-14 animate-pulse rounded bg-zinc-600" />
+              )}
+            </button>
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded bg-gray-600">
+              {job.logoUrl ? (
+                <Image
+                  src={job.logoUrl}
+                  alt={job.companyName}
+                  width={56}
+                  height={56}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <div aria-hidden className="h-14 w-14 animate-pulse rounded bg-zinc-600" />
+              )}
+            </div>
+          )}
           <div>
-            <p className="text-lg text-white">{job.companyName}</p>
+            {job.companyId ? (
+              <button
+                type="button"
+                onClick={handleCompanyClick}
+                className="hover:text-primary-green cursor-pointer text-left text-lg text-white transition-colors"
+              >
+                {job.companyName}
+              </button>
+            ) : (
+              <p className="text-lg text-white">{job.companyName}</p>
+            )}
             <p className="text-sm text-white">{job.location || 'Location not specified'}</p>
             {(job.type || job.expLevel || job.salary) && (
               <div className="mt-2 flex flex-wrap gap-x-3 text-xs text-gray-400">
