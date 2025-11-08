@@ -1,6 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 import { JobApplicationHistory } from '@/types/history';
 import { Button } from '@/components/ui/button';
 
@@ -54,8 +55,28 @@ export default function HistoryCard({ application, selected, onSelect }: History
         selected ? 'border-primary-green border-l-4 bg-gray-900' : ''
       }`}
     >
-      {/* Company Logo Placeholder */}
-      <div className="flex h-12 w-12 items-center justify-center rounded bg-gray-600 text-sm font-semibold text-white">
+      {/* Company Logo */}
+      {application.companyLogo ? (
+        <div className="relative h-12 w-12 overflow-hidden rounded">
+          <Image
+            src={application.companyLogo}
+            alt={`${application.companyName} logo`}
+            fill
+            className="object-cover"
+            onError={(e) => {
+              // Fallback to initials if image fails to load
+              const target = e.target as HTMLImageElement;
+              const parent = target.parentElement;
+              if (parent) parent.style.display = 'none';
+              const fallback = parent?.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = 'flex';
+            }}
+          />
+        </div>
+      ) : null}
+      <div
+        className={`flex h-12 w-12 items-center justify-center rounded bg-gray-600 text-sm font-semibold text-white ${application.companyLogo ? 'hidden' : ''}`}
+      >
         {application.companyName.substring(0, 2).toUpperCase()}
       </div>
 
@@ -99,7 +120,27 @@ export function HistoryDetails({ application }: JobDetailsProps) {
       {/* Header Section with Company Logo and External Link */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
+          {/* Company Logo */}
+          {application.companyLogo ? (
+            <div className="relative h-16 w-16 overflow-hidden rounded">
+              <Image
+                src={application.companyLogo}
+                alt={`${application.companyName} logo`}
+                fill
+                className="object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  const parent = target.parentElement;
+                  if (parent) parent.style.display = 'none';
+                  const fallback = parent?.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+            </div>
+          ) : null}
+          <div
+            className={`flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white ${application.companyLogo ? 'hidden' : ''}`}
+          >
             {application.companyName.substring(0, 2).toUpperCase()}
           </div>
           <div>

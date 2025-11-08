@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { JobApplicationHistory, HistoryFilters } from '@/types/history';
+import { CpskService } from '@/lib/services/cpsk.service';
+import { JobService } from '@/lib/services/job.service';
+import { CompanyService } from '@/lib/services/company.service';
 
 interface UseJobHistoryReturn {
   history: JobApplicationHistory[];
@@ -12,181 +15,159 @@ interface UseJobHistoryReturn {
   refetch: () => Promise<void>;
 }
 
-// Mock data for demonstration
-const mockHistoryData: JobApplicationHistory[] = [
-  {
-    id: 1,
-    jobTitle: 'Full Stack Developer',
-    companyName: 'TechCorp Solutions',
-    location: 'Bangkok, Thailand',
-    status: 'pending',
-    appliedDate: '2024-09-15T08:30:00Z',
-    lastUpdated: '2024-09-15T08:30:00Z',
-    jobType: 'Hybrid',
-    answer: {
-      id: 1,
-      expected_salary: '50,000 - 70,000 THB',
-      experience_level: 'Mid-level',
-      tags: ['JavaScript', 'TypeScript', 'React', 'Node.js'],
-    },
-    postId: 1,
-  },
-  {
-    id: 2,
-    jobTitle: 'Frontend Developer',
-    companyName: 'Digital Agency',
-    location: 'Bangkok, Thailand',
-    status: 'in consideration',
-    appliedDate: '2024-09-12T14:20:00Z',
-    lastUpdated: '2024-09-14T09:15:00Z',
-    jobType: 'Remote',
-    answer: {
-      id: 2,
-      expected_salary: '45,000 - 60,000 THB',
-      experience_level: 'Junior',
-      tags: ['React', 'Vue.js', 'CSS', 'HTML'],
-    },
-    postId: 2,
-  },
-  {
-    id: 3,
-    jobTitle: 'Backend Developer',
-    companyName: 'StartupTech',
-    location: 'Chiang Mai, Thailand',
-    status: 'rejected',
-    appliedDate: '2024-09-10T11:45:00Z',
-    lastUpdated: '2024-09-13T16:30:00Z',
-    jobType: 'Onsite',
-    answer: {
-      id: 3,
-      expected_salary: '40,000 - 55,000 THB',
-      experience_level: 'Junior',
-      tags: ['Python', 'Django', 'PostgreSQL'],
-    },
-    postId: 3,
-  },
-  {
-    id: 4,
-    jobTitle: 'UI/UX Designer',
-    companyName: 'Creative Studio',
-    location: 'Bangkok, Thailand',
-    status: 'pending',
-    appliedDate: '2024-09-08T16:00:00Z',
-    lastUpdated: '2024-09-08T16:00:00Z',
-    jobType: 'Onsite',
-    answer: {
-      id: 4,
-      expected_salary: '30,000 - 40,000 THB',
-      experience_level: 'Junior',
-      tags: ['Figma', 'Adobe XD', 'Sketch', 'UI Design'],
-    },
-    postId: 4,
-  },
-  {
-    id: 5,
-    jobTitle: 'DevOps Engineer',
-    companyName: 'CloudTech',
-    location: 'Bangkok, Thailand',
-    status: 'in consideration',
-    appliedDate: '2024-09-05T10:30:00Z',
-    lastUpdated: '2024-09-11T14:20:00Z',
-    jobType: 'Hybrid',
-    answer: {
-      id: 5,
-      expected_salary: '60,000 - 80,000 THB',
-      experience_level: 'Mid-level',
-      tags: ['Docker', 'Kubernetes', 'AWS', 'Python'],
-    },
-    postId: 5,
-  },
-  {
-    id: 6,
-    jobTitle: 'Mobile Developer',
-    companyName: 'AppWorks',
-    location: 'Bangkok, Thailand',
-    status: 'pending',
-    appliedDate: '2024-09-03T13:15:00Z',
-    lastUpdated: '2024-09-03T13:15:00Z',
-    jobType: 'Remote',
-    answer: {
-      id: 6,
-      expected_salary: '50,000 - 65,000 THB',
-      experience_level: 'Mid-level',
-      tags: ['React Native', 'Flutter', 'Swift', 'Kotlin'],
-    },
-    postId: 6,
-  },
-  {
-    id: 7,
-    jobTitle: 'Data Scientist',
-    companyName: 'DataCorp',
-    location: 'Bangkok, Thailand',
-    status: 'rejected',
-    appliedDate: '2024-09-01T09:00:00Z',
-    lastUpdated: '2024-09-07T11:45:00Z',
-    jobType: 'Onsite',
-    answer: {
-      id: 7,
-      expected_salary: '70,000 - 90,000 THB',
-      experience_level: 'Senior',
-      tags: ['Python', 'R', 'SQL', 'TensorFlow'],
-    },
-    postId: 7,
-  },
-  {
-    id: 8,
-    jobTitle: 'Product Manager',
-    companyName: 'InnovateTech',
-    location: 'Bangkok, Thailand',
-    status: 'in consideration',
-    appliedDate: '2024-08-28T15:30:00Z',
-    lastUpdated: '2024-09-09T10:20:00Z',
-    jobType: 'Hybrid',
-    answer: {
-      id: 8,
-      experience_level: 'Senior',
-      tags: ['Product Strategy', 'Agile', 'Scrum', 'Analytics'],
-    },
-    postId: 8,
-  },
-];
-
 export function useJobHistory(): UseJobHistoryReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [transformedHistory, setTransformedHistory] = useState<JobApplicationHistory[]>([]);
   const [filters, setFilters] = useState<HistoryFilters>({
     sortBy: 'appliedDate',
     sortOrder: 'desc',
   });
+
+  // Cleanup object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      transformedHistory.forEach((item) => {
+        if (item.companyLogo) {
+          URL.revokeObjectURL(item.companyLogo);
+        }
+      });
+    };
+  }, [transformedHistory]);
 
   const fetchHistoryData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Use mock data for testing
-      console.log('Using mock data for testing...');
+      console.log('Fetching CPSK profile to get application history...');
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Fetch CPSK profile which contains applications array
+      const profile = await CpskService.getProfile();
 
-      // Set mock history data directly
-      setTransformedHistory(mockHistoryData);
+      console.log('Profile data:', profile);
+      console.log('Applications:', profile.applications);
+
+      // Transform applications from profile into JobApplicationHistory format
+      const applications = profile.applications || [];
+
+      // Fetch job post details for each application in parallel
+      const historyItems: JobApplicationHistory[] = await Promise.all(
+        applications.map(async (app) => {
+          // Normalize status to match expected types
+          const normalizedStatus = (app.status || 'pending').toLowerCase();
+          const status: 'pending' | 'in consideration' | 'rejected' =
+            normalizedStatus === 'rejected'
+              ? 'rejected'
+              : normalizedStatus === 'in consideration' || normalizedStatus === 'in_consideration'
+                ? 'in consideration'
+                : 'pending';
+
+          // Fetch job post details
+          let jobTitle = `Job Post #${app.post_id}`;
+          let companyName = 'Company';
+          let location = 'Location';
+          let companyLogo: string | undefined = undefined;
+          let jobType:
+            | 'Full-time'
+            | 'Part-time'
+            | 'Internship'
+            | 'Contract'
+            | 'Onsite'
+            | 'Hybrid'
+            | 'Remote'
+            | undefined = undefined;
+
+          try {
+            const jobPost = await JobService.getJobPostById(app.post_id.toString());
+            console.log(`Fetched job post ${app.post_id}:`, jobPost);
+
+            // Extract job details from the response
+            if (jobPost) {
+              jobTitle = jobPost.title || jobTitle;
+              companyName = jobPost.company_user?.name || companyName;
+              location = jobPost.location || location;
+
+              // Fetch company logo if available
+              const logoId = jobPost.company_user?.logo_id;
+              if (logoId) {
+                try {
+                  const logoBlob = await CompanyService.fetchLogo(logoId);
+                  companyLogo = URL.createObjectURL(logoBlob);
+                  console.log(`Fetched logo for company ${companyName}:`, companyLogo);
+                } catch (logoErr) {
+                  console.warn(`Failed to fetch logo for company ${companyName}:`, logoErr);
+                }
+              }
+
+              // Map job type from backend to expected format
+              const typeMapping: Record<
+                string,
+                | 'Full-time'
+                | 'Part-time'
+                | 'Internship'
+                | 'Contract'
+                | 'Onsite'
+                | 'Hybrid'
+                | 'Remote'
+              > = {
+                'full-time': 'Full-time',
+                fulltime: 'Full-time',
+                'part-time': 'Part-time',
+                parttime: 'Part-time',
+                internship: 'Internship',
+                contract: 'Contract',
+                onsite: 'Onsite',
+                hybrid: 'Hybrid',
+                remote: 'Remote',
+              };
+
+              if (jobPost.type) {
+                const normalizedType = jobPost.type.toLowerCase().replace(/\s+/g, '');
+                jobType = typeMapping[normalizedType];
+              }
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch job post ${app.post_id}:`, err);
+            // Continue with placeholder data if job post fetch fails
+          }
+
+          return {
+            id: app.id,
+            jobTitle,
+            companyName,
+            location,
+            companyLogo,
+            status,
+            appliedDate: app.applied_at,
+            lastUpdated: app.applied_at,
+            jobType,
+            answer: {
+              id: app.answer.id,
+              expected_salary: app.answer.expected_salary,
+              experience_level: `${app.answer.year_of_experience} years`,
+              tags: app.answer.programming_languages || [],
+            },
+            postId: app.post_id,
+          };
+        })
+      );
+
+      console.log('Transformed history items with job details:', historyItems);
+      setTransformedHistory(historyItems);
     } catch (err) {
-      console.error('Error with mock data:', err);
-      setError('Failed to load mock application history');
+      console.error('Error fetching application history:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load application history');
+      // Set empty array on error
+      setTransformedHistory([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Always fetch mock data regardless of authentication status for testing
     fetchHistoryData();
   }, [fetchHistoryData]);
-
-  // Transform and filter applications - using mock data directly
-  const [transformedHistory, setTransformedHistory] = useState<JobApplicationHistory[]>([]);
 
   // Helper function to normalize values for comparison
   const normalizeValue = (value: unknown, sortBy: string): unknown => {
