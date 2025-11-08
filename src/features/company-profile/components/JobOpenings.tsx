@@ -9,6 +9,7 @@ import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import EditJobModal from './EditJob';
 import JobCard from './JobCard';
 
@@ -21,6 +22,7 @@ interface JobOpeningsProps {
 export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpeningsProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
   const [jobs, setJobs] = useState<JobOpening[]>(jobOpenings);
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
   const [successModalType, setSuccessModalType] = useState<'edit' | 'delete' | null>(null);
@@ -114,7 +116,7 @@ export default function JobOpenings({ jobOpenings, viewType, companyId }: JobOpe
             key={job.id}
             job={job}
             viewType={viewType}
-            onApply={userRole === 'Visitor' ? undefined : handleApply}
+            onApply={userRole === 'Visitor' || isAdminAuthenticated ? undefined : handleApply}
             onEdit={handleEdit}
             onViewApplications={handleViewApplications}
             onDelete={handleDelete}
