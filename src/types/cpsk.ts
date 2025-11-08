@@ -20,6 +20,22 @@ export interface ProfileData {
   profile_picture?: string | null;
   soft_skill?: string[];
   resume_id?: number | null;
+  applications?: Array<{
+    id: number;
+    cpsk_id: string;
+    post_id: number;
+    answer_id: number;
+    resume_id: number;
+    status: string;
+    applied_at: string;
+    answer: {
+      id: number;
+      programming_languages: string[];
+      year_of_experience: number;
+      expected_salary: string;
+      right_to_work: string;
+    };
+  }>;
 }
 
 export const MAJOR_OPTIONS = [
