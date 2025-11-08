@@ -16,7 +16,10 @@ export default function EditProfilePage() {
   useEffect(() => {
     if (status === 'loading') return; // Still loading, don't redirect yet
 
-    if (status === 'unauthenticated' || !session?.backendToken || !session?.backendUser?.program) {
+    // Only redirect when unauthenticated or missing backend token.
+    // Do NOT redirect based on presence/absence of `backendUser.program` here because
+    // it may be updated asynchronously right after the user saves their profile.
+    if (status === 'unauthenticated' || !session?.backendToken) {
       router.push('/');
     }
   }, [status, session, router]);
