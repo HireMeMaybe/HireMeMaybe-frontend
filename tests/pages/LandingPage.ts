@@ -8,17 +8,19 @@ import { BasePage } from './BasePage';
 export class LandingPage extends BasePage {
   readonly navBar: Locator;
   readonly footer: Locator;
-  readonly searchButton: Locator;
-  readonly loginButton: Locator;
-  readonly registerButton: Locator;
+  readonly joinButton: Locator;
+  readonly companyCard: Locator;
+  readonly cpskCard: Locator;
+  readonly visitorCard: Locator;
 
   constructor(page: Page) {
     super(page);
     this.navBar = page.locator('nav');
     this.footer = page.locator('footer');
-    this.searchButton = page.getByRole('button', { name: /search/i });
-    this.loginButton = page.getByRole('button', { name: /login/i });
-    this.registerButton = page.getByRole('button', { name: /register/i });
+    this.joinButton = page.getByRole('button', { name: /join/i });
+    this.companyCard = page.getByRole('button', { name: /^company\b/i });
+    this.cpskCard = page.getByRole('button', { name: /^cpsk\b/i });
+    this.visitorCard = page.getByRole('button', { name: /^visitor\b/i });
   }
 
   /**
@@ -29,23 +31,30 @@ export class LandingPage extends BasePage {
   }
 
   /**
-   * Click on search button
+   * Click on join button (scrolls to login section)
    */
-  async clickSearch() {
-    await this.searchButton.click();
+  async clickJoin() {
+    await this.joinButton.click();
   }
 
   /**
-   * Click on login button
+   * Click on Company role card
    */
-  async clickLogin() {
-    await this.loginButton.click();
+  async clickCompanyCard() {
+    await this.companyCard.click();
   }
 
   /**
-   * Click on register button
+   * Click on CPSK role card
    */
-  async clickRegister() {
-    await this.registerButton.click();
+  async clickCPSKCard() {
+    await this.cpskCard.click();
+  }
+
+  /**
+   * Click on Visitor role card
+   */
+  async clickVisitorCard() {
+    await this.visitorCard.click();
   }
 }
