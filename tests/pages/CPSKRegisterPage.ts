@@ -6,35 +6,49 @@ import { BasePage } from './BasePage';
  * Page Object Model for CPSK (Career Professional Service Provider) registration
  */
 export class CPSKRegisterPage extends BasePage {
-  readonly nameInput: Locator;
+  readonly firstNameInput: Locator;
+  readonly lastNameInput: Locator;
   readonly emailInput: Locator;
   readonly phoneInput: Locator;
-  readonly specialtySelect: Locator;
-  readonly experienceInput: Locator;
-  readonly certificationInput: Locator;
-  readonly bioTextarea: Locator;
-  readonly documentsUpload: Locator;
-  readonly termsCheckbox: Locator;
+  readonly programRadioGroup: Locator;
+  readonly programCPE: Locator;
+  readonly programSKE: Locator;
+  readonly yearRadioGroup: Locator;
+  readonly yearOptions: Locator;
+  readonly resumeUpload: Locator;
   readonly submitButton: Locator;
-  readonly cancelButton: Locator;
+  readonly confirmDialog: Locator;
+  readonly confirmSubmitButton: Locator;
+  readonly successDialog: Locator;
+  readonly successCloseButton: Locator;
+  readonly loadingDialog: Locator;
+  readonly softSkillInput: Locator;
+  readonly softSkillChips: Locator;
+  readonly softSkillRemoveButtons: Locator;
   readonly errorMessages: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.nameInput = page.getByLabel(/name/i);
-    this.emailInput = page.getByLabel(/email/i);
-    this.phoneInput = page.getByLabel(/phone/i);
-    this.specialtySelect = page.getByLabel(/specialty/i);
-    this.experienceInput = page.getByLabel(/experience/i);
-    this.certificationInput = page.getByLabel(/certification/i);
-    this.bioTextarea = page.getByLabel(/bio|about/i);
-    this.documentsUpload = page.locator('input[type="file"]');
-    this.termsCheckbox = page.getByRole('checkbox', {
-      name: /terms|agree/i,
-    });
-    this.submitButton = page.getByRole('button', { name: /submit|register/i });
-    this.cancelButton = page.getByRole('button', { name: /cancel/i });
-    this.errorMessages = page.locator('[data-testid="error-message"]');
+    this.firstNameInput = page.locator('input[name="first_name"]');
+    this.lastNameInput = page.locator('input[name="last_name"]');
+    this.emailInput = page.locator('input[name="email"]');
+    this.phoneInput = page.locator('input[name="phone"]');
+    this.programRadioGroup = page.locator('input[type="radio"][name="program"]');
+    this.programCPE = page.locator('#program-cpe');
+    this.programSKE = page.locator('#program-ske');
+    this.yearRadioGroup = page.locator('input[type="radio"][name="year"]');
+    this.yearOptions = this.yearRadioGroup; // alias
+    this.resumeUpload = page.locator('input[type="file"]');
+    this.submitButton = page.locator('button[type="button"]:has-text("Submit")');
+    this.confirmDialog = page.locator('[role="dialog"]:has-text("Submit?")');
+    this.confirmSubmitButton = this.confirmDialog.locator('button:has-text("Submit")');
+    this.successDialog = page.locator('[role="dialog"]:has-text("Submitted")');
+    this.successCloseButton = this.successDialog.locator('button:has-text("Close")');
+    this.loadingDialog = page.locator('[role="dialog"]:has-text("Submitting Profile")');
+    this.softSkillInput = page.locator('#soft-skill-input');
+    this.softSkillChips = page.locator('span.inline-flex.items-center.rounded-full');
+    this.softSkillRemoveButtons = this.softSkillChips.locator('button[aria-label^="Remove"]');
+    this.errorMessages = page.locator('.text-red-reject, .text-red-600');
   }
 
   /**
@@ -48,37 +62,35 @@ export class CPSKRegisterPage extends BasePage {
    * Fill CPSK registration form
    */
   async fillRegistrationForm(data: {
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone: string;
-    specialty: string;
-    experience: string;
-    certification?: string;
-    bio: string;
-    documentsPath?: string[];
+    program: 'CPE' | 'SKE';
+    year?: string;
+    resumePath?: string; // single file
+    softSkills?: string[];
   }) {
-    await this.nameInput.fill(data.name);
-    await this.emailInput.fill(data.email);
+    await this.firstNameInput.fill(data.firstName);
+    await this.lastNameInput.fill(data.lastName);
     await this.phoneInput.fill(data.phone);
-    await this.specialtySelect.selectOption(data.specialty);
-    await this.experienceInput.fill(data.experience);
+    await this.page.locator(`input[name="program"][value="${data.program}"]`).click();
 
-    if (data.certification) {
-      await this.certificationInput.fill(data.certification);
+    if (data.year) {
+      await this.page.locator(`input[name="year"][value="${data.year}"]`).click();
     }
 
-    await this.bioTextarea.fill(data.bio);
-
-    if (data.documentsPath && data.documentsPath.length > 0) {
-      await this.documentsUpload.setInputFiles(data.documentsPath);
+    if (data.resumePath) {
+      await this.resumeUpload.setInputFiles(data.resumePath);
     }
-  }
 
-  /**
-   * Accept terms and conditions
-   */
-  async acceptTerms() {
-    await this.termsCheckbox.check();
+    if (data.softSkills?.length) {
+      for (const skill of data.softSkills) {
+        await this.softSkillInput.fill(skill);
+        // Press Enter to add
+        await this.softSkillInput.press('Enter');
+      }
+    }
   }
 
   /**
@@ -86,14 +98,24 @@ export class CPSKRegisterPage extends BasePage {
    */
   async submit() {
     await this.submitButton.click();
-    await this.waitForPageLoad();
+    // Wait for confirm dialog, then submit
+    await this.confirmDialog.waitFor({ state: 'visible' });
+    await this.confirmSubmitButton.click();
+    // Either loading then success or direct success
+    await Promise.race([
+      this.successDialog.waitFor({ state: 'visible' }),
+      this.page.waitForURL(/\/profile$/),
+    ]);
   }
 
   /**
    * Cancel registration
    */
   async cancel() {
-    await this.cancelButton.click();
+    // Open confirm modal then cancel by clicking its Cancel button
+    await this.submitButton.click();
+    await this.confirmDialog.waitFor({ state: 'visible' });
+    await this.confirmDialog.locator('button:has-text("Cancel")').click();
   }
 
   /**
