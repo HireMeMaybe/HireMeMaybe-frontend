@@ -8,10 +8,12 @@ import { BasePage } from '../BasePage';
 export class AdminDashboardPage extends BasePage {
   readonly pageTitle: Locator;
   readonly statsCards: Locator;
-  readonly totalUsersCard: Locator;
-  readonly totalCompaniesCard: Locator;
   readonly totalJobPostsCard: Locator;
-  readonly pendingVerificationsCard: Locator;
+  readonly openReportsCard: Locator;
+  readonly verifiedCompaniesCard: Locator;
+  readonly activeCPSKCard: Locator;
+  readonly totalVisitorsCard: Locator;
+  readonly unverifiedCompaniesCard: Locator;
   readonly navigationMenu: Locator;
   readonly logoutButton: Locator;
 
@@ -26,12 +28,14 @@ export class AdminDashboardPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.pageTitle = page.getByRole('heading', { name: /dashboard/i });
-    this.statsCards = page.locator('[data-testid="stat-card"]');
-    this.totalUsersCard = page.locator('[data-testid="total-users"]');
-    this.totalCompaniesCard = page.locator('[data-testid="total-companies"]');
-    this.totalJobPostsCard = page.locator('[data-testid="total-job-posts"]');
-    this.pendingVerificationsCard = page.locator('[data-testid="pending-verifications"]');
-    this.navigationMenu = page.locator('nav[data-testid="admin-nav"]');
+    this.statsCards = page.locator('.stat-card');
+    this.totalJobPostsCard = page.locator('.stat-card:has-text("Total Job Posts")');
+    this.openReportsCard = page.locator('.stat-card:has-text("Open Reports")');
+    this.verifiedCompaniesCard = page.locator('.stat-card:has-text("Verified Companies")');
+    this.activeCPSKCard = page.locator('.stat-card:has-text("Active CPSK")');
+    this.totalVisitorsCard = page.locator('.stat-card:has-text("Total Visitors")');
+    this.unverifiedCompaniesCard = page.locator('.stat-card:has-text("Unverified Companies")');
+    this.navigationMenu = page.locator('nav.admin-nav');
     this.logoutButton = page.getByRole('button', { name: /logout/i });
 
     // Navigation
@@ -59,20 +63,6 @@ export class AdminDashboardPage extends BasePage {
   }
 
   /**
-   * Get total users count
-   */
-  async getTotalUsers() {
-    return await this.totalUsersCard.textContent();
-  }
-
-  /**
-   * Get total companies count
-   */
-  async getTotalCompanies() {
-    return await this.totalCompaniesCard.textContent();
-  }
-
-  /**
    * Get total job posts count
    */
   async getTotalJobPosts() {
@@ -80,10 +70,38 @@ export class AdminDashboardPage extends BasePage {
   }
 
   /**
-   * Get pending verifications count
+   * Get open reports count
    */
-  async getPendingVerifications() {
-    return await this.pendingVerificationsCard.textContent();
+  async getOpenReports() {
+    return await this.openReportsCard.textContent();
+  }
+
+  /**
+   * Get verified companies count
+   */
+  async getVerifiedCompanies() {
+    return await this.verifiedCompaniesCard.textContent();
+  }
+
+  /**
+   * Get active CPSK count
+   */
+  async getActiveCPSK() {
+    return await this.activeCPSKCard.textContent();
+  }
+
+  /**
+   * Get total visitors count
+   */
+  async getTotalVisitors() {
+    return await this.totalVisitorsCard.textContent();
+  }
+
+  /**
+   * Get unverified companies count
+   */
+  async getUnverifiedCompanies() {
+    return await this.unverifiedCompaniesCard.textContent();
   }
 
   /**
