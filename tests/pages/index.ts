@@ -8,16 +8,9 @@ export { BasePage } from './BasePage';
 
 // Public Pages
 export { LandingPage } from './LandingPage';
-export { AuthPage } from './AuthPage';
-export { SearchPage } from './SearchPage';
-export { JobPostPage } from './JobPostPage';
-export { JobDetailPage } from './JobDetailPage';
-export { ProfilePage } from './ProfilePage';
 export { ApplicationPage } from './ApplicationPage';
-export { CompanyProfilePage } from './CompanyProfilePage';
 export { CompanyRegisterPage } from './CompanyRegisterPage';
 export { CPSKRegisterPage } from './CPSKRegisterPage';
-export { HistoryPage } from './HistoryPage';
 
 // Admin Pages
 export { AdminLoginPage } from './admin/AdminLoginPage';

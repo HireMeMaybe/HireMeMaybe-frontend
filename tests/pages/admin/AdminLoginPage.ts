@@ -10,17 +10,15 @@ export class AdminLoginPage extends BasePage {
   readonly passwordInput: Locator;
   readonly loginButton: Locator;
   readonly errorMessage: Locator;
-  readonly forgotPasswordLink: Locator;
+  readonly showPasswordButton: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.usernameInput = page.getByLabel(/username|email/i);
-    this.passwordInput = page.getByLabel(/password/i);
-    this.loginButton = page.getByRole('button', { name: /login|sign in/i });
+    this.usernameInput = page.locator('#username');
+    this.passwordInput = page.locator('#password');
+    this.loginButton = page.getByRole('button', { name: /sign in/i });
     this.errorMessage = page.locator('[data-testid="error-message"]');
-    this.forgotPasswordLink = page.getByRole('link', {
-      name: /forgot password/i,
-    });
+    this.showPasswordButton = page.locator('[data-testid="toggle-password-visibility"]');
   }
 
   /**
@@ -52,5 +50,12 @@ export class AdminLoginPage extends BasePage {
    */
   async getErrorMessage() {
     return await this.errorMessage.textContent();
+  }
+
+  /**
+   * Toggle password visibility
+   */
+  async togglePasswordVisibility() {
+    await this.showPasswordButton.click();
   }
 }

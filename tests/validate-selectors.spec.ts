@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { CompanyRegisterPage, LandingPage, CPSKRegisterPage } from './pages';
 
 test.describe('Selector smoke validation', () => {
@@ -41,5 +42,16 @@ test.describe('Selector smoke validation', () => {
     await expect(cpskRegister.resumeUpload).toBeVisible();
     await expect(cpskRegister.softSkillInput).toBeVisible();
     await expect(cpskRegister.submitButton).toBeVisible();
+  });
+
+  test('Admin login page components', async ({ page }) => {
+    const adminLogin = new AdminLoginPage(page);
+    await adminLogin.navigate();
+
+    await expect(adminLogin.usernameInput).toBeVisible();
+    await expect(adminLogin.passwordInput).toBeVisible();
+    await expect(adminLogin.loginButton).toBeVisible();
+    await expect(adminLogin.showPasswordButton).toBeVisible();
+    await expect(adminLogin.errorMessage).toBeHidden();
   });
 });
