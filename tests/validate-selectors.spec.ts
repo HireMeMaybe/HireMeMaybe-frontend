@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { CompanyRegisterPage, LandingPage, CPSKRegisterPage } from './pages';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 
 test.describe('Selector smoke validation', () => {
   test('Landing page basic elements', async ({ page }) => {
@@ -53,5 +54,19 @@ test.describe('Selector smoke validation', () => {
     await expect(adminLogin.loginButton).toBeVisible();
     await expect(adminLogin.showPasswordButton).toBeVisible();
     await expect(adminLogin.errorMessage).toBeHidden();
+  });
+
+  test('Admin dashboard page components', async ({ page }) => {
+    const adminDashboard = new AdminDashboardPage(page);
+    // Login first before accessing dashboard
+    await adminDashboard.loginAndNavigate();
+
+    await expect(adminDashboard.totalJobPostsCard).toBeVisible();
+    await expect(adminDashboard.openReportsCard).toBeVisible();
+    await expect(adminDashboard.verifiedCompaniesCard).toBeVisible();
+    await expect(adminDashboard.activeCPSKCard).toBeVisible();
+    await expect(adminDashboard.totalVisitorsCard).toBeVisible();
+    await expect(adminDashboard.unverifiedCompaniesCard).toBeVisible();
+    await expect(adminDashboard.sidebar).toBeVisible();
   });
 });

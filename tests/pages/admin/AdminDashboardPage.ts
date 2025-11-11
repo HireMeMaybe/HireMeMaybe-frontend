@@ -1,21 +1,21 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from '../BasePage';
+import { AdminLoginPage } from './AdminLoginPage';
 
 /**
  * Admin Dashboard Page
  * Page Object Model for admin dashboard
  */
 export class AdminDashboardPage extends BasePage {
-  readonly pageTitle: Locator;
-  readonly statsCards: Locator;
+  private readonly loginPage: AdminLoginPage;
   readonly totalJobPostsCard: Locator;
   readonly openReportsCard: Locator;
   readonly verifiedCompaniesCard: Locator;
   readonly activeCPSKCard: Locator;
   readonly totalVisitorsCard: Locator;
   readonly unverifiedCompaniesCard: Locator;
-  readonly navigationMenu: Locator;
-  readonly logoutButton: Locator;
+  readonly sidebar: Locator;
+  readonly dashboardTitle: Locator;
 
   // Navigation links
   readonly companyVerificationLink: Locator;
@@ -24,21 +24,25 @@ export class AdminDashboardPage extends BasePage {
   readonly manageJobPostsLink: Locator;
   readonly manageVisitorsLink: Locator;
   readonly reportsLink: Locator;
+  readonly dashboardLink: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.pageTitle = page.getByRole('heading', { name: /dashboard/i });
-    this.statsCards = page.locator('.stat-card');
-    this.totalJobPostsCard = page.locator('.stat-card:has-text("Total Job Posts")');
-    this.openReportsCard = page.locator('.stat-card:has-text("Open Reports")');
-    this.verifiedCompaniesCard = page.locator('.stat-card:has-text("Verified Companies")');
-    this.activeCPSKCard = page.locator('.stat-card:has-text("Active CPSK")');
-    this.totalVisitorsCard = page.locator('.stat-card:has-text("Total Visitors")');
-    this.unverifiedCompaniesCard = page.locator('.stat-card:has-text("Unverified Companies")');
-    this.navigationMenu = page.locator('nav.admin-nav');
-    this.logoutButton = page.getByRole('button', { name: /logout/i });
+    this.loginPage = new AdminLoginPage(page);
 
-    // Navigation
+    // Stat cards - using text content to identify them
+    this.totalJobPostsCard = page.getByText('Total Job Posts').locator('..');
+    this.openReportsCard = page.getByText('Open Reports').locator('..');
+    this.verifiedCompaniesCard = page.getByText('Verified Companies').locator('..');
+    this.activeCPSKCard = page.getByText('Active CPSK').locator('..');
+    this.totalVisitorsCard = page.getByText('Total Visitors').locator('..');
+    this.unverifiedCompaniesCard = page.getByText('Unverified Companies').locator('..');
+
+    this.sidebar = page.locator('nav');
+    this.dashboardTitle = page.getByRole('heading', { name: /admin dashboard/i });
+
+    // Navigation links in sidebar
+    this.dashboardLink = page.getByRole('link', { name: /^dashboard$/i });
     this.companyVerificationLink = page.getByRole('link', {
       name: /company verification/i,
     });
@@ -52,7 +56,7 @@ export class AdminDashboardPage extends BasePage {
     this.manageVisitorsLink = page.getByRole('link', {
       name: /manage visitors/i,
     });
-    this.reportsLink = page.getByRole('link', { name: /reports/i });
+    this.reportsLink = page.getByRole('link', { name: /review reports/i });
   }
 
   /**
@@ -60,6 +64,18 @@ export class AdminDashboardPage extends BasePage {
    */
   async navigate() {
     await this.goto('/admin/dashboard');
+  }
+
+  /**
+   * Login and navigate to admin dashboard
+   * @param username - Admin username (default: 'admin')
+   * @param password - Admin password (default: 'trustmebro')
+   */
+  async loginAndNavigate(username: string = 'admin', password: string = 'trustmebro') {
+    await this.loginPage.navigate();
+    await this.loginPage.login(username, password);
+    // After successful login, should redirect to dashboard
+    await this.waitForPageLoad();
   }
 
   /**
@@ -153,10 +169,10 @@ export class AdminDashboardPage extends BasePage {
   }
 
   /**
-   * Logout from admin panel
+   * Navigate to dashboard page
    */
-  async logout() {
-    await this.logoutButton.click();
+  async goToDashboard() {
+    await this.dashboardLink.click();
     await this.waitForPageLoad();
   }
 }
