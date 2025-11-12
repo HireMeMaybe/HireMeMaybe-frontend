@@ -72,13 +72,13 @@ export class CompanyProfilePage extends BasePage {
       .filter({ has: page.locator('svg.lucide-phone') });
 
     // Job openings section - from JobOpenings.tsx
-    this.jobOpeningsSection = page.getByRole('heading', { name: /job openings/i });
-    this.jobOpeningsTitle = page.getByRole('heading', { name: /job openings/i });
+    this.jobOpeningsSection = page.getByRole('heading', { name: /^current job openings$/i }); // h2
+    this.jobOpeningsTitle = page.getByRole('heading', { name: /^current job openings$/i });
     this.jobCards = page.locator('div').filter({ has: page.getByRole('heading', { level: 3 }) }); // Job cards
-    this.createJobButton = page.getByRole('button', { name: /create job|post job/i });
+    this.createJobButton = page.getByRole('button', { name: /post new job/i }); // "Post New Job"
     this.viewApplicationsButton = page.getByRole('button', { name: /view applications/i });
-    this.editJobButton = page.getByRole('button', { name: /edit job/i });
-    this.deleteJobButton = page.getByRole('button', { name: /delete job/i });
+    this.editJobButton = page.getByRole('button', { name: /edit/i });
+    this.deleteJobButton = page.getByRole('button', { name: /delete/i });
 
     // Edit profile modal - from EditProfileModal.tsx
     this.editProfileModal = page.getByRole('heading', { name: /edit profile/i });

@@ -49,9 +49,9 @@ export class ApplicationPage extends BasePage {
     super(page);
 
     // Page elements
-    this.pageTitle = page.getByRole('heading', { name: /^application form$/i });
-    this.jobTitle = page.locator('text=Job not found'); // fallback if job doesn't exist
-    this.companyName = page.locator('text=Back to Search');
+    this.pageTitle = page.getByRole('heading', { name: /^application form$/i }); // h1: "Application form"
+    this.jobTitle = page.getByText(/job not found/i); // Error state if job doesn't exist
+    this.companyName = page.getByRole('button', { name: /back to search/i }); // Button in error state
 
     // Form fields - match actual labels from component
     this.nameInput = page.getByLabel(/^name\*$/i);

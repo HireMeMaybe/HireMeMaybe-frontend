@@ -48,8 +48,8 @@ export class JobPostPage extends BasePage {
     super(page);
 
     // Page elements - based on JobPostForm.tsx
-    this.pageTitle = page.getByRole('heading', { name: /job posting/i });
-    this.pageDescription = page.getByText(/fill in the details/i);
+    this.pageTitle = page.getByRole('heading', { name: /^job posting$/i }); // h1: "Job Posting"
+    this.pageDescription = page.getByRole('heading', { name: /^job details$/i }); // h2: "Job Details"
 
     // Form fields - match actual label text
     this.openingPositionInput = page.getByLabel(/opening position|job title/i);

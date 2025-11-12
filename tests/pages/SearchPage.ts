@@ -67,10 +67,11 @@ export class SearchPage extends BasePage {
     super(page);
 
     // Page elements - based on SearchPage.tsx
-    this.pageTitle = page.getByRole('heading', { name: /search|find jobs/i });
+    // Note: SearchPage doesn't have a page title heading, starts with search bar
+    this.pageTitle = page.getByRole('heading').first(); // Fallback if heading exists
 
-    // Search bar
-    this.searchInput = page.getByPlaceholder(/search/i);
+    // Search bar - match actual placeholder
+    this.searchInput = page.getByPlaceholder(/search for job titles/i);
     this.searchButton = page.getByRole('button', { name: /search/i }).first();
 
     // Filters - based on SearchFilters.tsx
@@ -83,10 +84,8 @@ export class SearchPage extends BasePage {
     this.clearFiltersButton = page.getByRole('button', { name: /clear filters|reset/i });
     this.applyFiltersButton = page.getByRole('button', { name: /apply filters/i });
 
-    // Sort controls
-    this.sortButton = page
-      .getByRole('button')
-      .filter({ has: page.locator('svg.lucide-arrow-down-up') });
+    // Sort controls - match actual button text "Newest first" / "Oldest first"
+    this.sortButton = page.getByRole('button', { name: /newest first|oldest first/i });
     this.sortDropdown = page.locator('select, div[role="listbox"]');
 
     // Job cards - based on JobCard.tsx

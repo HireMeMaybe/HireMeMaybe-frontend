@@ -51,8 +51,8 @@ export class JobApplicationsPage extends BasePage {
     super(page);
 
     // Page elements - based on JobApplications.tsx
-    this.pageTitle = page.getByRole('heading', { level: 1 });
-    this.pageDescription = page.getByText(/applications received/i);
+    this.pageTitle = page.getByRole('heading', { level: 1 }); // h1: "{jobPost.title} Applications"
+    this.pageDescription = page.getByText(/applications received/i); // p: "X applications received"
     this.backButton = page.getByRole('button', { name: /back to company profile/i });
 
     // Job information

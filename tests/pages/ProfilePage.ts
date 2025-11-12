@@ -62,7 +62,8 @@ export class ProfilePage extends BasePage {
     super(page);
 
     // Page elements - based on Profile.tsx
-    this.pageTitle = page.getByRole('heading', { name: /profile/i });
+    // Note: Profile page doesn't have a "Profile" heading, h1 is the user's full name
+    this.pageTitle = page.getByRole('heading', { level: 1 }).first(); // h1: User's full name
     this.editProfileButton = page.getByRole('button', { name: /^edit profile$/i });
 
     // Profile header

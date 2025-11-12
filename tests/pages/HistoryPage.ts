@@ -47,11 +47,11 @@ export class HistoryPage extends BasePage {
     super(page);
 
     // Page elements - based on HistoryPage.tsx
-    this.pageTitle = page.getByRole('heading', { name: /^history$/i });
-    this.pageDescription = page.locator('text=/applications/i');
+    this.pageTitle = page.getByRole('heading', { name: /^history$/i }); // h1: "History"
+    this.pageDescription = page.getByText(/review your job applied activity/i); // p: description text
 
-    // Sorting controls
-    this.sortButton = page.locator('svg.lucide-chevron-down').locator('..');
+    // Sorting controls - match actual button text
+    this.sortButton = page.getByRole('button', { name: /^newest$|^oldest$/i }); // Button shows "Newest" or "Oldest"
     this.refreshButton = page.getByRole('button', { name: /refresh/i });
 
     // History list - HistoryCard components
