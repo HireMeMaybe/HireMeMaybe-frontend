@@ -21,3 +21,12 @@ export { ManageJobPostsPage } from './admin/ManageJobPostsPage';
 export { ManageVisitorsPage } from './admin/ManageVisitorsPage';
 export { ReportPage } from './admin/ReportPage';
 export { VisitorReportsPage } from './admin/VisitorReportsPage';
+
+// User Pages
+export { ApplicationPage } from './ApplicationPage';
+export { CompanyProfilePage } from './CompanyProfilePage';
+export { HistoryPage } from './HistoryPage';
+export { JobApplicationsPage } from './JobApplicationsPage';
+export { JobPostPage } from './JobPostPage';
+export { ProfilePage } from './ProfilePage';
+export { SearchPage } from './SearchPage';
