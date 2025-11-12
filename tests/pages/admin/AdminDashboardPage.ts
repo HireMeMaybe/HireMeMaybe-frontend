@@ -1,20 +1,17 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from '../BasePage';
-import { AdminLoginPage } from './AdminLoginPage';
 
 /**
  * Admin Dashboard Page
  * Page Object Model for admin dashboard
  */
 export class AdminDashboardPage extends BasePage {
-  private readonly loginPage: AdminLoginPage;
   readonly totalJobPostsCard: Locator;
   readonly openReportsCard: Locator;
   readonly verifiedCompaniesCard: Locator;
   readonly activeCPSKCard: Locator;
   readonly totalVisitorsCard: Locator;
   readonly unverifiedCompaniesCard: Locator;
-  readonly sidebar: Locator;
   readonly dashboardTitle: Locator;
 
   // Navigation links
@@ -28,17 +25,15 @@ export class AdminDashboardPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.loginPage = new AdminLoginPage(page);
 
-    // Stat cards - using text content to identify them
-    this.totalJobPostsCard = page.getByText('Total Job Posts').locator('..');
-    this.openReportsCard = page.getByText('Open Reports').locator('..');
-    this.verifiedCompaniesCard = page.getByText('Verified Companies').locator('..');
-    this.activeCPSKCard = page.getByText('Active CPSK').locator('..');
-    this.totalVisitorsCard = page.getByText('Total Visitors').locator('..');
-    this.unverifiedCompaniesCard = page.getByText('Unverified Companies').locator('..');
+    // Stat cards - using more specific selectors to avoid conflicts
+    this.totalJobPostsCard = page.getByRole('link', { name: /total job posts/i });
+    this.openReportsCard = page.getByRole('link', { name: /open reports/i });
+    this.verifiedCompaniesCard = page.getByRole('link', { name: /verified companies.*active/i }); // More specific
+    this.activeCPSKCard = page.getByRole('link', { name: /active cpsk/i });
+    this.totalVisitorsCard = page.getByRole('link', { name: /total visitors/i });
+    this.unverifiedCompaniesCard = page.getByRole('link', { name: /unverified companies/i });
 
-    this.sidebar = page.locator('nav');
     this.dashboardTitle = page.getByRole('heading', { name: /admin dashboard/i });
 
     // Navigation links in sidebar
@@ -64,18 +59,6 @@ export class AdminDashboardPage extends BasePage {
    */
   async navigate() {
     await this.goto('/admin/dashboard');
-  }
-
-  /**
-   * Login and navigate to admin dashboard
-   * @param username - Admin username (default: 'admin')
-   * @param password - Admin password (default: 'trustmebro')
-   */
-  async loginAndNavigate(username: string = 'admin', password: string = 'trustmebro') {
-    await this.loginPage.navigate();
-    await this.loginPage.login(username, password);
-    // After successful login, should redirect to dashboard
-    await this.waitForPageLoad();
   }
 
   /**

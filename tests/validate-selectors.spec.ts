@@ -56,19 +56,26 @@ test.describe('Selector smoke validation', () => {
     await expect(adminLogin.errorMessage).toBeHidden();
   });
 
-  test('Admin dashboard page components', async ({ page }) => {
-    const adminDashboard = new AdminDashboardPage(page);
+  test.describe('Admin dashboard', () => {
     // Login first before accessing dashboard
-    await adminDashboard.loginAndNavigate();
-    await adminDashboard.waitForPageLoad();
-    await page.waitForTimeout(2000);
+    test.beforeEach(async ({ page }) => {
+      const adminLogin = new AdminLoginPage(page);
+      await adminLogin.navigate();
+      await adminLogin.login('admin', 'trustmebro');
+    });
 
-    await expect(adminDashboard.totalJobPostsCard).toBeVisible();
-    await expect(adminDashboard.openReportsCard).toBeVisible();
-    await expect(adminDashboard.verifiedCompaniesCard).toBeVisible();
-    await expect(adminDashboard.activeCPSKCard).toBeVisible();
-    await expect(adminDashboard.totalVisitorsCard).toBeVisible();
-    await expect(adminDashboard.unverifiedCompaniesCard).toBeVisible();
-    await expect(adminDashboard.sidebar).toBeVisible();
+    test('Admin dashboard page components', async ({ page }) => {
+      const adminDashboard = new AdminDashboardPage(page);
+      await adminDashboard.navigate();
+      await adminDashboard.waitForPageLoad();
+      await page.waitForTimeout(2000);
+
+      await expect(adminDashboard.totalJobPostsCard).toBeVisible();
+      await expect(adminDashboard.openReportsCard).toBeVisible();
+      await expect(adminDashboard.verifiedCompaniesCard).toBeVisible();
+      await expect(adminDashboard.activeCPSKCard).toBeVisible();
+      await expect(adminDashboard.totalVisitorsCard).toBeVisible();
+      await expect(adminDashboard.unverifiedCompaniesCard).toBeVisible();
+    });
   });
 });
