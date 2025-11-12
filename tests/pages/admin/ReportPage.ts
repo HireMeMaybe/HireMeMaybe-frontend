@@ -39,8 +39,8 @@ export class ReportPage extends BasePage {
       name: /review reports/i,
       level: 1,
     });
-    this.pageDescription = page.getByText(/review and manage user-submitted reports/i);
-    this.sectionTitle = page.getByRole('heading', { name: /all reports/i });
+    this.pageDescription = page.getByText(/handle reports from students and companies/i);
+    this.sectionTitle = page.getByRole('heading', { name: /open reports/i });
 
     // Table elements
     this.table = page.locator('table');
@@ -48,14 +48,14 @@ export class ReportPage extends BasePage {
       reportedEntity: page.locator('th').filter({ hasText: /reported entity/i }),
       type: page.locator('th').filter({ hasText: /type/i }),
       reason: page.locator('th').filter({ hasText: /reason/i }),
-      reportedBy: page.locator('th').filter({ hasText: /reported by/i }),
+      reportedBy: page.locator('th').filter({ hasText: /^reporter$/i }),
       submitted: page.locator('th').filter({ hasText: /submitted/i }),
       status: page.locator('th').filter({ hasText: /status/i }),
       actions: page.locator('th').filter({ hasText: /actions/i }),
     };
 
     // Actions
-    this.viewEntityButtons = page.getByRole('button', { name: /view entity/i });
+    this.viewEntityButtons = page.getByRole('button', { name: /^view$/i });
     this.reviewButtons = page.getByRole('button', { name: /review/i });
 
     // Modals

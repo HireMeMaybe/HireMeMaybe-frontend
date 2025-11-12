@@ -42,15 +42,15 @@ export class ManageCPSKPage extends BasePage {
       name: /manage cpsk/i,
       level: 1,
     });
-    this.pageDescription = page.getByText(/oversee and moderate cpsk accounts/i);
-    this.sectionTitle = page.getByRole('heading', { name: /cpsk accounts overview/i });
+    this.pageDescription = page.getByText(/manage cpsk accounts/i);
+    this.sectionTitle = page.getByRole('heading', { name: /cpsk accounts/i });
 
     // Table elements
     this.table = page.locator('table');
     this.tableHeaders = {
-      name: page.locator('th').filter({ hasText: /name/i }),
-      email: page.locator('th').filter({ hasText: /email/i }),
-      department: page.locator('th').filter({ hasText: /department/i }),
+      name: page.locator('th').filter({ hasText: /^cpsk$/i }),
+      email: page.locator('th').filter({ hasText: /major/i }),
+      department: page.locator('th').filter({ hasText: /year/i }),
       status: page.locator('th').filter({ hasText: /status/i }),
       actions: page.locator('th').filter({ hasText: /actions/i }),
     };

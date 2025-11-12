@@ -60,6 +60,8 @@ test.describe('Selector smoke validation', () => {
     const adminDashboard = new AdminDashboardPage(page);
     // Login first before accessing dashboard
     await adminDashboard.loginAndNavigate();
+    await adminDashboard.waitForPageLoad();
+    await page.waitForTimeout(2000);
 
     await expect(adminDashboard.totalJobPostsCard).toBeVisible();
     await expect(adminDashboard.openReportsCard).toBeVisible();

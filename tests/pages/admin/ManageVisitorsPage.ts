@@ -42,15 +42,15 @@ export class ManageVisitorsPage extends BasePage {
       name: /manage visitors/i,
       level: 1,
     });
-    this.pageDescription = page.getByText(/oversee and moderate visitor accounts/i);
-    this.sectionTitle = page.getByRole('heading', { name: /visitors overview/i });
+    this.pageDescription = page.getByText(/view and manage visitor accounts/i);
+    this.sectionTitle = page.getByRole('heading', { name: /visitor accounts/i });
 
     // Table elements
     this.table = page.locator('table');
     this.tableHeaders = {
       name: page.locator('th').filter({ hasText: /name/i }),
       email: page.locator('th').filter({ hasText: /email/i }),
-      reports: page.locator('th').filter({ hasText: /reports/i }),
+      reports: page.locator('th').filter({ hasText: /report count/i }),
       status: page.locator('th').filter({ hasText: /status/i }),
       actions: page.locator('th').filter({ hasText: /actions/i }),
     };

@@ -42,15 +42,15 @@ export class ManageCompaniesPage extends BasePage {
       name: /manage companies/i,
       level: 1,
     });
-    this.pageDescription = page.getByText(/oversee and moderate company accounts/i);
-    this.sectionTitle = page.getByRole('heading', { name: /companies overview/i });
+    this.pageDescription = page.getByText(/manage all verified companies on the platform/i);
+    this.sectionTitle = page.getByRole('heading', { name: /all companies/i });
 
     // Table elements
     this.table = page.locator('table');
     this.tableHeaders = {
-      companyName: page.locator('th').filter({ hasText: /company name/i }),
+      companyName: page.locator('th').filter({ hasText: /^company$/i }),
       industry: page.locator('th').filter({ hasText: /industry/i }),
-      contact: page.locator('th').filter({ hasText: /contact/i }),
+      contact: page.locator('th').filter({ hasText: /verified date/i }),
       status: page.locator('th').filter({ hasText: /status/i }),
       actions: page.locator('th').filter({ hasText: /actions/i }),
     };
