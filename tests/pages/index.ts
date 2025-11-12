@@ -14,3 +14,10 @@ export { CPSKRegisterPage } from './CPSKRegisterPage';
 // Admin Pages
 export { AdminLoginPage } from './admin/AdminLoginPage';
 export { AdminDashboardPage } from './admin/AdminDashboardPage';
+export { CompanyVerificationPage } from './admin/CompanyVerificationPage';
+export { ManageCompaniesPage } from './admin/ManageCompaniesPage';
+export { ManageCPSKPage } from './admin/ManageCPSKPage';
+export { ManageJobPostsPage } from './admin/ManageJobPostsPage';
+export { ManageVisitorsPage } from './admin/ManageVisitorsPage';
+export { ReportPage } from './admin/ReportPage';
+export { VisitorReportsPage } from './admin/VisitorReportsPage';
