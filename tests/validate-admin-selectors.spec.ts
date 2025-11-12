@@ -324,17 +324,20 @@ test.describe('Admin Pages - Modal Interactions', () => {
   test('Company Verification - Reconsider modal', async ({ page }) => {
     const companyVerification = new CompanyVerificationPage(page);
     await companyVerification.navigate();
+    await companyVerification.waitForPageLoad();
+    // Wait for data to load from API
+    await page.waitForTimeout(2000);
 
     const hasData = await companyVerification.getCompanyCount();
 
     if (hasData > 0) {
       // Open reconsider modal
       await companyVerification.reconsiderCompany(0);
-      await expect(companyVerification.reconsiderModal).toBeVisible();
+      await expect(companyVerification.reconsiderModal).toBeVisible({ timeout: 10000 });
 
       // Close modal
       await companyVerification.cancelReconsider();
-      await expect(companyVerification.reconsiderModal).not.toBeVisible();
+      await expect(companyVerification.reconsiderModal).not.toBeVisible({ timeout: 10000 });
 
       console.log('✅ Reconsider modal can open and close');
     } else {
@@ -345,6 +348,9 @@ test.describe('Admin Pages - Modal Interactions', () => {
   test('Manage Companies - Suspend modal', async ({ page }) => {
     const manageCompanies = new ManageCompaniesPage(page);
     await manageCompanies.navigate();
+    await manageCompanies.waitForPageLoad();
+    // Wait for data to load from API
+    await page.waitForTimeout(2000);
 
     const hasData = await manageCompanies.getCompanyCount();
     const hasSuspendBtn = (await manageCompanies.suspendButtons.count()) > 0;
@@ -352,11 +358,11 @@ test.describe('Admin Pages - Modal Interactions', () => {
     if (hasData > 0 && hasSuspendBtn) {
       // Open suspend modal
       await manageCompanies.suspendCompany(0);
-      await expect(manageCompanies.suspendModal).toBeVisible();
+      await expect(manageCompanies.suspendModal).toBeVisible({ timeout: 10000 });
 
       // Close modal
       await manageCompanies.cancelSuspendAction();
-      await expect(manageCompanies.suspendModal).not.toBeVisible();
+      await expect(manageCompanies.suspendModal).not.toBeVisible({ timeout: 10000 });
 
       console.log('✅ Suspend modal can open and close');
     } else {
@@ -367,17 +373,20 @@ test.describe('Admin Pages - Modal Interactions', () => {
   test('Manage Job Posts - Delete modal', async ({ page }) => {
     const manageJobPosts = new ManageJobPostsPage(page);
     await manageJobPosts.navigate();
+    await manageJobPosts.waitForPageLoad();
+    // Wait for data to load from API
+    await page.waitForTimeout(2000);
 
     const hasData = await manageJobPosts.getJobPostCount();
 
     if (hasData > 0) {
       // Open delete modal
       await manageJobPosts.deleteJobPost(0);
-      await expect(manageJobPosts.deleteModal).toBeVisible();
+      await expect(manageJobPosts.deleteModal).toBeVisible({ timeout: 10000 });
 
       // Close modal
       await manageJobPosts.cancelDelete();
-      await expect(manageJobPosts.deleteModal).not.toBeVisible();
+      await expect(manageJobPosts.deleteModal).not.toBeVisible({ timeout: 10000 });
 
       console.log('✅ Delete modal can open and close');
     } else {
@@ -388,17 +397,20 @@ test.describe('Admin Pages - Modal Interactions', () => {
   test('Report Page - Review modal', async ({ page }) => {
     const reportPage = new ReportPage(page);
     await reportPage.navigate();
+    await reportPage.waitForPageLoad();
+    // Wait for data to load from API
+    await page.waitForTimeout(2000);
 
     const hasData = await reportPage.getReportCount();
 
     if (hasData > 0) {
       // Open review modal
       await reportPage.reviewReport(0);
-      await expect(reportPage.reviewModal).toBeVisible();
+      await expect(reportPage.reviewModal).toBeVisible({ timeout: 10000 });
 
       // Close modal
       await reportPage.closeReviewModal();
-      await expect(reportPage.reviewModal).not.toBeVisible();
+      await expect(reportPage.reviewModal).not.toBeVisible({ timeout: 10000 });
 
       console.log('✅ Review modal can open and close');
     } else {
