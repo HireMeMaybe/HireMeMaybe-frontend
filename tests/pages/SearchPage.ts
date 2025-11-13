@@ -5,6 +5,12 @@ import { BasePage } from './BasePage';
  * Page Object for Job Search Page
  * Based on: src/features/search/components/SearchPage.tsx
  * Route: /search
+ *
+ * Role-based access:
+ * - CPSK: Can view jobs and apply
+ * - Company: Can view jobs (read-only, no apply button)
+ * - Visitor: Can view jobs (read-only, no apply button)
+ * - Admin: Can view jobs (read-only, no apply button)
  */
 export class SearchPage extends BasePage {
   // Page elements
@@ -41,10 +47,10 @@ export class SearchPage extends BasePage {
 
   // Job details panel/modal
   readonly jobDetailsPanel: Locator;
+  readonly jobDetailsTitle: Locator;
   readonly jobDescription: Locator;
   readonly jobRequirements: Locator;
-  readonly applyButton: Locator;
-  readonly viewCompanyButton: Locator;
+  readonly externalLinkIcon: Locator;
 
   // Pagination
   readonly paginationContainer: Locator;
@@ -99,16 +105,16 @@ export class SearchPage extends BasePage {
     this.jobTags = page.locator('span.rounded-full, span.badge');
     this.postedDate = page.locator('text=/posted|ago|days|hours/i');
 
-    // Job details panel/modal
-    this.jobDetailsPanel = page
-      .locator('div')
-      .filter({ has: page.getByRole('heading', { level: 2 }) });
-    this.jobDescription = page.locator('p, div').filter({ hasText: /description|about/i });
+    // Job details panel/modal - based on JobDetails component in JobCard.tsx
+    this.jobDetailsPanel = page.locator(
+      'div.bg-very-dark-gray.rounded-lg.border.border-gray-700.p-6'
+    );
+    this.jobDetailsTitle = page.locator('div.bg-very-dark-gray h1.text-2xl');
+    this.jobDescription = page.locator('div.text-sm.leading-relaxed.whitespace-pre-line');
     this.jobRequirements = page
       .locator('p, div')
       .filter({ hasText: /requirements|qualifications/i });
-    this.applyButton = page.getByRole('button', { name: /^apply$|apply now/i });
-    this.viewCompanyButton = page.getByRole('button', { name: /view company/i });
+    this.externalLinkIcon = page.locator('svg.lucide-external-link');
 
     // Pagination - based on Pagination.tsx
     this.paginationContainer = page.locator('nav[aria-label="pagination"]');
@@ -127,6 +133,28 @@ export class SearchPage extends BasePage {
     // Error state
     this.errorMessage = page.locator('div.text-red-400');
   }
+
+  // ==================== Role-specific Buttons ====================
+
+  /**
+   * Get Apply button in job details panel (CPSK only)
+   * Visible only for CPSK role, hidden for Company, Visitor, and Admin
+   */
+  getApplyButton(): Locator {
+    return this.page.getByRole('button', { name: /^apply$/i });
+  }
+
+  /**
+   * Get company logo/name button that links to company profile
+   * Available for all roles
+   */
+  getCompanyProfileButton(): Locator {
+    return this.jobDetailsPanel.locator('button').filter({
+      has: this.page.locator('img[alt*="logo"], div.rounded.bg-gray-600'),
+    });
+  }
+
+  // ==================== Navigation ====================
 
   /**
    * Navigate to search page
@@ -216,19 +244,54 @@ export class SearchPage extends BasePage {
     };
   }
 
+  // ==================== Role-specific Actions ====================
+
   /**
-   * Apply to a job from details panel
+   * Apply to a job from details panel (CPSK only)
    */
   async applyToJob(): Promise<void> {
-    await this.applyButton.click();
+    await this.getApplyButton().click();
   }
 
   /**
-   * View company profile from job details
+   * View company profile from job details (All roles)
    */
-  async viewCompany(): Promise<void> {
-    await this.viewCompanyButton.click();
+  async viewCompanyProfile(): Promise<void> {
+    await this.getCompanyProfileButton().click();
   }
+
+  /**
+   * Open job post in new tab via external link icon (All roles)
+   */
+  async openJobInNewTab(): Promise<void> {
+    await this.externalLinkIcon.click();
+  }
+
+  // ==================== View State Checks ====================
+
+  /**
+   * Check if Apply button is visible (indicates CPSK view)
+   */
+  async canApplyToJobs(): Promise<boolean> {
+    // First check if job details panel is visible
+    const isDetailsVisible = await this.jobDetailsPanel.isVisible();
+    if (!isDetailsVisible) return false;
+
+    return await this.getApplyButton().isVisible();
+  }
+
+  /**
+   * Check if viewing as read-only (Company, Visitor, or Admin)
+   */
+  async isReadOnlyView(): Promise<boolean> {
+    const isDetailsVisible = await this.jobDetailsPanel.isVisible();
+    if (!isDetailsVisible) return false;
+
+    const hasApplyButton = await this.getApplyButton().isVisible();
+    return !hasApplyButton;
+  }
+
+  // ==================== Pagination ====================
 
   /**
    * Go to next page

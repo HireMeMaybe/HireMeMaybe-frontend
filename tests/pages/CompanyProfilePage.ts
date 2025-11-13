@@ -5,13 +5,18 @@ import { BasePage } from './BasePage';
  * Page Object for Company Profile View
  * Based on: src/features/company-profile/components/CompanyProfile.tsx
  * Route: /company/[id]
+ *
+ * Supports multiple viewpoints:
+ * - owner: Company owner (can edit profile, manage jobs)
+ * - cpsk: Job seeker (can apply to jobs)
+ * - company: Other company viewing (read-only)
+ * - visitor: Visitor viewing (read-only)
  */
 export class CompanyProfilePage extends BasePage {
   // Header elements
   readonly companyName: Locator;
   readonly companyLogo: Locator;
   readonly companyCover: Locator;
-  readonly editProfileButton: Locator;
 
   // Company information
   readonly aboutSection: Locator;
@@ -26,23 +31,7 @@ export class CompanyProfilePage extends BasePage {
   readonly jobOpeningsSection: Locator;
   readonly jobOpeningsTitle: Locator;
   readonly jobCards: Locator;
-  readonly createJobButton: Locator;
-  readonly viewApplicationsButton: Locator;
-  readonly editJobButton: Locator;
-  readonly deleteJobButton: Locator;
-
-  // Edit profile modal
-  readonly editProfileModal: Locator;
-  readonly editCompanyNameInput: Locator;
-  readonly editEmailInput: Locator;
-  readonly editPhoneInput: Locator;
-  readonly editOverviewInput: Locator;
-  readonly editIndustrySelect: Locator;
-  readonly editSizeSelect: Locator;
-  readonly uploadLogoButton: Locator;
-  readonly uploadCoverButton: Locator;
-  readonly saveChangesButton: Locator;
-  readonly cancelEditButton: Locator;
+  readonly noJobsMessage: Locator;
 
   // Loading and error states
   readonly loadingSpinner: Locator;
@@ -56,7 +45,6 @@ export class CompanyProfilePage extends BasePage {
     this.companyName = page.getByRole('heading', { level: 1 }); // h1 with company name
     this.companyLogo = page.locator('div.overflow-hidden.rounded-xl img, svg.lucide-building');
     this.companyCover = page.locator('div.h-85.bg-gray-800');
-    this.editProfileButton = page.getByRole('button', { name: /^edit profile$/i });
 
     // Company information - from CompanyHeader.tsx
     this.aboutSection = page.getByRole('heading', { name: /^about us$/i });
@@ -74,24 +62,10 @@ export class CompanyProfilePage extends BasePage {
     // Job openings section - from JobOpenings.tsx
     this.jobOpeningsSection = page.getByRole('heading', { name: /^current job openings$/i }); // h2
     this.jobOpeningsTitle = page.getByRole('heading', { name: /^current job openings$/i });
-    this.jobCards = page.locator('div').filter({ has: page.getByRole('heading', { level: 3 }) }); // Job cards
-    this.createJobButton = page.getByRole('button', { name: /post new job/i }); // "Post New Job"
-    this.viewApplicationsButton = page.getByRole('button', { name: /view applications/i });
-    this.editJobButton = page.getByRole('button', { name: /edit/i });
-    this.deleteJobButton = page.getByRole('button', { name: /delete/i });
-
-    // Edit profile modal - from EditProfileModal.tsx
-    this.editProfileModal = page.getByRole('heading', { name: /edit profile/i });
-    this.editCompanyNameInput = page.getByLabel(/company name/i);
-    this.editEmailInput = page.getByLabel(/email/i);
-    this.editPhoneInput = page.getByLabel(/phone/i);
-    this.editOverviewInput = page.getByLabel(/overview/i);
-    this.editIndustrySelect = page.getByLabel(/industry/i);
-    this.editSizeSelect = page.getByLabel(/company size/i);
-    this.uploadLogoButton = page.getByRole('button', { name: /upload logo/i });
-    this.uploadCoverButton = page.getByRole('button', { name: /upload cover|upload banner/i });
-    this.saveChangesButton = page.getByRole('button', { name: /save|update/i });
-    this.cancelEditButton = page.getByRole('button', { name: /cancel/i });
+    this.jobCards = page.locator(
+      'div.border-gray-cancel.bg-very-dark-gray.flex.items-start.justify-between.rounded-xl.border.p-4'
+    );
+    this.noJobsMessage = page.getByText(/no job openings available/i);
 
     // Loading and error states
     this.loadingSpinner = page.getByText(/loading company profile/i);
@@ -99,25 +73,177 @@ export class CompanyProfilePage extends BasePage {
     this.notFoundMessage = page.getByText(/company not found/i);
   }
 
+  // ==================== Role-specific Buttons ====================
+
+  /**
+   * Get Edit Profile button (Owner only)
+   * Visible only in owner viewpoint
+   */
+  getEditProfileButton(): Locator {
+    return this.page.getByRole('button', { name: /^edit profile$/i });
+  }
+
+  /**
+   * Get Post New Job button (Owner only)
+   * Visible only in owner viewpoint
+   */
+  getPostNewJobButton(): Locator {
+    return this.page.getByRole('button', { name: /post new job/i });
+  }
+
+  /**
+   * Get Apply button for a specific job (CPSK only)
+   * Visible only in cpsk viewpoint
+   */
+  getApplyButton(jobCard?: Locator): Locator {
+    const baseLocator = jobCard || this.page;
+    return baseLocator.getByRole('button', { name: /^apply$/i });
+  }
+
+  /**
+   * Get Edit Job button for a specific job (Owner only)
+   * Visible only in owner viewpoint
+   */
+  getEditJobButton(jobCard?: Locator): Locator {
+    const baseLocator = jobCard || this.page;
+    return baseLocator
+      .getByRole('button', { name: /^edit$/i })
+      .filter({ has: this.page.locator('svg.lucide-edit') });
+  }
+
+  /**
+   * Get Delete Job button for a specific job (Owner only)
+   * Visible only in owner viewpoint
+   */
+  getDeleteJobButton(jobCard?: Locator): Locator {
+    const baseLocator = jobCard || this.page;
+    return baseLocator
+      .getByRole('button', { name: /^delete$/i })
+      .filter({ has: this.page.locator('svg.lucide-trash-2') });
+  }
+
+  /**
+   * Get View Applications button for a specific job (Owner only)
+   * Visible only in owner viewpoint
+   */
+  getViewApplicationsButton(jobCard?: Locator): Locator {
+    const baseLocator = jobCard || this.page;
+    return baseLocator
+      .getByRole('button', { name: /view applications/i })
+      .filter({ has: this.page.locator('svg.lucide-eye') });
+  }
+
+  // ==================== Edit Profile Modal ====================
+
+  /**
+   * Get Edit Profile Modal elements
+   * Only accessible after clicking Edit Profile button in owner view
+   */
+  getEditProfileModal() {
+    return {
+      modal: this.page.getByRole('heading', { name: /edit profile/i }),
+      companyNameInput: this.page.getByLabel(/company name/i),
+      emailInput: this.page.getByLabel(/email/i),
+      phoneInput: this.page.getByLabel(/phone/i),
+      overviewInput: this.page.getByLabel(/overview/i),
+      industrySelect: this.page.getByLabel(/industry/i),
+      sizeSelect: this.page.getByLabel(/company size/i),
+      uploadLogoButton: this.page.getByRole('button', { name: /upload logo/i }),
+      uploadCoverButton: this.page.getByRole('button', { name: /upload cover|upload banner/i }),
+      saveButton: this.page.getByRole('button', { name: /save|update/i }),
+      cancelButton: this.page.getByRole('button', { name: /cancel/i }),
+    };
+  }
+
+  // ==================== Job Card Components ====================
+
+  /**
+   * Get a specific job card by index
+   */
+  getJobCard(index: number): Locator {
+    return this.jobCards.nth(index);
+  }
+
+  /**
+   * Get job card elements for a specific job
+   */
+  getJobCardElements(jobCard: Locator) {
+    return {
+      title: jobCard.locator('h3').first(),
+      experienceLevel: jobCard
+        .locator('span')
+        .filter({ hasText: /entry|junior|mid|senior|lead/i })
+        .first(),
+      salary: jobCard.locator('span.text-primary-green').first(),
+      location: jobCard.locator('p.text-lighter-gray-text').first(),
+      tags: jobCard.locator('span.rounded-full.bg-zinc-800'),
+      applicationCount: jobCard
+        .locator('div')
+        .filter({ has: this.page.locator('svg.lucide-users') }),
+      postedDate: jobCard.locator('div.text-xs.text-zinc-400').filter({ hasText: /posted/i }),
+      expiryDate: jobCard.locator('div.text-xs.text-orange-400').filter({ hasText: /expires/i }),
+      externalLink: jobCard.locator('a[href^="/job-post/"]').locator('svg.lucide-external-link'),
+    };
+  }
+
+  // ==================== Navigation ====================
+
   /**
    * Navigate to company profile page
+   * @param companyId - The company ID to navigate to
+   * @param viewType - The view type (owner, cpsk, company, visitor)
    */
-  async navigate(companyId: string, viewType: 'owner' | 'visitor' = 'visitor'): Promise<void> {
-    const params = viewType === 'owner' ? '?view=company' : '';
+  async navigate(companyId: string, viewType?: 'owner' | 'cpsk' | 'company'): Promise<void> {
+    const params = viewType ? `?view=${viewType}` : '';
     await this.page.goto(`/company/${companyId}${params}`);
     await this.waitForPageLoad();
   }
+
+  // ==================== View State Checks ====================
+
+  /**
+   * Check if viewing as owner (edit buttons visible)
+   */
+  async isOwnerView(): Promise<boolean> {
+    return await this.getEditProfileButton().isVisible();
+  }
+
+  /**
+   * Check if viewing as CPSK (apply buttons visible)
+   */
+  async isCPSKView(): Promise<boolean> {
+    const jobCount = await this.jobCards.count();
+    if (jobCount === 0) return false;
+    return await this.getApplyButton(this.getJobCard(0)).isVisible();
+  }
+
+  /**
+   * Check if viewing as read-only (no action buttons)
+   */
+  async isReadOnlyView(): Promise<boolean> {
+    const hasEditProfile = await this.getEditProfileButton().isVisible();
+    const jobCount = await this.jobCards.count();
+
+    if (hasEditProfile) return false;
+    if (jobCount === 0) return true;
+
+    const hasApply = await this.getApplyButton(this.getJobCard(0)).isVisible();
+    return !hasApply;
+  }
+
+  // ==================== Owner Actions ====================
 
   /**
    * Open edit profile modal (owner only)
    */
   async openEditProfile(): Promise<void> {
-    await this.editProfileButton.click();
-    await this.editProfileModal.waitFor({ state: 'visible' });
+    const modal = this.getEditProfileModal();
+    await this.getEditProfileButton().click();
+    await modal.modal.waitFor({ state: 'visible' });
   }
 
   /**
-   * Update company profile information
+   * Update company profile information (owner only)
    */
   async updateProfile(data: {
     companyName?: string;
@@ -127,108 +253,158 @@ export class CompanyProfilePage extends BasePage {
     industry?: string;
     size?: string;
   }): Promise<void> {
-    if (data.companyName) await this.editCompanyNameInput.fill(data.companyName);
-    if (data.email) await this.editEmailInput.fill(data.email);
-    if (data.phone) await this.editPhoneInput.fill(data.phone);
-    if (data.overview) await this.editOverviewInput.fill(data.overview);
-    if (data.industry) await this.editIndustrySelect.selectOption(data.industry);
-    if (data.size) await this.editSizeSelect.selectOption(data.size);
+    const modal = this.getEditProfileModal();
+    if (data.companyName) await modal.companyNameInput.fill(data.companyName);
+    if (data.email) await modal.emailInput.fill(data.email);
+    if (data.phone) await modal.phoneInput.fill(data.phone);
+    if (data.overview) await modal.overviewInput.fill(data.overview);
+    if (data.industry) await modal.industrySelect.selectOption(data.industry);
+    if (data.size) await modal.sizeSelect.selectOption(data.size);
   }
 
   /**
-   * Upload company logo
+   * Upload company logo (owner only)
    */
   async uploadLogo(filePath: string): Promise<void> {
-    const fileInput = this.uploadLogoButton.locator('input[type="file"]');
+    const modal = this.getEditProfileModal();
+    const fileInput = modal.uploadLogoButton.locator('input[type="file"]');
     await fileInput.setInputFiles(filePath);
   }
 
   /**
-   * Upload company cover image
+   * Upload company cover image (owner only)
    */
   async uploadCover(filePath: string): Promise<void> {
-    const fileInput = this.uploadCoverButton.locator('input[type="file"]');
+    const modal = this.getEditProfileModal();
+    const fileInput = modal.uploadCoverButton.locator('input[type="file"]');
     await fileInput.setInputFiles(filePath);
   }
 
   /**
-   * Save profile changes
+   * Save profile changes (owner only)
    */
   async saveProfileChanges(): Promise<void> {
-    await this.saveChangesButton.click();
-    await this.editProfileModal.waitFor({ state: 'hidden' });
+    const modal = this.getEditProfileModal();
+    await modal.saveButton.click();
+    await modal.modal.waitFor({ state: 'hidden' });
   }
 
   /**
-   * Cancel profile editing
+   * Cancel profile editing (owner only)
    */
   async cancelProfileEdit(): Promise<void> {
-    await this.cancelEditButton.click();
-  }
-
-  /**
-   * Get list of job openings
-   */
-  async getJobOpenings(): Promise<number> {
-    return await this.jobCards.count();
-  }
-
-  /**
-   * Click on a job card by index
-   */
-  async clickJobCard(index: number): Promise<void> {
-    await this.jobCards.nth(index).click();
-  }
-
-  /**
-   * View applications for a specific job (owner only)
-   */
-  async viewApplications(jobIndex: number): Promise<void> {
-    await this.jobCards.nth(jobIndex).locator(this.viewApplicationsButton).click();
-  }
-
-  /**
-   * Edit a specific job (owner only)
-   */
-  async editJob(jobIndex: number): Promise<void> {
-    await this.jobCards.nth(jobIndex).locator(this.editJobButton).click();
-  }
-
-  /**
-   * Delete a specific job (owner only)
-   */
-  async deleteJob(jobIndex: number): Promise<void> {
-    await this.jobCards.nth(jobIndex).locator(this.deleteJobButton).click();
+    const modal = this.getEditProfileModal();
+    await modal.cancelButton.click();
   }
 
   /**
    * Create a new job posting (owner only)
    */
   async createJob(): Promise<void> {
-    await this.createJobButton.click();
+    await this.getPostNewJobButton().click();
   }
 
   /**
-   * Get company information
+   * Edit a specific job (owner only)
+   * @param jobIndex - The index of the job to edit (0-based)
+   */
+  async editJob(jobIndex: number): Promise<void> {
+    const jobCard = this.getJobCard(jobIndex);
+    await this.getEditJobButton(jobCard).click();
+  }
+
+  /**
+   * Delete a specific job (owner only)
+   * @param jobIndex - The index of the job to delete (0-based)
+   */
+  async deleteJob(jobIndex: number): Promise<void> {
+    const jobCard = this.getJobCard(jobIndex);
+    await this.getDeleteJobButton(jobCard).click();
+  }
+
+  /**
+   * View applications for a specific job (owner only)
+   * @param jobIndex - The index of the job to view applications (0-based)
+   */
+  async viewApplications(jobIndex: number): Promise<void> {
+    const jobCard = this.getJobCard(jobIndex);
+    await this.getViewApplicationsButton(jobCard).click();
+  }
+
+  // ==================== CPSK Actions ====================
+
+  /**
+   * Apply to a specific job (CPSK only)
+   * @param jobIndex - The index of the job to apply to (0-based)
+   */
+  async applyToJob(jobIndex: number): Promise<void> {
+    const jobCard = this.getJobCard(jobIndex);
+    await this.getApplyButton(jobCard).click();
+  }
+
+  // ==================== Common Actions ====================
+
+  /**
+   * Get the count of job openings
+   */
+  async getJobOpeningsCount(): Promise<number> {
+    return await this.jobCards.count();
+  }
+
+  /**
+   * Click on a job card by index to view details
+   * @param jobIndex - The index of the job card (0-based)
+   */
+  async clickJobCard(jobIndex: number): Promise<void> {
+    await this.getJobCard(jobIndex).click();
+  }
+
+  /**
+   * Get company information displayed on the page
    */
   async getCompanyInfo(): Promise<{
     name: string;
     industry: string;
     size: string;
-    location: string;
+    email: string;
+    phone: string;
   }> {
     return {
       name: (await this.companyName.textContent()) || '',
       industry: (await this.industryText.textContent()) || '',
       size: (await this.sizeText.textContent()) || '',
-      location: (await this.locationText.textContent()) || '',
+      email: (await this.emailText.textContent()) || '',
+      phone: (await this.phoneText.textContent()) || '',
     };
   }
 
   /**
-   * Check if viewing as owner (edit buttons visible)
+   * Get job information for a specific job card
+   * @param jobIndex - The index of the job card (0-based)
    */
-  async isOwnerView(): Promise<boolean> {
-    return await this.editProfileButton.isVisible();
+  async getJobInfo(jobIndex: number): Promise<{
+    title: string;
+    experienceLevel: string;
+    salary: string;
+    location: string;
+    tags: string[];
+  }> {
+    const jobCard = this.getJobCard(jobIndex);
+    const elements = this.getJobCardElements(jobCard);
+
+    const tagsCount = await elements.tags.count();
+    const tags: string[] = [];
+    for (let i = 0; i < tagsCount; i++) {
+      const tagText = await elements.tags.nth(i).textContent();
+      if (tagText) tags.push(tagText);
+    }
+
+    return {
+      title: (await elements.title.textContent()) || '',
+      experienceLevel: (await elements.experienceLevel.textContent()) || '',
+      salary: (await elements.salary.textContent()) || '',
+      location: (await elements.location.textContent()) || '',
+      tags,
+    };
   }
 }
