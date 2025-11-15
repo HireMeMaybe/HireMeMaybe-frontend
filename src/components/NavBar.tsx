@@ -199,7 +199,7 @@ export default function Navbar() {
           !isUnverifiedCompany &&
           (session?.backendUser?.role === 'Company' ? (
             <a
-              href={`/company/${session.backendUser?.id ?? ''}?view=company`}
+              href={`/company/${session.backendUser?.id ?? ''}/applications`}
               className="flex items-center gap-2 rounded px-3 py-2 hover:bg-white/5"
             >
               <History className="h-4 w-4" />
