@@ -37,6 +37,7 @@ function mapToJobResult(job: JobPostSummary): JobSearchResult | null {
     salary: job.salary,
     expLevel: job.exp_lvl,
     type: job.type,
+    userApply: job.user_apply,
   };
 }
 
