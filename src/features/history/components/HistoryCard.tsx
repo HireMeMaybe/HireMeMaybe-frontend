@@ -1,8 +1,8 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 import { JobApplicationHistory } from '@/types/history';
-import { Button } from '@/components/ui/button';
 
 type HistoryCardProps = {
   readonly application: JobApplicationHistory;
@@ -54,9 +54,20 @@ export default function HistoryCard({ application, selected, onSelect }: History
         selected ? 'border-primary-green border-l-4 bg-gray-900' : ''
       }`}
     >
-      {/* Company Logo Placeholder */}
-      <div className="flex h-12 w-12 items-center justify-center rounded bg-gray-600 text-sm font-semibold text-white">
-        {application.companyName.substring(0, 2).toUpperCase()}
+      {/* Company Logo */}
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gray-600 text-sm font-semibold text-white">
+        {application.companyLogo ? (
+          <Image
+            src={application.companyLogo}
+            alt={application.companyName}
+            width={48}
+            height={48}
+            className="h-full w-full object-contain"
+            unoptimized
+          />
+        ) : (
+          <div aria-hidden className="h-12 w-12 animate-pulse rounded bg-zinc-700" />
+        )}
       </div>
 
       {/* Job Info */}
@@ -99,8 +110,19 @@ export function HistoryDetails({ application }: JobDetailsProps) {
       {/* Header Section with Company Logo and External Link */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
-            {application.companyName.substring(0, 2).toUpperCase()}
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gray-600 text-lg font-bold text-white">
+            {application.companyLogo ? (
+              <Image
+                src={application.companyLogo}
+                alt={application.companyName}
+                width={64}
+                height={64}
+                className="h-full w-full object-contain"
+                unoptimized
+              />
+            ) : (
+              <div aria-hidden className="h-16 w-16 animate-pulse rounded bg-zinc-600" />
+            )}
           </div>
           <div>
             <p className="text-lg text-white">{application.companyName}</p>
@@ -122,11 +144,6 @@ export function HistoryDetails({ application }: JobDetailsProps) {
         </span>
         <span className="text-sm text-gray-400">Applied {formatDate(application.appliedDate)}</span>
       </div>
-
-      {/* View Application Button */}
-      <Button className="bg-primary-green mb-6 cursor-pointer rounded-full px-8 py-3 text-sm text-white hover:bg-green-600">
-        View Application
-      </Button>
 
       {/* Job Description */}
       <div className="text-sm leading-relaxed text-gray-300">
