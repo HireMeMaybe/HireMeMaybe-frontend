@@ -4,11 +4,23 @@
  */
 
 import { apiClient, ApiError } from './api-client';
-import type { ApplicationFormData } from '@/types/application';
 
 interface ApplicationSubmitResponse {
   message: string;
   applicationId?: string;
+}
+
+interface ApplicationSubmitData {
+  answer: {
+    expected_salary: string;
+    programming_languages: string[];
+    right_to_work: string;
+    year_of_experience: number;
+  };
+  cpsk_id: string;
+  post_id: number;
+  resume_id: number;
+  status: string;
 }
 
 export class ApplicationService {
@@ -16,39 +28,33 @@ export class ApplicationService {
    * Submit a job application
    */
   static async submitApplication(
-    jobId: string,
-    data: ApplicationFormData
+    jobId: number,
+    cpskId: string,
+    resumeId: number,
+    data: {
+      expectedSalary: string;
+      programmingLanguages: string[];
+      rightToWork: string;
+      yearOfExperience: number;
+      status?: string;
+    }
   ): Promise<ApplicationSubmitResponse> {
     try {
-      const formData = new FormData();
+      const payload: ApplicationSubmitData = {
+        answer: {
+          expected_salary: data.expectedSalary,
+          programming_languages: data.programmingLanguages,
+          right_to_work: data.rightToWork,
+          year_of_experience: data.yearOfExperience,
+        },
+        cpsk_id: cpskId,
+        post_id: jobId,
+        resume_id: resumeId,
+        status: data.status || 'pending',
+      };
 
-      // Add basic fields
-      formData.append('name', data.name);
-      formData.append('surname', data.surname);
-      formData.append('email', data.email);
-      formData.append('phone', data.phone);
-      formData.append('major', data.major);
-      formData.append('educationLevel', data.educationLevel);
-
-      // Add resume if provided
-      if (data.resume) {
-        formData.append('resume', data.resume);
-      }
-
-      // Add soft skills
-      if (data.soft_skill && data.soft_skill.length > 0) {
-        data.soft_skill.forEach((skill) => {
-          formData.append('softSkills', skill);
-        });
-      }
-
-      // Add questions if provided
-      if (data.questions && data.questions.length > 0) {
-        formData.append('questions', JSON.stringify(data.questions));
-      }
-
-      return await apiClient.post<ApplicationSubmitResponse>(`/jobs/${jobId}/apply`, formData, {
-        useFormData: true,
+      return await apiClient.post<ApplicationSubmitResponse>('/application', payload, {
+        requireAuth: true,
       });
     } catch (error) {
       if (error instanceof ApiError) {
