@@ -85,10 +85,9 @@ interface DashboardStats {
 }
 
 interface ReportSubmitData {
-  reportedEntityId: string;
-  reportedEntityType: 'job' | 'company';
+  reported_id: number;
+  reportedEntityType: 'post' | 'user';
   reason: string;
-  details?: string;
 }
 
 export class AdminService {
@@ -232,7 +231,7 @@ export class AdminService {
     data: ReportSubmitData
   ): Promise<{ message: string; reportId: string }> {
     try {
-      return await apiClient.post('/reports', data);
+      return await apiClient.post(`/report/${data.reportedEntityType}`, data);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to submit report: ${error.message}`);

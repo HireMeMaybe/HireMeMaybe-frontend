@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import { useState } from 'react';
+import ReportModal from '@/components/modals/ReportModal';
+import { AdminService } from '@/lib/services';
+import { SuccessModal } from '@/components/modals';
+import { set } from 'zod';
 
 export interface JobSearchResult {
   id: number | string;
@@ -67,6 +72,9 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
 export function JobDetails({ job }: { readonly job: JobSearchResult }) {
   const router = useRouter();
   const { data: session } = useSession();
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
 
   const handleApply = () => {
     router.push(`/application/${job.id}`);
@@ -180,20 +188,61 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
         )}
       </div>
 
-      {/* Apply Button */}
-      {showApplyButton && (
+      {/* Actions: Apply (if allowed) + Report, wrapped and spaced with justify-between */}
+      <div className="mb-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {showApplyButton && (
+          <Button
+            onClick={handleApply}
+            className="bg-primary-green cursor-pointer rounded-full px-8 py-3 text-sm text-white hover:bg-green-600"
+          >
+            Apply
+          </Button>
+        )}
+
         <Button
-          onClick={handleApply}
-          className="bg-primary-green mb-6 cursor-pointer rounded-full px-8 py-3 text-sm text-white hover:bg-green-600"
+          variant="outline"
+          className="w-full rounded-lg border-white px-8 py-3 text-base font-medium text-white hover:border-red-700 hover:bg-red-700 sm:w-auto"
+          onClick={() => {
+            setShowReportModal(true);
+          }}
         >
-          Apply
+          Report
         </Button>
-      )}
+      </div>
 
       {/* Job Description */}
       <div className="text-sm leading-relaxed whitespace-pre-line text-gray-300">
         {job.description || 'No description provided for this role.'}
       </div>
+
+      {showReportModal && (
+        <ReportModal
+          isOpen={showReportModal}
+          reportType="post"
+          onSubmit={(data) => {
+            try {
+              AdminService.submitReport({
+                reported_id: Number(job.id),
+                reportedEntityType: 'post',
+                reason: data.details,
+              });
+              setReportSuccess(true);
+            } catch (error) {
+              throw error;
+            } finally {
+              setShowReportModal(false);
+            }
+          }}
+          onClose={() => setShowReportModal(false)}
+        />
+      )}
+      {reportSuccess && (
+        <SuccessModal
+          message="Report submitted successfully. Thank you for your feedback."
+          isOpen={reportSuccess}
+          onClose={() => setReportSuccess(false)}
+        />
+      )}
     </div>
   );
 }
