@@ -20,6 +20,7 @@ export interface JobSearchResult {
   salary?: string;
   expLevel?: string;
   type?: string;
+  userApply?: boolean | null;
 }
 
 type JobCardProps = {
@@ -27,8 +28,6 @@ type JobCardProps = {
   readonly selected: boolean;
   readonly onSelect: () => void;
 };
-
-const FALLBACK_LOGO = '/favicon.svg';
 
 export default function JobCard({ job, selected, onSelect }: JobCardProps) {
   return (
@@ -48,6 +47,7 @@ export default function JobCard({ job, selected, onSelect }: JobCardProps) {
             width={48}
             height={48}
             className="h-full w-full object-contain"
+            unoptimized
           />
         ) : (
           <div aria-hidden className="h-12 w-12 animate-pulse rounded bg-zinc-700" />
@@ -83,7 +83,8 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
   };
 
   const userRole = session?.backendUser?.role;
-  const showApplyButton = userRole !== 'Company' && userRole !== 'Visitor';
+  const hasAlreadyApplied = job.userApply === true;
+  const showApplyButton = userRole !== 'Company' && userRole !== 'Visitor' && !hasAlreadyApplied;
 
   const formatPostedDate = (value?: string): string | undefined => {
     if (!value) return undefined;
@@ -112,6 +113,7 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
                   width={56}
                   height={56}
                   className="h-full w-full object-contain"
+                  unoptimized
                 />
               ) : (
                 <div aria-hidden className="h-14 w-14 animate-pulse rounded bg-zinc-600" />
@@ -126,6 +128,7 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
                   width={56}
                   height={56}
                   className="h-full w-full object-contain"
+                  unoptimized
                 />
               ) : (
                 <div aria-hidden className="h-14 w-14 animate-pulse rounded bg-zinc-600" />
