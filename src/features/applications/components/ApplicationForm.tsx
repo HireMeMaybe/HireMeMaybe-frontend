@@ -20,16 +20,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useJobs } from '@/features/search/hooks/useJobs';
 import { ApplicationFormData, EDUCATION_LEVELS, DEFAULT_QUESTIONS } from '@/types/application';
+import type { JobWithQuestions } from '@/types/application';
 import { useState, useEffect } from 'react';
 import { ConfirmModal, SuccessModal, ResumePreviewModal, LoadingModal } from '@/components/modals';
 import { CpskService } from '@/lib/services/cpsk.service';
+import { JobService } from '@/lib/services/job.service';
 import { useSoftSkills } from '@/features/cpsk-register/hooks/useSoftSkills';
 import { useResumeUpload } from '@/features/cpsk-register/hooks/useResumeUpload';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { normalizeUser } from '@/lib/utils/user';
 import { useApplicationSubmit } from '@/features/applications/hooks';
+import { useSession } from 'next-auth/react';
 
 interface ApplicationFormProps {
   readonly jobId: string;
@@ -37,12 +39,47 @@ interface ApplicationFormProps {
 
 export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const router = useRouter();
-  const { jobs } = useJobs();
-  const job = jobs.find((j) => j.id.toString() === jobId);
+  const { data: session } = useSession();
+  const [job, setJob] = useState<JobWithQuestions | null>(null);
+  const [isLoadingJob, setIsLoadingJob] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [hasExistingResume, setHasExistingResume] = useState(false);
+
+  // Fetch job post by ID
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        setIsLoadingJob(true);
+        const jobData = await JobService.getJobPostById(jobId);
+
+        // Map JobPostDetail to JobWithQuestions
+        const mappedJob: JobWithQuestions = {
+          id: jobData.id,
+          title: jobData.title,
+          company: jobData.company_user?.name || 'Unknown Company',
+          location: jobData.location,
+          logoPath: '', // Will be handled separately if needed
+          tags: jobData.tags,
+          description: jobData.desc,
+          postedDate: jobData.post_time,
+          includeDefaultQuestions: true, // Assume default questions for now
+          includeCustomQuestions: false,
+          customQuestionsLink: undefined,
+        };
+
+        setJob(mappedJob);
+      } catch (error) {
+        console.error('Failed to fetch job post:', error);
+        setJob(null);
+      } finally {
+        setIsLoadingJob(false);
+      }
+    };
+
+    fetchJob();
+  }, [jobId]);
 
   const getInitialQuestions = () => {
     if (!job) return [];
@@ -231,17 +268,79 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       }
     }
 
-    const success = await submitApplication(jobId, data);
+    try {
+      // Get CPSK user ID from session
+      const cpskId = session?.backendUser?.id;
+      if (!cpskId) {
+        setValidationMessage('User ID not found. Please log in again.');
+        setIsValidationOpen(true);
+        return;
+      }
 
-    if (success) {
+      // Upload resume if a new one is provided, otherwise use existing resume_id
+      let resumeId = profileData?.resume_id;
+      if (data.resume instanceof File) {
+        await CpskService.uploadResume(data.resume);
+        // After upload, fetch the updated profile to get the new resume_id
+        const updatedProfile = await CpskService.getProfile();
+        resumeId = updatedProfile.resume_id;
+      }
+
+      if (!resumeId) {
+        setValidationMessage('Resume is required. Please upload your resume.');
+        setIsValidationOpen(true);
+        return;
+      }
+
+      // Extract answers from questions
+      const rightToWork =
+        data.questions.find((q) => q.id === 'default_q1')?.answer || 'Not specified';
+      const expectedSalary =
+        data.questions.find((q) => q.id === 'default_q2')?.answer || 'Not specified';
+      const experienceAnswer = data.questions.find((q) => q.id === 'default_q3')?.answer || '';
+
+      // Map experience text to years
+      const experienceMap: Record<string, number> = {
+        'No experience': 0,
+        'Less than 1 year': 0,
+        '1-2 years': 1,
+        '3-5 years': 3,
+        '5+ years': 5,
+      };
+      const yearOfExperience = experienceMap[experienceAnswer] ?? 0;
+
+      // Get programming languages from multiselect question
+      const programmingLanguagesAnswer =
+        data.questions.find((q) => q.id === 'default_q4')?.answer || '';
+      const programmingLanguages = programmingLanguagesAnswer
+        ? programmingLanguagesAnswer.split(', ').filter((lang) => lang.trim())
+        : [];
+
+      const success = await submitApplication(Number(jobId), String(cpskId), resumeId, {
+        expectedSalary,
+        programmingLanguages,
+        rightToWork,
+        yearOfExperience,
+        status: 'pending',
+      });
+
+      if (success) {
+        setMissingRequiredQuestions([]);
+        setIsSuccessOpen(true);
+        setTimeout(() => {
+          router.push('/search');
+        }, 2000);
+      } else {
+        setMissingRequiredQuestions([]);
+        setValidationMessage(submitError || 'Failed to submit application. Please try again.');
+        setIsValidationOpen(true);
+      }
+    } catch (error) {
+      console.error('Error during application submission:', error);
       setMissingRequiredQuestions([]);
-      setIsSuccessOpen(true);
-      setTimeout(() => {
-        router.push('/search');
-      }, 2000);
-    } else {
-      setMissingRequiredQuestions([]);
-      setValidationMessage(submitError || 'Failed to submit application. Please try again.');
+      setValidationMessage(
+        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'
+      );
       setIsValidationOpen(true);
     }
   };
@@ -267,14 +366,14 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     );
   }
 
-  if (isLoading) {
+  if (isLoadingJob || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="text-center text-white">
             <div className="border-primary-green mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"></div>
-            <p className="text-lg">Loading your profile...</p>
-            <p className="text-muted mt-2 text-sm">Please wait while we fetch your information</p>
+            <p className="text-lg">Loading...</p>
+            <p className="text-muted mt-2 text-sm">Please wait while we fetch the information</p>
           </div>
         </div>
       </div>
