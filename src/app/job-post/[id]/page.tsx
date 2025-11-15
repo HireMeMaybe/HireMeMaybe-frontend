@@ -236,7 +236,7 @@ export default function JobPostDetailPage() {
                     <p className="text-lg font-semibold text-white">{companyName}</p>
                   )}
                   <p className="text-sm text-gray-400">
-                    { capitalize(companyMetadata) || jobPost.location || 'Location not specified'}
+                    {capitalize(companyMetadata) || jobPost.location || 'Location not specified'}
                   </p>
                 </div>
               </div>
@@ -317,7 +317,8 @@ export default function JobPostDetailPage() {
             {/* Action Button - Only show for CPSK users (not Company, Visitor, or Admin) */}
             {session?.role !== 'Company' &&
               session?.role !== 'Visitor' &&
-              !isAdminAuthenticated && (
+              !isAdminAuthenticated &&
+              jobPost.user_apply !== true && (
                 <div className="mt-8">
                   <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
                     Apply Now
