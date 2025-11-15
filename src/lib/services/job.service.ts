@@ -79,6 +79,7 @@ export interface JobPostDetail {
   expiring: string;
   applications: JobPostApplication[] | null;
   company_user?: CompanyUserDetail;
+  user_apply?: boolean | null;
 }
 
 interface JobSearchParams {
@@ -113,6 +114,7 @@ export interface JobPostSummary {
     industry?: string;
     location?: string;
   };
+  user_apply?: boolean | null;
 }
 
 type JobSearchResponse = JobPostSummary[];
