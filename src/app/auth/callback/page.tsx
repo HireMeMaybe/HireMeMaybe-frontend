@@ -32,6 +32,7 @@ export default function AuthCallbackPage() {
       });
 
       const payload = await res.json();
+      console.log('Token exchange response payload:', payload);
       if (!res.ok || !payload?.success) {
         throw new Error('backend_exchange');
       }

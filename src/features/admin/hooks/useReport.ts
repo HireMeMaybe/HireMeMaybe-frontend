@@ -68,10 +68,9 @@ export function useReport() {
   }, [fetchReports]);
 
   const submitReport = async (data: {
-    reportedEntityId: string;
-    reportedEntityType: 'job' | 'company';
+    reported_id: number;
+    reportedEntityType: 'post' | 'user';
     reason: string;
-    details?: string;
   }) => {
     try {
       await AdminService.submitReport(data);
