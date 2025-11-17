@@ -27,7 +27,7 @@ export class AdminDashboardPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-        this.userIcon = page
+    this.userIcon = page
       .locator('button[aria-label*="user" i], button:has(svg):has-text("admin")')
       .first();
     // Logout button inside dropdown (initially hidden)
@@ -163,6 +163,21 @@ export class AdminDashboardPage extends BasePage {
    */
   async goToDashboard() {
     await this.dashboardLink.click();
+    await this.waitForPageLoad();
+  }
+
+  /**
+   * Logout from admin dashboard
+   * Clicks user icon to open dropdown menu, then clicks logout button
+   */
+  async logout() {
+    // Click user icon to open dropdown
+    await this.userIcon.click();
+    // Wait for dropdown to appear
+    await this.page.waitForTimeout(300);
+    // Click logout button
+    await this.logoutButton.click();
+    // Wait for navigation to complete
     await this.waitForPageLoad();
   }
 }

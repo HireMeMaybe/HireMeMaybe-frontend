@@ -6,6 +6,8 @@ import { BasePage } from '../BasePage';
  * Page Object Model for admin company verification page
  */
 export class CompanyVerificationPage extends BasePage {
+  readonly userIcon: Locator;
+  readonly logoutButton: Locator;
   readonly pageTitle: Locator;
   readonly pageDescription: Locator;
   readonly sectionTitle: Locator;
@@ -33,6 +35,11 @@ export class CompanyVerificationPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
+
+    this.userIcon = page
+      .locator('button[aria-label*="user" i], button:has(svg):has-text("admin")')
+      .first();
+    this.logoutButton = page.getByRole('button', { name: /Logout/i });
 
     this.pageTitle = page.getByRole('heading', {
       name: /company verification/i,
@@ -183,5 +190,16 @@ export class CompanyVerificationPage extends BasePage {
    */
   async isErrorModalVisible() {
     return await this.errorModal.isVisible();
+  }
+
+  /**
+   * Logout from admin panel
+   * Clicks user icon to open dropdown menu, then clicks logout button
+   */
+  async logout() {
+    await this.userIcon.click();
+    await this.page.waitForTimeout(300);
+    await this.logoutButton.click();
+    await this.waitForPageLoad();
   }
 }
