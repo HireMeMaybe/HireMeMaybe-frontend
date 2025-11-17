@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
           {/* Error Message */}
           {error && (
             <div className="mb-6 rounded-md border border-red-500/50 bg-red-500/10 p-3">
-              <p className="text-red-reject text-sm">{error}</p>
+              <p className="text-red-reject text-sm" data-testid="error-message">{error}</p>
             </div>
           )}
 
