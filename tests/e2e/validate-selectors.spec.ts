@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { AdminLoginPage } from './pages/admin/AdminLoginPage';
-import { CompanyRegisterPage, LandingPage, CPSKRegisterPage } from './pages';
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminLoginPage } from '../pages/admin/AdminLoginPage';
+import { CompanyRegisterPage, LandingPage, CPSKRegisterPage } from '../pages';
+import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 
 test.describe('Selector smoke validation', () => {
   test('Landing page basic elements', async ({ page }) => {
@@ -76,6 +76,10 @@ test.describe('Selector smoke validation', () => {
       await expect(adminDashboard.activeCPSKCard).toBeVisible();
       await expect(adminDashboard.totalVisitorsCard).toBeVisible();
       await expect(adminDashboard.unverifiedCompaniesCard).toBeVisible();
+      await expect(adminDashboard.userIcon).toBeVisible();
+      // Open dropdown to see logout button
+      await adminDashboard.userIcon.click();
+      await expect(adminDashboard.logoutButton).toBeVisible();
     });
   });
 });

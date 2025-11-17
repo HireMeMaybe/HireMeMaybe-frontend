@@ -6,6 +6,8 @@ import { BasePage } from '../BasePage';
  * Page Object Model for admin dashboard
  */
 export class AdminDashboardPage extends BasePage {
+  readonly userIcon: Locator;
+  readonly logoutButton: Locator;
   readonly totalJobPostsCard: Locator;
   readonly openReportsCard: Locator;
   readonly verifiedCompaniesCard: Locator;
@@ -25,6 +27,11 @@ export class AdminDashboardPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
+        this.userIcon = page
+      .locator('button[aria-label*="user" i], button:has(svg):has-text("admin")')
+      .first();
+    // Logout button inside dropdown (initially hidden)
+    this.logoutButton = page.getByRole('button', { name: /Logout/i });
 
     // Stat cards - using more specific selectors to avoid conflicts
     this.totalJobPostsCard = page.getByRole('link', { name: /total job posts/i });
