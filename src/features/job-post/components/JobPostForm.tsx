@@ -145,6 +145,11 @@ export default function JobPostForm() {
           .filter((tag) => tag.length > 0),
         ...(expiringISO && { expiring: expiringISO }),
         ...(data.salary && { salary: data.salary }),
+        default_form: data.includeDefaultForm ?? false,
+        custom_form: data.includeCustomForm ?? false,
+        ...(data.includeCustomForm && data.customFormLink
+          ? { custom_form_link: data.customFormLink }
+          : { custom_form_link: null }),
       };
 
       // Call the API

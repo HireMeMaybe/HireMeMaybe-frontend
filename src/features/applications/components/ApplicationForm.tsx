@@ -37,6 +37,23 @@ interface ApplicationFormProps {
   readonly jobId: string;
 }
 
+const pickBooleanValue = (
+  ...values: Array<boolean | undefined | null>
+): boolean | undefined => values.find((value): value is boolean => typeof value === 'boolean');
+
+const ensureAbsoluteUrl = (raw: string) => {
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const sanitized = raw.replace(/^\/+/, '');
+  return `https://${sanitized}`;
+};
+
+const normalizeLink = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return ensureAbsoluteUrl(trimmed);
+};
+
 export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -54,6 +71,33 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
         setIsLoadingJob(true);
         const jobData = await JobService.getJobPostById(jobId);
 
+        const optionalFormLinks = [
+          ...(Array.isArray(jobData.optional_forms) ? jobData.optional_forms : []),
+          ...(Array.isArray(jobData.optionalForms) ? jobData.optionalForms : []),
+        ]
+          .map((link) => normalizeLink(link))
+          .filter((link): link is string => Boolean(link));
+
+        const includeDefaultQuestions =
+          pickBooleanValue(
+            jobData.include_default_form,
+            jobData.includeDefaultForm,
+            jobData.default_form,
+            jobData.defaultForm
+          ) ?? true;
+
+        const rawCustomQuestionsLink = jobData.custom_form_link ?? jobData.customFormLink ?? null;
+        const trimmedCustomLink = normalizeLink(rawCustomQuestionsLink);
+        const customQuestionsLink = trimmedCustomLink ?? optionalFormLinks[0];
+
+        const includeCustomQuestions =
+          pickBooleanValue(
+            jobData.include_custom_form,
+            jobData.includeCustomForm,
+            jobData.custom_form,
+            jobData.customForm
+          ) ?? Boolean(customQuestionsLink);
+
         // Map JobPostDetail to JobWithQuestions
         const mappedJob: JobWithQuestions = {
           id: jobData.id,
@@ -64,9 +108,10 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
           tags: jobData.tags,
           description: jobData.desc,
           postedDate: jobData.post_time,
-          includeDefaultQuestions: true, // Assume default questions for now
-          includeCustomQuestions: false,
-          customQuestionsLink: undefined,
+          includeDefaultQuestions,
+          includeCustomQuestions,
+          customQuestionsLink,
+          optionalFormLinks,
         };
 
         setJob(mappedJob);
@@ -80,15 +125,6 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
 
     fetchJob();
   }, [jobId]);
-
-  const getInitialQuestions = () => {
-    if (!job) return [];
-    const questions = [];
-    if (job.includeDefaultQuestions) {
-      questions.push(...DEFAULT_QUESTIONS);
-    }
-    return questions;
-  };
 
   const {
     register,
@@ -109,9 +145,26 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
       educationLevel: '',
       resume: undefined,
       soft_skill: [],
-      questions: getInitialQuestions(),
+      questions: [],
     },
   });
+
+  useEffect(() => {
+    if (!job) {
+      setValue('questions', []);
+      return;
+    }
+
+    if (job.includeDefaultQuestions) {
+      const clonedQuestions = DEFAULT_QUESTIONS.map((question) => ({
+        ...question,
+        answer: '',
+      }));
+      setValue('questions', clonedQuestions);
+    } else {
+      setValue('questions', []);
+    }
+  }, [job, setValue]);
 
   const watchedResume = watch('resume');
 
@@ -169,14 +222,14 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
   const formData = watch();
 
   const handleQuestionChange = (id: string, value: string) => {
-    const updatedQuestions = formData.questions.map((q) =>
+    const updatedQuestions = (formData.questions || []).map((q) =>
       q.id === id ? { ...q, answer: value } : q
     );
     setValue('questions', updatedQuestions);
   };
 
   const handleMultiselectChange = (id: string, option: string, checked: boolean) => {
-    const updatedQuestions = formData.questions.map((q) => {
+    const updatedQuestions = (formData.questions || []).map((q) => {
       if (q.id === id) {
         const currentAnswers = q.answer ? q.answer.split(', ') : [];
         const updatedAnswers = checked
@@ -384,6 +437,13 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
     console.warn('Profile fetch error:', profileError);
     // Continue to show form even if profile fetch fails
   }
+
+  const optionalFormLinksToShow =
+    job?.optionalFormLinks && job.optionalFormLinks.length > 0
+      ? job.optionalFormLinks
+      : job?.customQuestionsLink
+        ? [job.customQuestionsLink]
+        : [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -713,22 +773,32 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
             </div>
           )}
 
-          {/* Custom Questions Link */}
-          {job.includeCustomQuestions && job.customQuestionsLink && (
+          {/* Optional/Custom Forms Link */}
+          {optionalFormLinksToShow.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Additional Questions</h3>
+              <h3 className="text-xl font-semibold text-white">Additional Forms</h3>
               <div className="bg-muted rounded-lg border border-gray-600 p-4">
                 <p className="mb-3 text-white">
-                  Please complete the additional questions for this position:
+                  Please complete the additional forms provided by the company. Each link opens in a
+                  new tab.
                 </p>
-                <Button
-                  type="button"
-                  onClick={() => window.open(job.customQuestionsLink, '_blank')}
-                  className="bg-primary-green/70 hover:bg-primary-green/60 inline-flex cursor-pointer items-center gap-2 text-white"
-                >
-                  Complete Custom Questions
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
+                <div className="flex flex-col gap-3">
+                  {optionalFormLinksToShow.map((link, index) => (
+                    <Button
+                      key={`${link}-${index}`}
+                      type="button"
+                      asChild
+                      className="bg-primary-green/70 hover:bg-primary-green/60 inline-flex cursor-pointer items-center gap-2 text-white"
+                    >
+                      <a href={link} target="_blank" rel="noopener noreferrer">
+                        {optionalFormLinksToShow.length > 1
+                          ? `Open Optional Form ${index + 1}`
+                          : 'Open Optional Form'}
+                        <ExternalLink className="ml-2 inline h-4 w-4" />
+                      </a>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

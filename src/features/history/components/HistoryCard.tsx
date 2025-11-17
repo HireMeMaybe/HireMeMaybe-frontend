@@ -105,6 +105,8 @@ export function HistoryDetails({ application }: JobDetailsProps) {
     });
   };
 
+  const jobPostUrl = application.postId ? `/job-post/${application.postId}` : null;
+
   return (
     <div className="bg-very-dark-gray rounded-lg border border-gray-700 p-6">
       {/* Header Section with Company Logo and External Link */}
@@ -129,7 +131,22 @@ export function HistoryDetails({ application }: JobDetailsProps) {
             <p className="text-sm text-white">{application.location}</p>
           </div>
         </div>
-        <ExternalLink className="hover:text-primary-green mt-2 h-6 w-6 cursor-pointer text-gray-400" />
+        {jobPostUrl ? (
+          <a
+            href={jobPostUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open job post in new tab"
+            className="hover:text-primary-green mt-2 text-gray-400"
+          >
+            <ExternalLink className="h-6 w-6" />
+          </a>
+        ) : (
+          <ExternalLink
+            aria-hidden
+            className="mt-2 h-6 w-6 text-gray-600"
+          />
+        )}
       </div>
 
       {/* Job Title */}

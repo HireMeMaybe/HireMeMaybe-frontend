@@ -29,6 +29,7 @@ Qualifications:
       includeDefaultQuestions: true,
       includeCustomQuestions: true,
       customQuestionsLink: "https://forms.google.com/custom-ocs-questions",
+      optionalFormLinks: ["https://forms.google.com/custom-ocs-questions"],
     },
     {
       id: 2,
@@ -55,6 +56,7 @@ Qualifications:
       // This job only includes default questions
       includeDefaultQuestions: true,
       includeCustomQuestions: false,
+      optionalFormLinks: [],
     },
     {
       id: 3,
@@ -82,6 +84,7 @@ Qualifications:
       includeDefaultQuestions: false,
       includeCustomQuestions: true,
       customQuestionsLink: "https://forms.google.com/line-thailand-design-questions",
+      optionalFormLinks: ["https://forms.google.com/line-thailand-design-questions"],
     },
     {
       id: 4,
@@ -108,6 +111,7 @@ Qualifications:
       // This job has no questions at all
       includeDefaultQuestions: false,
       includeCustomQuestions: false,
+      optionalFormLinks: [],
     },
     {
       id: 5,
@@ -134,6 +138,7 @@ Qualifications:
       // This job has custom questions without link (embedded questions)
       includeDefaultQuestions: false,
       includeCustomQuestions: true,
+      optionalFormLinks: [],
     },
   ];
 

@@ -46,6 +46,7 @@ export interface JobWithQuestions {
   includeDefaultQuestions?: boolean;
   includeCustomQuestions?: boolean;
   customQuestionsLink?: string;
+  optionalFormLinks?: string[];
 }
 
 export const DEFAULT_QUESTIONS: ApplicationQuestion[] = [

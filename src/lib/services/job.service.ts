@@ -80,6 +80,18 @@ export interface JobPostDetail {
   applications: JobPostApplication[] | null;
   company_user?: CompanyUserDetail;
   user_apply?: boolean | null;
+  include_default_form?: boolean;
+  include_custom_form?: boolean;
+  custom_form_link?: string | null;
+  includeDefaultForm?: boolean;
+  includeCustomForm?: boolean;
+  customFormLink?: string | null;
+  default_form?: boolean;
+  custom_form?: boolean;
+  defaultForm?: boolean;
+  customForm?: boolean;
+  optional_forms?: string[] | null;
+  optionalForms?: string[] | null;
 }
 
 interface JobSearchParams {
@@ -129,6 +141,9 @@ interface JobPostCreateData {
   tags: string[];
   expiring?: string;
   salary?: string;
+  default_form?: boolean;
+  custom_form?: boolean;
+  custom_form_link?: string | null;
 }
 
 export class JobService {
