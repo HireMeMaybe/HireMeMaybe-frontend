@@ -114,11 +114,15 @@ test.describe('Admin Journey Tests', () => {
     test.beforeEach(async ({ adminLoginPage, page }) => {
       // Login before each test
       await adminLoginPage.loginWithDefaults();
+      await page.waitForTimeout(1000);
       await expect(page).toHaveURL('/admin/dashboard');
     });
 
-    test('should display all dashboard stat cards', async ({ adminDashboardPage }) => {
+    test('should display all dashboard stat cards', async ({ adminDashboardPage, page }) => {
       await adminDashboardPage.navigate();
+
+      // Wait for cards to load
+      await page.waitForTimeout(1000);
 
       // Verify all stat cards are visible
       await expect(adminDashboardPage.totalJobPostsCard).toBeVisible();
@@ -155,6 +159,7 @@ test.describe('Admin Journey Tests', () => {
       page,
     }) => {
       await adminDashboardPage.navigate();
+      await page.waitForTimeout(1000);
 
       // Click on verified companies card
       await adminDashboardPage.verifiedCompaniesCard.click();
