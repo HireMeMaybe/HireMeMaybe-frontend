@@ -29,9 +29,13 @@ import { useFormSubmission } from '../hooks/useFormSubmission';
 export default function CPSKRegisterForm({
   session,
   profileData: initialProfile,
+  redirectTo = '/profile',
+  immediateRedirect = false,
 }: {
   session?: Session | null;
   profileData?: ProfileData | null;
+  redirectTo?: string;
+  immediateRedirect?: boolean;
 }): React.JSX.Element {
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const router = useRouter();
@@ -83,7 +87,16 @@ export default function CPSKRegisterForm({
   const watchedResume = watch('resume');
 
   // Extracted hooks
-  const { isPending, status, submitForm } = useFormSubmission({ session, updateSession });
+  const { isPending, status, submitForm } = useFormSubmission({
+    session,
+    updateSession,
+    onSuccess: immediateRedirect
+      ? () => {
+          console.log('onSuccess callback - redirecting immediately');
+          router.replace(redirectTo);
+        }
+      : undefined,
+  });
 
   const { skillInput, skills, setSkillInput, setSkills, addSkill, removeSkill, onSkillKeyDown } =
     useSoftSkills({
@@ -161,27 +174,43 @@ export default function CPSKRegisterForm({
   };
 
   const onSubmit = async (data: FormInput) => {
+    console.log('Form submitted, calling submitForm');
     await submitForm(data);
+    console.log('submitForm completed');
   };
 
   // Handle success modal and navigation when status changes
   useEffect(() => {
+    console.log('Status changed:', status);
     if (!status?.ok) return;
 
+    console.log('Success! Redirecting to:', redirectTo, 'Immediate:', immediateRedirect);
     setIsSuccessOpen(true);
 
     // Reset form and clear skills after success
     reset();
     setSkills([]);
 
+    if (immediateRedirect) {
+      // Use setTimeout to ensure state updates complete before navigation
+      const timer = window.setTimeout(() => {
+        console.log('Executing immediate redirect to:', redirectTo);
+        router.replace(redirectTo);
+      }, 100);
+      return () => {
+        window.clearTimeout(timer);
+      };
+    }
+
     const timer = window.setTimeout(() => {
-      router.push('/profile');
+      console.log('Executing delayed redirect to:', redirectTo);
+      router.push(redirectTo);
     }, 2000);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [status, reset, setSkills, router]);
+  }, [status, reset, setSkills, router, redirectTo, immediateRedirect]);
 
   const handleConfirm = () => {
     // close modal then submit form
