@@ -89,7 +89,7 @@ export class ProfilePage extends BasePage {
 
     // Resume section
     this.resumeSection = page.locator('text=/resume/i');
-    this.previewResumeButton = page.getByRole('button', { name: /preview resume/i });
+    this.previewResumeButton = page.getByRole('button', { name: /Preview/i });
     this.downloadResumeButton = page.getByRole('button', { name: /download resume/i });
 
     // Edit mode elements - match label text from actual form

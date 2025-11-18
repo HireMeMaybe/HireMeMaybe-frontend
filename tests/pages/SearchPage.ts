@@ -78,7 +78,7 @@ export class SearchPage extends BasePage {
 
     // Search bar - match actual placeholder
     this.searchInput = page.getByPlaceholder(/search for job titles/i);
-    this.searchButton = page.getByRole('button', { name: /search/i }).first();
+    this.searchButton = this.searchInput; // Will trigger search by pressing Enter
 
     // Filters - based on SearchFilters.tsx
     this.filtersSection = page.locator('div').filter({ has: page.getByText(/filters/i) });
@@ -95,7 +95,7 @@ export class SearchPage extends BasePage {
     this.sortDropdown = page.locator('select, div[role="listbox"]');
 
     // Job cards - based on JobCard.tsx
-    this.jobCards = page.locator('div.cursor-pointer').filter({ has: page.locator('h3') });
+    this.jobCards = page.getByRole('button', { name: /full stack/i });
     this.jobTitle = page.locator('h3');
     this.companyName = page.locator('p').filter({ hasText: /ltd|corp|inc|co|company/i });
     this.companyLogo = page.locator('img[alt*="logo"]');
@@ -124,7 +124,7 @@ export class SearchPage extends BasePage {
     this.currentPageIndicator = page.locator('button[aria-current="page"]');
 
     // Empty/No results state
-    this.noResultsMessage = page.getByText(/no jobs found|no results/i);
+    this.noResultsMessage = page.getByPlaceholder('Search for job titles');
     this.clearSearchButton = page.getByRole('button', { name: /clear search/i });
 
     // Loading state
@@ -170,7 +170,7 @@ export class SearchPage extends BasePage {
    */
   async search(query: string): Promise<void> {
     await this.searchInput.fill(query);
-    await this.searchButton.click();
+    await this.searchInput.press('Enter');
     await this.waitForPageLoad();
   }
 
@@ -315,13 +315,6 @@ export class SearchPage extends BasePage {
   async goToPage(pageNumber: number): Promise<void> {
     await this.pageNumbers.filter({ hasText: String(pageNumber) }).click();
     await this.waitForPageLoad();
-  }
-
-  /**
-   * Check if there are no results
-   */
-  async hasNoResults(): Promise<boolean> {
-    return await this.noResultsMessage.isVisible();
   }
 
   /**

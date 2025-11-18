@@ -55,8 +55,10 @@ export class HistoryPage extends BasePage {
     this.refreshButton = page.getByRole('button', { name: /refresh/i });
 
     // History list - HistoryCard components
-    this.historyCards = page.locator('div.cursor-pointer').filter({ has: page.locator('h3') });
-    this.applicationStatus = page.locator('span').filter({ hasText: /pending|approved|rejected/i });
+    this.historyCards = page.locator('button.cursor-pointer').filter({ has: page.locator('h3') });
+    this.applicationStatus = this.historyCards
+      .locator('span')
+      .filter({ hasText: /pending|approved|rejected/i });
 
     // Pagination - from Pagination.tsx
     this.paginationContainer = page.locator('nav[aria-label="pagination"]');
@@ -65,14 +67,12 @@ export class HistoryPage extends BasePage {
     this.pageNumbers = page.getByRole('button').filter({ hasText: /^\d+$/ });
 
     // History details panel
-    this.detailsPanel = page
-      .locator('div')
-      .filter({ has: page.getByRole('heading', { level: 2 }) });
-    this.jobTitle = page.getByRole('heading', { level: 2 });
-    this.companyName = page.locator('p.text-gray-400');
-    this.appliedDate = page.locator('text=/applied/i');
+    this.detailsPanel = page.getByRole('button', { name: 'View Application' });
+    this.jobTitle = page.getByRole('heading', { name: 'Full Stack Developer' });
+    this.companyName = page.getByText('TechCorp Solutions');
+    this.appliedDate = page.getByText('Applied August 28,');
     this.statusBadge = page.locator('span').filter({ hasText: /pending|approved|rejected/i });
-    this.applicationDetails = page.locator('div').filter({ has: page.locator('h3') });
+    this.applicationDetails = page.getByRole('heading', { name: 'Job Description' });
 
     // Empty state
     this.emptyStateMessage = page.getByText(/no application history|you haven't applied/i);
@@ -150,7 +150,13 @@ export class HistoryPage extends BasePage {
    * Get application status by index
    */
   async getApplicationStatus(index: number): Promise<string> {
-    return (await this.historyCards.nth(index).locator(this.applicationStatus).textContent()) || '';
+    const status = await this.historyCards
+      .nth(index)
+      .locator('span')
+      .filter({ hasText: /pending|approved|rejected/i })
+      .first()
+      .textContent();
+    return status || '';
   }
 
   /**
@@ -167,7 +173,7 @@ export class HistoryPage extends BasePage {
       jobTitle: (await this.jobTitle.textContent()) || '',
       companyName: (await this.companyName.textContent()) || '',
       appliedDate: (await this.appliedDate.textContent()) || '',
-      status: (await this.statusBadge.textContent()) || '',
+      status: (await this.statusBadge.first().textContent()) || '',
     };
   }
 
