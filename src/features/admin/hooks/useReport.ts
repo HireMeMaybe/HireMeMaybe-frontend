@@ -3,6 +3,55 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AdminService, type Report, type ReportStatus, type ReportType } from '@/lib/services';
 
+// Helper function to get reporter info from cached data
+function getReporterInfo(
+  reporterId: string,
+  cpskMap: Map<string, string>,
+  visitorMap: Map<string, string>,
+  companyMap: Map<string, string>
+): { name: string; role?: string } {
+  if (cpskMap.has(reporterId)) {
+    return { name: cpskMap.get(reporterId)!, role: 'CPSK' };
+  }
+  if (visitorMap.has(reporterId)) {
+    return { name: visitorMap.get(reporterId)!, role: 'Visitor' };
+  }
+  if (companyMap.has(reporterId)) {
+    return { name: companyMap.get(reporterId)!, role: 'Company' };
+  }
+  return { name: reporterId };
+}
+
+// Helper function to get reported entity info from cached data
+function getReportedEntityInfo(
+  reportedId: string,
+  type: 'post' | 'user',
+  cpskMap: Map<string, string>,
+  visitorMap: Map<string, string>,
+  companyMap: Map<string, string>,
+  jobPostMap: Map<number, string>
+): { name: string; entityType: 'Job' | 'Company' | 'CPSK' } {
+  if (type === 'post') {
+    const jobId = Number.parseInt(reportedId, 10);
+    return {
+      name: jobPostMap.get(jobId) || `Job Post #${reportedId}`,
+      entityType: 'Job',
+    };
+  }
+
+  // type === 'user'
+  if (cpskMap.has(reportedId)) {
+    return { name: cpskMap.get(reportedId)!, entityType: 'CPSK' };
+  }
+  if (visitorMap.has(reportedId)) {
+    return { name: visitorMap.get(reportedId)!, entityType: 'Company' };
+  }
+  if (companyMap.has(reportedId)) {
+    return { name: companyMap.get(reportedId)!, entityType: 'Company' };
+  }
+  return { name: `User #${reportedId}`, entityType: 'Company' };
+}
+
 export function useReport() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -15,44 +64,102 @@ export function useReport() {
     try {
       const data = await AdminService.getReports(status);
 
-      // Fetch reporter names, roles, and reported entity names for each report
-      const reportsWithNames = await Promise.all(
-        data.map(async (report) => {
-          const updatedReport = { ...report };
+      // Pre-fetch all user accounts once to avoid rate limiting
+      const [cpskAccounts, visitorAccounts] = await Promise.all([
+        AdminService.getCPSKAccounts().catch(() => []),
+        AdminService.getVisitorAccounts().catch(() => []),
+      ]);
 
-          // Fetch reporter info
-          if (report.reporter_id && !report.reporter) {
-            try {
-              const userInfo = await AdminService.getUserInfo(report.reporter_id);
-              updatedReport.reporter = userInfo.name;
-              updatedReport.reporterRole = userInfo.role;
-            } catch (err) {
-              console.error(`Failed to fetch info for reporter ${report.reporter_id}:`, err);
-              updatedReport.reporter = report.reporter_id;
-            }
+      // Create lookup maps for faster access
+      const cpskMap = new Map(cpskAccounts.map((user) => [user.id, user.name]));
+      const visitorMap = new Map(
+        visitorAccounts.map((user) => [
+          user.id,
+          `${user.first_name} ${user.last_name}`.trim() || user.User?.username || 'Unknown',
+        ])
+      );
+
+      // Collect unique job post IDs to batch fetch
+      const jobPostIds = new Set<number>();
+      const companyIds = new Set<string>();
+
+      for (const report of data) {
+        if (report.type === 'post' && !report.reportedEntity) {
+          jobPostIds.add(Number.parseInt(report.reported_id, 10));
+        }
+        // Check if reported entity is a company (not in CPSK or Visitor maps)
+        if (
+          report.type === 'user' &&
+          !cpskMap.has(report.reported_id) &&
+          !visitorMap.has(report.reported_id)
+        ) {
+          companyIds.add(report.reported_id);
+        }
+        // Check if reporter is a company
+        if (
+          report.reporter_id &&
+          !cpskMap.has(report.reporter_id) &&
+          !visitorMap.has(report.reporter_id)
+        ) {
+          companyIds.add(report.reporter_id);
+        }
+      }
+
+      // Batch fetch job posts
+      const jobPostMap = new Map<number, string>();
+      await Promise.all(
+        Array.from(jobPostIds).map(async (id) => {
+          try {
+            const jobPost = await AdminService.getJobPostById(id);
+            jobPostMap.set(id, jobPost.title);
+          } catch (err) {
+            console.error(`Failed to fetch job post ${id}:`, err);
+            jobPostMap.set(id, `Job Post #${id}`);
           }
-
-          // Fetch reported entity info
-          if (report.reported_id && !report.reportedEntity) {
-            try {
-              const entityInfo = await AdminService.getReportedEntityName(
-                report.reported_id,
-                report.type
-              );
-              updatedReport.reportedEntity = entityInfo.name;
-              updatedReport.reportedEntityType = entityInfo.entityType;
-            } catch (err) {
-              console.error(`Failed to fetch info for reported entity ${report.reported_id}:`, err);
-              updatedReport.reportedEntity =
-                report.type === 'post'
-                  ? `Job Post #${report.reported_id}`
-                  : `User #${report.reported_id}`;
-            }
-          }
-
-          return updatedReport;
         })
       );
+
+      // Batch fetch companies
+      const companyMap = new Map<string, string>();
+      await Promise.all(
+        Array.from(companyIds).map(async (id) => {
+          try {
+            const company = await AdminService.getCompanyById(id);
+            companyMap.set(id, company.name);
+          } catch (err) {
+            console.error(`Failed to fetch company ${id}:`, err);
+            companyMap.set(id, id);
+          }
+        })
+      );
+
+      // Process reports with cached data
+      const reportsWithNames = data.map((report) => {
+        const updatedReport = { ...report };
+
+        // Set reporter info using cached data
+        if (report.reporter_id && !report.reporter) {
+          const reporterInfo = getReporterInfo(report.reporter_id, cpskMap, visitorMap, companyMap);
+          updatedReport.reporter = reporterInfo.name;
+          updatedReport.reporterRole = reporterInfo.role;
+        }
+
+        // Set reported entity info using cached data
+        if (report.reported_id && !report.reportedEntity) {
+          const entityInfo = getReportedEntityInfo(
+            report.reported_id,
+            report.type,
+            cpskMap,
+            visitorMap,
+            companyMap,
+            jobPostMap
+          );
+          updatedReport.reportedEntity = entityInfo.name;
+          updatedReport.reportedEntityType = entityInfo.entityType;
+        }
+
+        return updatedReport;
+      });
 
       setReports(reportsWithNames);
     } catch (err) {
