@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import type { JWT } from 'next-auth/jwt';
 
-const ALLOWED_PATHS = new Set(['/', '/unverify', '/company-register']);
+const ALLOWED_PATHS = new Set(['/', '/unverify', '/company-register', '/auth/callback']);
 const SKIP_PREFIXES = ['/_next', '/favicon', '/assets', '/images', '/static', '/public'];
 
 function normalizePathname(pathname: string): string {

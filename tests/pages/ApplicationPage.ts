@@ -60,7 +60,7 @@ export class ApplicationPage extends BasePage {
     this.phoneInput = page.getByLabel(/^phone\*$/i);
     this.majorInput = page.getByLabel(/^major\*$/i); // This is actually a RadioGroup
     this.educationLevelSelect = page.getByLabel(/^education level\*$/i); // Also RadioGroup
-    this.resumeUpload = page.getByLabel(/^resume\*$/i);
+    this.resumeUpload = page.locator('input[type="file"]');
     this.softSkillInput = page.locator('#soft-skill-input'); // Has explicit ID
 
     // Soft skills - match actual structure
