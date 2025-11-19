@@ -111,12 +111,16 @@ export default function CompanyApplicationViewer({
   );
   const program = getProgram(application?.cpsk_user);
   const yearDisplay = getYearDisplay(application?.cpsk_user);
-  const cpskAccount = application?.cpsk_user?.user || null;
+  const cpskAccount = application?.cpsk_user?.user || application?.cpsk_user?.User || null;
   const contactEmail = cpskAccount?.email || cpskAccount?.username || '-';
   const contactPhone = cpskAccount?.tel || '-';
   const softSkills = application?.cpsk_user?.soft_skill || [];
   const languages = application?.answer?.programming_languages || [];
-  const reportedUserId = application?.cpsk_id || application?.cpsk_user?.user?.id || null;
+  const reportedUserId =
+    application?.cpsk_id ||
+    application?.cpsk_user?.user?.id ||
+    application?.cpsk_user?.User?.id ||
+    null;
   const canReportApplicant = Boolean(reportedUserId);
 
   useEffect(() => {

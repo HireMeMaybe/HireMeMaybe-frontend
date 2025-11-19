@@ -38,6 +38,18 @@ interface CompanyApplicationUser {
     updatedAt?: string;
     username?: string;
   };
+  User?: {
+    CreatedAt?: string;
+    DeletedAt?: { time?: string; valid?: boolean } | null;
+    email?: string;
+    id?: string;
+    profile_picture?: string | null;
+    punishment?: { at?: string; end?: string; type?: string } | null;
+    role?: string;
+    tel?: string;
+    UpdatedAt?: string;
+    username?: string;
+  };
 }
 
 // Full response shape for PATCH /company/profile (simplified types)
