@@ -38,6 +38,7 @@ export interface Company {
   location: string;
   email: string;
   phone: string;
+  ownerId?: string;
   logoUrl?: string;
   bannerUrl?: string;
   about: string;
