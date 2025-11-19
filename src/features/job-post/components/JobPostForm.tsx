@@ -132,6 +132,9 @@ export default function JobPostForm() {
       }
 
       // Map form data to API format
+      const optionalForms =
+        data.includeCustomForm && data.customFormLink ? [data.customFormLink] : undefined;
+
       const jobPostData = {
         title: data.openingPosition,
         desc: data.description,
@@ -146,10 +149,7 @@ export default function JobPostForm() {
         ...(expiringISO && { expiring: expiringISO }),
         ...(data.salary && { salary: data.salary }),
         default_form: data.includeDefaultForm ?? false,
-        custom_form: data.includeCustomForm ?? false,
-        ...(data.includeCustomForm && data.customFormLink
-          ? { custom_form_link: data.customFormLink }
-          : { custom_form_link: null }),
+        optional_forms: optionalForms,
       };
 
       // Call the API
