@@ -123,6 +123,9 @@ export function useJobHistory(): UseJobHistoryReturn {
                 id: app.answer.id,
                 expected_salary: app.answer.expected_salary,
                 experience_level: mapExperienceLevel(app.answer.year_of_experience),
+                year_of_experience: app.answer.year_of_experience,
+                right_to_work: app.answer.right_to_work,
+                programming_languages: app.answer.programming_languages || [],
                 tags: app.answer.programming_languages || [],
               }
             : undefined;

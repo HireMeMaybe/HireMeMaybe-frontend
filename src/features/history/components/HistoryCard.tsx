@@ -3,6 +3,7 @@
 import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { JobApplicationHistory } from '@/types/history';
+import { Button } from '@/components/ui/button';
 
 type HistoryCardProps = {
   readonly application: JobApplicationHistory;
@@ -106,6 +107,7 @@ export function HistoryDetails({ application }: JobDetailsProps) {
   };
 
   const jobPostUrl = application.postId ? `/job-post/${application.postId}` : null;
+  const historyApplicationUrl = `/history/application/${application.id}`;
 
   return (
     <div className="bg-very-dark-gray rounded-lg border border-gray-700 p-6">
@@ -142,24 +144,36 @@ export function HistoryDetails({ application }: JobDetailsProps) {
             <ExternalLink className="h-6 w-6" />
           </a>
         ) : (
-          <ExternalLink
-            aria-hidden
-            className="mt-2 h-6 w-6 text-gray-600"
-          />
+          <ExternalLink aria-hidden className="mt-2 h-6 w-6 text-gray-600" />
         )}
       </div>
 
       {/* Job Title */}
       <h1 className="mb-4 text-2xl font-bold text-white">{application.jobTitle}</h1>
 
-      {/* Status and Applied Date */}
-      <div className="mb-6 flex items-center gap-4">
-        <span
-          className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs ${getStatusColor(application.status)} bg-gray-800`}
+      <div className="mb-4">
+        <Button
+          asChild
+          className="bg-primary-green w-full cursor-pointer rounded-full text-white hover:bg-green-600 sm:w-auto"
         >
-          {formatStatus(application.status)}
-        </span>
-        <span className="text-sm text-gray-400">Applied {formatDate(application.appliedDate)}</span>
+          <a href={historyApplicationUrl} target="_blank" rel="noopener noreferrer">
+            View Application
+          </a>
+        </Button>
+      </div>
+
+      {/* Status and Applied Date */}
+      <div className="mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <span
+            className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs ${getStatusColor(application.status)} bg-gray-800`}
+          >
+            {formatStatus(application.status)}
+          </span>
+          <span className="text-sm text-gray-400">
+            Applied {formatDate(application.appliedDate)}
+          </span>
+        </div>
       </div>
 
       {/* Job Description */}
