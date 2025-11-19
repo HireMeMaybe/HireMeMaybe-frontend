@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Eye } from 'lucide-react';
+import { ArrowLeft, Eye, Flag } from 'lucide-react';
 import Loading from '@/app/loading';
-import { ResumePreviewModal } from '@/components/modals';
+import { ResumePreviewModal, ReportModal, SuccessModal } from '@/components/modals';
 import { useCompanyApplication } from '../hooks/useCompanyApplication';
 import { CompanyService } from '@/lib/services/company.service';
 import type { ApplicationCpskUser } from '@/lib/services/job.service';
+import { AdminService } from '@/lib/services';
 
 interface CompanyApplicationViewerProps {
   readonly applicationId: string;
@@ -56,19 +57,13 @@ const getYearDisplay = (user?: ApplicationCpskUser | null) => {
 const DisplayField = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="space-y-2">
     <Label className="text-sm text-white/80">{label}</Label>
-    <div className="bg-muted text-white/90 flex min-h-[3rem] items-center rounded-lg border border-border px-4 text-base">
+    <div className="bg-muted border-border flex min-h-[3rem] items-center rounded-lg border px-4 text-base text-white/90">
       {value && value.trim() ? value : '-'}
     </div>
   </div>
 );
 
-const SectionCard = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) => (
+const SectionCard = ({ title, children }: { title: string; children: ReactNode }) => (
   <div className="bg-darker-gray rounded-2xl border border-gray-700 p-6 shadow-inner shadow-black/20">
     <h2 className="mb-4 text-lg font-semibold text-white">{title}</h2>
     {children}
@@ -85,7 +80,7 @@ const TagList = ({ items }: { items: string[] }) => {
       {items.map((item) => (
         <span
           key={item}
-          className="bg-gray-800 text-gray-100 rounded-full border border-gray-600 px-3 py-1 text-xs"
+          className="rounded-full border border-gray-600 bg-gray-800 px-3 py-1 text-xs text-gray-100"
         >
           {item}
         </span>
@@ -103,6 +98,9 @@ export default function CompanyApplicationViewer({
   const [isResumePreviewOpen, setIsResumePreviewOpen] = useState(false);
   const [resumePreviewLoading, setResumePreviewLoading] = useState(false);
   const [resumePreviewError, setResumePreviewError] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   const application = data?.application;
   const job = data?.job;
@@ -113,11 +111,13 @@ export default function CompanyApplicationViewer({
   );
   const program = getProgram(application?.cpsk_user);
   const yearDisplay = getYearDisplay(application?.cpsk_user);
-  const cpskAccount = application?.cpsk_user?.user || application?.cpsk_user?.User || null;
+  const cpskAccount = application?.cpsk_user?.user || null;
   const contactEmail = cpskAccount?.email || cpskAccount?.username || '-';
   const contactPhone = cpskAccount?.tel || '-';
   const softSkills = application?.cpsk_user?.soft_skill || [];
   const languages = application?.answer?.programming_languages || [];
+  const reportedUserId = application?.cpsk_id || application?.cpsk_user?.user?.id || null;
+  const canReportApplicant = Boolean(reportedUserId);
 
   useEffect(() => {
     return () => {
@@ -183,6 +183,28 @@ export default function CompanyApplicationViewer({
 
   const jobPostUrl = job.id ? `/job-post/${job.id}` : null;
 
+  const handleReportSubmit = async (details: string) => {
+    if (!reportedUserId) {
+      setReportError('Unable to identify this applicant for reporting.');
+      return;
+    }
+
+    try {
+      setReportError(null);
+      await AdminService.submitReport({
+        reported_id: reportedUserId,
+        reportedEntityType: 'user',
+        reason: details || 'No reason provided',
+      });
+      setReportSuccess(true);
+    } catch (err) {
+      console.error('Failed to submit applicant report:', err);
+      setReportError('Failed to submit report. Please try again later.');
+    } finally {
+      setShowReportModal(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mx-auto max-w-5xl">
@@ -199,19 +221,33 @@ export default function CompanyApplicationViewer({
           </Button>
         </div>
 
-        <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-gray-700 bg-very-dark-gray p-6 shadow-lg lg:flex-row lg:items-center lg:justify-between">
+        <div className="bg-very-dark-gray mb-8 flex flex-col gap-4 rounded-2xl border border-gray-700 p-6 shadow-lg lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-gray-400 text-sm">Applied {formatDate(application.applied_at)}</p>
+            <p className="text-sm text-gray-400">Applied {formatDate(application.applied_at)}</p>
             <h1 className="text-3xl font-bold text-white">{job.title || 'Job Application'}</h1>
             <p className="text-gray-400">
               {job.location || 'Location not specified'}
               {job.type ? ` • ${job.type}` : ''}
             </p>
-          </div>
-          <div className="flex flex-col items-start gap-3 lg:items-end">
-            <span className="bg-gray-800 text-white rounded-full px-4 py-1 text-xs font-medium capitalize">
+            <span className="rounded-full bg-gray-800 px-4 py-1 text-xs font-medium text-white capitalize">
               {application.status || 'pending'}
             </span>
+          </div>
+          <div className="flex flex-col items-start gap-3 lg:items-end">
+            <div className="flex w-full flex-col-reverse flex-wrap items-end gap-2">
+              {canReportApplicant && (
+                <Button
+                  variant="outline"
+                  className="border-red-500/70 text-red-400 hover:border-red-400 hover:bg-red-500/10"
+                  onClick={() => {
+                    setReportError(null);
+                    setShowReportModal(true);
+                  }}
+                >
+                  <Flag className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             {jobPostUrl && (
               <Button
                 asChild
@@ -222,6 +258,9 @@ export default function CompanyApplicationViewer({
                   View Job Post
                 </a>
               </Button>
+            )}
+            {canReportApplicant && reportError && (
+              <p className="text-sm text-red-400">{reportError}</p>
             )}
           </div>
         </div>
@@ -266,7 +305,7 @@ export default function CompanyApplicationViewer({
                       type="button"
                       onClick={() => void handleResumePreview()}
                       disabled={resumePreviewLoading}
-                      className="bg-primary-green hover:bg-green-600 flex cursor-pointer items-center gap-2 px-4 text-white"
+                      className="bg-primary-green flex cursor-pointer items-center gap-2 px-4 text-white hover:bg-green-600"
                     >
                       <Eye className="h-4 w-4" />
                       {resumePreviewLoading ? 'Loading...' : 'Preview'}
@@ -281,7 +320,10 @@ export default function CompanyApplicationViewer({
 
           <SectionCard title="Application Answers">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <DisplayField label="Right to Work" value={application.answer?.right_to_work || '-'} />
+              <DisplayField
+                label="Right to Work"
+                value={application.answer?.right_to_work || '-'}
+              />
               <DisplayField
                 label="Expected Salary"
                 value={application.answer?.expected_salary || '-'}
@@ -312,6 +354,26 @@ export default function CompanyApplicationViewer({
         error={resumePreviewError}
         isLoading={resumePreviewLoading}
       />
+      {canReportApplicant && showReportModal && (
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          reportType="user"
+          onSubmit={(payload) => {
+            void handleReportSubmit(payload.details);
+          }}
+        />
+      )}
+      {canReportApplicant && reportSuccess && (
+        <SuccessModal
+          isOpen={reportSuccess}
+          onClose={() => setReportSuccess(false)}
+          title="Report Submitted"
+          message="Thank you for helping keep the community safe."
+          buttonText="Close"
+          description="Our team will review this applicant shortly."
+        />
+      )}
     </div>
   );
 }
