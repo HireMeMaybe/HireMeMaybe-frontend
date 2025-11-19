@@ -56,7 +56,8 @@ class ApiClient {
     if (config.requireAuth !== false) {
       const token = await this.getAuthToken();
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        const hasAuthScheme = /^[A-Za-z]+\s+/i.test(token);
+        headers['Authorization'] = hasAuthScheme ? token : `Bearer ${token}`;
       }
     }
 
