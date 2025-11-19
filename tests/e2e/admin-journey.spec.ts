@@ -479,7 +479,9 @@ test.describe('Admin Journey Tests', () => {
 
         if (await viewReportsButton.isVisible()) {
           await viewReportsButton.click();
-          await page.waitForLoadState('networkidle');
+
+          // Wait for navigation to visitor reports page
+          await page.waitForURL(/\/admin\/visitor-reports\/\d+/);
 
           // Should navigate to visitor reports page
           expect(page.url()).toMatch(/\/admin\/visitor-reports\/\d+/);
