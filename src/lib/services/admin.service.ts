@@ -495,6 +495,21 @@ export class AdminService {
   }
 
   /**
+   * Get a single company by ID
+   * @param companyId - The ID of the company
+   */
+  static async getCompanyById(companyId: string): Promise<Company> {
+    try {
+      return await apiClient.get<Company>(`/company/${companyId}`);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(`Failed to fetch company: ${error.message}`);
+      }
+      throw new Error('Failed to fetch company');
+    }
+  }
+
+  /**
    * @deprecated Use reconsiderCompany() instead
    * Reconsider a rejected company
    */
