@@ -87,13 +87,14 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
   const uploadImage = async (
     file: File,
     uploadFn: (file: File) => Promise<unknown>,
-    errorMessage: string
+    errorMessage: string,
+    type: 'logo' | 'banner'
   ): Promise<number | undefined> => {
     try {
       const response = await uploadFn(file);
       console.log(`${errorMessage.split(' ')[0]} upload response:`, response);
-      return ((response as unknown as Record<string, unknown>)?.logo_id ||
-        (response as unknown as Record<string, unknown>)?.banner_id) as number | undefined;
+      const idKey = type === 'logo' ? 'logo_id' : 'banner_id';
+      return (response as unknown as Record<string, unknown>)?.[idKey] as number | undefined;
     } catch (e) {
       console.error(`${errorMessage.split(' ')[0]} upload failed:`, e);
       throw new Error(errorMessage);
@@ -147,6 +148,8 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
     startTransition(async () => {
       try {
         console.log('Saving profile with data:', updatedData);
+        console.log('Logo file:', logoFile);
+        console.log('Banner file:', bannerFile);
         console.log('Session:', session);
 
         const updatedProfile = await updateProfileData(updatedData);
@@ -155,28 +158,36 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
         let bannerId: number | undefined = updatedProfile?.banner_id;
 
         if (logoFile) {
+          console.log('Uploading logo...');
           logoId = await uploadImage(
             logoFile,
             CompanyService.uploadProfileLogo,
-            'Profile updated but logo upload failed.'
+            'Profile updated but logo upload failed.',
+            'logo'
           );
+          console.log('Logo uploaded with ID:', logoId);
         }
 
         if (bannerFile) {
+          console.log('Uploading banner...');
           bannerId = await uploadImage(
             bannerFile,
             CompanyService.uploadProfileBanner,
-            'Profile updated but banner upload failed.'
+            'Profile updated but banner upload failed.',
+            'banner'
           );
+          console.log('Banner uploaded with ID:', bannerId);
         }
 
-        const newLogoUrl = logoFile
-          ? await fetchAndCreateImageUrl(logoId, CompanyService.fetchLogo, company.logoUrl)
-          : company.logoUrl;
+        const newLogoUrl =
+          logoFile && logoId
+            ? await fetchAndCreateImageUrl(logoId, CompanyService.fetchLogo, company.logoUrl)
+            : company.logoUrl;
 
-        const newBannerUrl = bannerFile
-          ? await fetchAndCreateImageUrl(bannerId, CompanyService.fetchBanner, company.bannerUrl)
-          : company.bannerUrl;
+        const newBannerUrl =
+          bannerFile && bannerId
+            ? await fetchAndCreateImageUrl(bannerId, CompanyService.fetchBanner, company.bannerUrl)
+            : company.bannerUrl;
 
         const updatedCompany: Company = {
           ...company,
@@ -240,7 +251,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                   <div>
                     <h1 className="mb-2 text-3xl font-bold text-white">{company.name}</h1>
                     <p className="text-lighter-gray-text mb-4">
-                      {capitalize(company.industry)} | {mapBackendToDisplay(company.size)} 
+                      {capitalize(company.industry)} | {mapBackendToDisplay(company.size)}
                     </p>
 
                     {/* Contact Info */}
@@ -305,9 +316,7 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                           <Flag className="h-4 w-4" />
                           Report Company
                         </Button>
-                        {reportError && (
-                          <p className="text-sm text-red-400">{reportError}</p>
-                        )}
+                        {reportError && <p className="text-sm text-red-400">{reportError}</p>}
                       </div>
                     ) : null}
                   </div>
