@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ApplicationCard from './ApplicationCard';
 import { CompanyService } from '@/lib/services/company.service';
-import type { JobPostApplication } from '@/lib/services/job.service';
+import type { ApplicationCpskUser, JobPostApplication } from '@/lib/services/job.service';
 
 interface ApplicationWithJobInfo extends JobPostApplication {
   jobTitle: string;
@@ -22,6 +22,29 @@ export default function AllApplications({ companyId }: AllApplicationsProps) {
   const [applications, setApplications] = useState<ApplicationWithJobInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const formatYearLabel = (year?: string | null) => {
+    if (!year) return null;
+    const trimmed = year.trim();
+    if (!trimmed) return null;
+    return trimmed.toLowerCase().startsWith('year') ? trimmed : `Year ${trimmed}`;
+  };
+
+  const getCandidateName = (user?: ApplicationCpskUser | null, fallbackId?: string) => {
+    const first = user?.first_name?.trim() || '';
+    const last = user?.last_name?.trim() || '';
+    const fullName = [first, last].filter(Boolean).join(' ');
+    return fullName || (fallbackId ? `Applicant ${fallbackId}` : 'Applicant');
+  };
+
+  const getProgram = (user?: ApplicationCpskUser | null) => user?.program || 'Program not specified';
+
+  const getUniversityDisplay = (user?: ApplicationCpskUser | null) => {
+    if (!user) return 'CPSK';
+    const yearLabel = formatYearLabel(user.year);
+    if (yearLabel) return `CPSK (${yearLabel})`;
+    return 'CPSK';
+  };
 
   useEffect(() => {
     const fetchAllApplications = async () => {
@@ -61,6 +84,7 @@ export default function AllApplications({ companyId }: AllApplicationsProps) {
                       right_to_work: app.answer?.right_to_work ?? '',
                       year_of_experience: app.answer?.year_of_experience ?? 0,
                     },
+                    cpsk_user: app.cpsk_user,
                     jobTitle: jobPost.title || 'Untitled Position',
                     jobId: jobPost.id || 0,
                   });
@@ -98,8 +122,7 @@ export default function AllApplications({ companyId }: AllApplicationsProps) {
   };
 
   const handleViewApplication = (applicationId: number) => {
-    console.log('View application details:', applicationId);
-    // TODO: Implement navigation to application details
+    router.push(`/company/${companyId}/applications/${applicationId}`);
   };
 
   if (isLoading) {
@@ -157,10 +180,13 @@ export default function AllApplications({ companyId }: AllApplicationsProps) {
                   application={{
                     id: application.id,
                     jobId: application.jobId,
-                    candidateName: `Applicant ${application.cpsk_id}`,
-                    university: 'Information not available',
-                    program: 'Information not available',
-                    skills: application.answer?.programming_languages || [],
+                    candidateName: getCandidateName(application.cpsk_user, application.cpsk_id),
+                    university: getUniversityDisplay(application.cpsk_user),
+                    program: getProgram(application.cpsk_user),
+                    skills:
+                      application.answer?.programming_languages?.length
+                        ? application.answer.programming_languages
+                        : application.cpsk_user?.soft_skill || [],
                     appliedDate: application.applied_at,
                     profilePicture: undefined,
                   }}

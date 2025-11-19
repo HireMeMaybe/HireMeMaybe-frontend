@@ -7,13 +7,36 @@ import ApplicationCard from './ApplicationCard';
 import { CompanyService } from '@/lib/services/company.service';
 import type { JobApplicationsProps } from '@/types/application';
 import { useState, useEffect } from 'react';
-import type { JobPostDetail } from '@/lib/services/job.service';
+import type { JobPostDetail, ApplicationCpskUser } from '@/lib/services/job.service';
 
 export default function JobApplications({ jobId, companyId }: Readonly<JobApplicationsProps>) {
   const router = useRouter();
   const [jobPost, setJobPost] = useState<JobPostDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const formatYearLabel = (year?: string | null) => {
+    if (!year) return null;
+    const trimmed = year.trim();
+    if (!trimmed) return null;
+    return trimmed.toLowerCase().startsWith('year') ? trimmed : `Year ${trimmed}`;
+  };
+
+  const getCandidateName = (user?: ApplicationCpskUser | null, fallbackId?: string) => {
+    const first = user?.first_name?.trim() || '';
+    const last = user?.last_name?.trim() || '';
+    const fullName = [first, last].filter(Boolean).join(' ');
+    return fullName || (fallbackId ? `Applicant ${fallbackId}` : 'Applicant');
+  };
+
+  const getProgram = (user?: ApplicationCpskUser | null) => user?.program || 'Program not specified';
+
+  const getUniversityDisplay = (user?: ApplicationCpskUser | null) => {
+    if (!user) return 'CPSK';
+    const yearLabel = formatYearLabel(user.year);
+    if (yearLabel) return `CPSK (${yearLabel})`;
+    return 'CPSK';
+  };
 
   useEffect(() => {
     const fetchJobPost = async () => {
@@ -56,6 +79,7 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
                   right_to_work: app.answer?.right_to_work ?? '',
                   year_of_experience: app.answer?.year_of_experience ?? 0,
                 },
+                cpsk_user: app.cpsk_user,
               })) || null,
           };
           setJobPost(mappedJobPost);
@@ -79,8 +103,7 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
   };
 
   const handleViewApplication = (applicationId: number) => {
-    console.log('View application details:', applicationId);
-    // Implement navigation to application details
+    router.push(`/company/${companyId}/applications/${applicationId}`);
   };
 
   const handleBackToProfile = () => {
@@ -189,16 +212,19 @@ export default function JobApplications({ jobId, companyId }: Readonly<JobApplic
             applications.map((application) => (
               <ApplicationCard
                 key={application.id}
-                application={{
-                  id: application.id,
-                  jobId: jobPost.id,
-                  candidateName: `Applicant ${application.cpsk_id}`, // Display CPSK ID as name for now
-                  university: 'Information not available',
-                  program: 'Information not available',
-                  skills: application.answer?.programming_languages || [],
-                  appliedDate: application.applied_at,
-                  profilePicture: undefined,
-                }}
+                  application={{
+                    id: application.id,
+                    jobId: jobPost.id,
+                    candidateName: getCandidateName(application.cpsk_user, application.cpsk_id),
+                    university: getUniversityDisplay(application.cpsk_user),
+                    program: getProgram(application.cpsk_user),
+                    skills:
+                      application.answer?.programming_languages?.length
+                        ? application.answer.programming_languages
+                        : application.cpsk_user?.soft_skill || [],
+                    appliedDate: application.applied_at,
+                    profilePicture: undefined,
+                  }}
                 onViewPost={handleViewPost}
                 onViewApplication={() => handleViewApplication(application.id)}
               />
