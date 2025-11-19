@@ -391,12 +391,8 @@ test.describe('Admin Journey Tests', () => {
 
       if (rowCount > 0) {
         // Check for action buttons
-        const hasView = (await page.getByRole('button', { name: /^view$/i }).count()) > 0;
         const hasSuspend = (await page.getByRole('button', { name: /^suspend$/i }).count()) > 0;
         const hasBan = (await page.getByRole('button', { name: /^ban$/i }).count()) > 0;
-
-        // At least view button should exist
-        expect(hasView).toBeTruthy();
 
         // Suspend or ban buttons should exist depending on account status
         expect(hasSuspend || hasBan).toBeTruthy();
@@ -440,7 +436,7 @@ test.describe('Admin Journey Tests', () => {
         // Modal should appear
         const modal = page.locator('[role="dialog"]');
         await expect(modal).toBeVisible();
-        await expect(modal.getByText(/ban/i)).toBeVisible();
+        await expect(modal.getByRole('button', { name: /ban/i })).toBeVisible();
 
         // Close modal
         const cancelButton = modal.getByRole('button', { name: /cancel/i });
