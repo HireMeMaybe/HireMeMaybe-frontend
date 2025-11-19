@@ -227,6 +227,11 @@ export default function EditProfileModal({
           size: mapFrontendToBackend(data.companySize) ?? data.companySize,
         };
 
+        console.log('EditProfileModal - Submitting with:');
+        console.log('  - logoFile:', logoFile);
+        console.log('  - bannerFile:', bannerFile);
+        console.log('  - updatedCompany:', updatedCompany);
+
         // Pass the files to the save handler
         await onSave?.(updatedCompany, logoFile || undefined, bannerFile || undefined);
 
@@ -354,7 +359,7 @@ export default function EditProfileModal({
                     <Button
                       type="button"
                       onClick={() => logoInputRef.current?.click()}
-                      className="bg-primary-green px-4 py-2 text-white hover:bg-green-700"
+                      className="bg-primary-green px-4 py-2 text-white hover:bg-green-700 cursor-pointer"
                     >
                       <Upload className="mr-2 h-4 w-4" />
                       Upload photo
@@ -420,7 +425,7 @@ export default function EditProfileModal({
                     <Button
                       type="button"
                       onClick={() => bannerInputRef.current?.click()}
-                      className="bg-primary-green px-4 py-2 text-white hover:bg-green-700"
+                      className="bg-primary-green px-4 py-2 text-white hover:bg-green-700 cursor-pointer"
                     >
                       <Upload className="mr-2 h-4 w-4" />
                       Upload banner
@@ -640,18 +645,18 @@ export default function EditProfileModal({
                   type="button"
                   onClick={handleClose}
                   variant="outline"
-                  className="border-zinc-600 px-6 text-zinc-300 hover:bg-zinc-700"
+                  className="border-zinc-600 px-6 text-zinc-300 hover:bg-zinc-700 cursor-pointer"
                   disabled={isPending}
                 >
                   Close
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-primary-green px-6 text-white hover:bg-green-700"
+                  className="bg-primary-green px-6 text-white hover:bg-green-700 cursor-pointer"
                   disabled={isPending}
                 >
                   {isPending ? (
-                    <div className="flex items-center justify-center space-x-2">
+                    <div className="flex items-center justify-center space-x-2 ">
                       <svg
                         className="mr-3 -ml-1 h-5 w-5 animate-spin text-white"
                         xmlns="http://www.w3.org/2000/svg"
