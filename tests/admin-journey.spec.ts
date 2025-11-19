@@ -160,12 +160,13 @@ test.describe('Admin Journey Tests', () => {
       await adminDashboardPage.navigate();
       await page.waitForTimeout(1000);
 
-      // Click on verified companies card
-      await adminDashboardPage.verifiedCompaniesCard.click();
-      await page.waitForLoadState('networkidle');
+      await Promise.all([
+        page.waitForURL(/\/admin\/manage-company/),
+        adminDashboardPage.verifiedCompaniesCard.click(),
+      ]);
 
       // Should navigate to manage companies or company verification
-      expect(page.url()).toMatch(/\/admin\/(manage-company|company-verification)/);
+      expect(page.url()).toMatch(/\/admin\/manage-company/);
     });
   });
 
