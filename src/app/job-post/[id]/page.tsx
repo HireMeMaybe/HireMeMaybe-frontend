@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Image from 'next/image';
+import { Flag } from 'lucide-react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
 import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
 import Loading from '@/app/loading';
 import ReportModal from '@/components/modals/ReportModal';
 import { AdminService } from '@/lib/services';
+import { capitalize } from '@/lib/utils/string';
 // Success feedback modal (optional). If you prefer to rely solely on error boundary, keep this.
 import { SuccessModal } from '@/components/modals';
 
@@ -171,21 +173,21 @@ export default function JobPostDetailPage() {
 
   return (
     <div className="bg-background text-foreground min-h-screen">
-      {/* Header */}
-      <div className="container mx-auto px-4 pt-8 pb-4">
-        <Button
-          onClick={() => router.back()}
-          variant="outline"
-          className="mb-4 border-gray-600 bg-transparent text-gray-300 hover:bg-gray-700"
-        >
-          ← Back
-        </Button>
-      </div>
-
       {/* Main Content - Full Width Job Post Details */}
       <div className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-5xl">
-          <div className="bg-very-dark-gray rounded-lg border border-gray-700 p-8">
+          <div className="bg-very-dark-gray relative rounded-lg border border-gray-700 p-8">
+            <Button
+              aria-label="Report job post"
+              variant="outline"
+              size="icon"
+              className="absolute right-4 top-4 z-10 border-red-500/70 text-red-400 hover:border-red-400 hover:bg-red-500/10"
+              onClick={() => {
+                setShowReportModal(true);
+              }}
+            >
+              <Flag className="size-5" />
+            </Button>
             {/* Header Section with Company Logo */}
             <div className="mb-6 flex items-start justify-between">
               <div className="flex items-center gap-4">
@@ -319,29 +321,16 @@ export default function JobPostDetailPage() {
               </p>
             </div>
 
-            {/* Action Buttons: Apply (for CPSK) and Report (visible to non-admins) */}
-            <div className="mt-8">
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                {session?.role !== 'Company' &&
-                  session?.role !== 'Visitor' &&
-                  !isAdminAuthenticated && (
-                    <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
-                      Apply Now
-                    </Button>
-                  )}
-
-                {/* Report button - purely visual (no behavior) */}
-                <Button
-                  variant="outline"
-                  className="w-full rounded-lg border-white px-8 py-3 text-base font-medium text-white hover:border-red-700 hover:bg-red-700 sm:w-auto"
-                  onClick={() => {
-                    setShowReportModal(true);
-                  }}
-                >
-                  Report
-                </Button>
-              </div>
-            </div>
+            {/* Action Button: Apply (for CPSK) */}
+            {session?.role !== 'Company' &&
+              session?.role !== 'Visitor' &&
+              !isAdminAuthenticated && (
+                <div className="mt-8">
+                  <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
+                    Apply Now
+                  </Button>
+                </div>
+              )}
           </div>
         </div>
       </div>

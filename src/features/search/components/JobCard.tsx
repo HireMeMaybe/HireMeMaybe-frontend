@@ -1,15 +1,15 @@
 'use client';
 
-import { ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ExternalLink, Flag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { Button } from '@/components/ui/button';
 import ReportModal from '@/components/modals/ReportModal';
 import { AdminService } from '@/lib/services';
 import { SuccessModal } from '@/components/modals';
-import { set } from 'zod';
 
 export interface JobSearchResult {
   id: number | string;
@@ -90,9 +90,12 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
     }
   };
 
-  const userRole = session?.backendUser?.role;
+  const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
+  const userRole = session?.backendUser?.role ?? session?.role;
   const hasAlreadyApplied = job.userApply === true;
   const showApplyButton = userRole !== 'Company' && userRole !== 'Visitor' && !hasAlreadyApplied;
+  const canReportJob =
+    isAdminAuthenticated || ['CPSK', 'Visitor', 'Admin'].includes(userRole ?? '');
 
   const formatPostedDate = (value?: string): string | undefined => {
     if (!value) return undefined;
@@ -105,7 +108,7 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
 
   return (
     <div className="bg-very-dark-gray rounded-lg border border-gray-700 p-6">
-      {/* Header Section with Company Logo and External Link */}
+      {/* Header Section with Company Logo, External Link, and Report */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
           {job.companyId ? (
@@ -165,10 +168,23 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
             )}
           </div>
         </div>
-        <ExternalLink
-          onClick={handleExternalLink}
-          className="hover:text-primary-green mt-2 h-6 w-6 cursor-pointer text-gray-400"
-        />
+        <div className="flex items-center gap-3">
+          {canReportJob && (
+            <Button
+              aria-label="Report job post"
+              variant="outline"
+              size="icon"
+              className="border-red-500/70 text-red-400 hover:border-red-400 hover:bg-red-500/10"
+              onClick={() => setShowReportModal(true)}
+            >
+              <Flag className="size-5" />
+            </Button>
+          )}
+          <ExternalLink
+            onClick={handleExternalLink}
+            className="hover:text-primary-green mt-2 mb-2 h-6 w-6 cursor-pointer text-gray-400"
+          />
+        </div>
       </div>
 
       {/* Job Title */}
@@ -191,47 +207,37 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
         )}
       </div>
 
-      {/* Actions: Apply (if allowed) + Report, wrapped and spaced with justify-between */}
-      <div className="mb-6 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {showApplyButton && (
+      {/* Actions: Apply (if allowed) */}
+      {showApplyButton && (
+        <div className="mb-6">
           <Button
             onClick={handleApply}
             className="bg-primary-green cursor-pointer rounded-full px-8 py-3 text-sm text-white hover:bg-green-600"
           >
             Apply
           </Button>
-        )}
-
-        <Button
-          variant="outline"
-          className="w-full rounded-lg border-white px-8 py-3 text-base font-medium text-white hover:border-red-700 hover:bg-red-700 sm:w-auto"
-          onClick={() => {
-            setShowReportModal(true);
-          }}
-        >
-          Report
-        </Button>
-      </div>
+        </div>
+      )}
 
       {/* Job Description */}
       <div className="text-sm leading-relaxed whitespace-pre-line text-gray-300">
         {job.description || 'No description provided for this role.'}
       </div>
 
-      {showReportModal && (
+      {canReportJob && showReportModal && (
         <ReportModal
           isOpen={showReportModal}
           reportType="post"
-          onSubmit={(data) => {
+          onSubmit={async (data) => {
             try {
-              AdminService.submitReport({
-                reported_id: Number(job.id),
+              await AdminService.submitReport({
+                reported_id: job.id,
                 reportedEntityType: 'post',
                 reason: data.details,
               });
               setReportSuccess(true);
             } catch (error) {
-              throw error;
+              console.error('Failed to submit report:', error);
             } finally {
               setShowReportModal(false);
             }
@@ -239,7 +245,7 @@ export function JobDetails({ job }: { readonly job: JobSearchResult }) {
           onClose={() => setShowReportModal(false)}
         />
       )}
-      {reportSuccess && (
+      {canReportJob && reportSuccess && (
         <SuccessModal
           message="Report submitted successfully. Thank you for your feedback."
           isOpen={reportSuccess}
