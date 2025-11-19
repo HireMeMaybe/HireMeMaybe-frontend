@@ -1,6 +1,5 @@
 import { test, expect } from './fixtures';
 import { AdminLoginPage } from './pages';
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from './utils/test-data';
 
 /**
  * Admin Journey Tests
@@ -566,7 +565,7 @@ test.describe('Admin Journey Tests', () => {
     }) => {
       // Login
       await adminLoginPage.navigate();
-      await adminLoginPage.login(ADMIN_USERNAME, ADMIN_PASSWORD);
+      await adminLoginPage.loginWithDefaults();
       await expect(page).toHaveURL('/admin/dashboard');
 
       // Refresh page
