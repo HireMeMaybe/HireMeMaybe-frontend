@@ -1,6 +1,6 @@
-import { test, expect } from '../fixtures';
-import { AdminLoginPage } from '../pages';
-import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../utils/test-data';
+import { test, expect } from './fixtures';
+import { AdminLoginPage } from './pages';
+import { ADMIN_USERNAME, ADMIN_PASSWORD } from './utils/test-data';
 
 /**
  * Admin Journey Tests

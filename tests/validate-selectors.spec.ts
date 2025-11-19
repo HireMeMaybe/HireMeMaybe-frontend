@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { AdminLoginPage } from '../pages/admin/AdminLoginPage';
-import { CompanyRegisterPage, LandingPage, CPSKRegisterPage } from '../pages';
-import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { CompanyRegisterPage, LandingPage, CPSKRegisterPage } from './pages';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 
 test.describe('Selector smoke validation', () => {
   test('Landing page basic elements', async ({ page }) => {
