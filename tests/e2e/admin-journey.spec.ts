@@ -310,7 +310,7 @@ test.describe('Admin Journey Tests', () => {
         // Modal should appear
         const modal = page.locator('[role="dialog"]');
         await expect(modal).toBeVisible();
-        await expect(modal.getByRole('heading', { name: /delete job post/i })).toBeVisible();
+        await expect(modal.locator('h3', { hasText: /delete job post/i })).toBeVisible();
 
         // Cancel the deletion
         const cancelButton = modal.getByRole('button', { name: /cancel/i });
@@ -321,21 +321,27 @@ test.describe('Admin Journey Tests', () => {
       }
     });
 
-    test('should navigate to job details when view is clicked', async ({ page }) => {
+    test('should navigate to job details when view is clicked', async ({ page, context }) => {
       await page.goto('/admin/manage-job-posts');
       await page.waitForLoadState('networkidle');
 
       const rowCount = await page.locator('table tbody tr').count();
 
       if (rowCount > 0) {
-        // Click view button
+        // Click view button (opens in new tab)
         const viewButton = page.getByRole('button', { name: /view/i }).first();
-        await viewButton.click();
 
-        await page.waitForLoadState('networkidle');
+        // Wait for new tab to open
+        const [newPage] = await Promise.all([context.waitForEvent('page'), viewButton.click()]);
 
-        // Should navigate to job detail page
-        expect(page.url()).toMatch(/\/job-post\/\d+/);
+        // Wait for the new page to load
+        await newPage.waitForLoadState('networkidle');
+
+        // Verify we're on the job detail page in the new tab
+        expect(newPage.url()).toMatch(/\/job-post\/\d+/);
+
+        // Close the new tab
+        await newPage.close();
       }
     });
   });
