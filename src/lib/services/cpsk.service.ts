@@ -18,6 +18,13 @@ const cpskRegistrationSchema = z.object({
   soft_skill: z.array(z.string()).optional(),
 });
 
+const buildAuthHeaderValue = (token?: string | null): string | null => {
+  if (!token) return null;
+  const trimmed = token.trim();
+  if (!trimmed) return null;
+  return /^bearer\s+/i.test(trimmed) ? trimmed : `Bearer ${trimmed}`;
+};
+
 export type CpskRegistrationData = z.infer<typeof cpskRegistrationSchema>;
 
 interface CpskProfileUpdateData {
@@ -163,11 +170,15 @@ export class CpskService {
       return providedFileId;
     }
 
+    const authHeader = buildAuthHeaderValue(token);
+    const headers: Record<string, string> = {};
+    if (authHeader) {
+      headers.Authorization = authHeader;
+    }
+
     const profileResponse = await fetch(`${backendUrl}/cpsk/myprofile`, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     });
 
     if (profileResponse.ok) {
@@ -222,11 +233,15 @@ export class CpskService {
 
       console.log('Fetching resume for preview from:', `${backendUrl}/file/${resumeFileId}`);
 
+      const authHeader = buildAuthHeaderValue(session.backendToken);
+      const headers: Record<string, string> = {};
+      if (authHeader) {
+        headers.Authorization = authHeader;
+      }
+
       const response = await fetch(`${backendUrl}/file/${resumeFileId}`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.backendToken}`,
-        },
+        headers,
       });
 
       console.log('Resume fetch response status:', response.status);

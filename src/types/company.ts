@@ -70,6 +70,17 @@ export interface CompanyProfileProps {
 
 import type { BackendUser, BackendUserPascal } from './user';
 
+export interface BackendCompanyApplicationUser {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  program?: string | null;
+  year?: string | null;
+  resume_id?: number | null;
+  soft_skill?: string[] | null;
+  user?: BackendUser | BackendUserPascal | null;
+}
+
 // Backend response shape for company profile endpoints (documented here for clarity)
 export interface BackendCompanyResponse {
   banner_id?: number;
@@ -87,6 +98,7 @@ export interface BackendCompanyResponse {
       answer_id?: number;
       applied_at?: string;
       cpsk_id?: string;
+      cpsk_user?: BackendCompanyApplicationUser | null;
       id?: number;
       post_id?: number;
       resume_id?: number;

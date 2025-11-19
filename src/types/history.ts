@@ -2,7 +2,10 @@ export interface Answer {
   id: number;
   expected_salary?: string;
   experience_level?: string;
-  tags: string[];
+  year_of_experience?: number;
+  right_to_work?: string;
+  programming_languages?: string[];
+  tags?: string[];
 }
 
 export interface JobPost {
