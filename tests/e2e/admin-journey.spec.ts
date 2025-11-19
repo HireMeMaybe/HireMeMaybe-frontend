@@ -238,8 +238,8 @@ test.describe('Admin Journey Tests', () => {
         await expect(modal).toBeVisible();
 
         // Confirm the action
-        const confirmButton = modal.getByRole('button', { name: /confirm|reconsider/i });
-        await confirmButton.click();
+        const approveButton = modal.getByRole('button', { name: /approve/i });
+        await approveButton.click();
 
         // Should show success or update the list
         await page.waitForLoadState('networkidle');
@@ -310,7 +310,7 @@ test.describe('Admin Journey Tests', () => {
         // Modal should appear
         const modal = page.locator('[role="dialog"]');
         await expect(modal).toBeVisible();
-        await expect(modal.getByText(/delete/i)).toBeVisible();
+        await expect(modal.getByRole('heading', { name: /delete job post/i })).toBeVisible();
 
         // Cancel the deletion
         const cancelButton = modal.getByRole('button', { name: /cancel/i });
