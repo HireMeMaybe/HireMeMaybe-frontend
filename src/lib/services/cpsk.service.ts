@@ -61,6 +61,7 @@ export class CpskService {
       if (error instanceof ApiError) {
         throw new Error(`Failed to update profile: ${error.message}`);
       }
+      console.log('Error in updateProfile:', error);
       throw new Error('Failed to update profile');
     }
   }

@@ -8,8 +8,11 @@ import Image from 'next/image';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
 import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
-import { capitalize } from '@/lib/utils/string';
 import Loading from '@/app/loading';
+import ReportModal from '@/components/modals/ReportModal';
+import { AdminService } from '@/lib/services';
+// Success feedback modal (optional). If you prefer to rely solely on error boundary, keep this.
+import { SuccessModal } from '@/components/modals';
 
 // Extend the Session type to include isRegistered
 declare module 'next-auth' {
@@ -29,8 +32,10 @@ export default function JobPostDetailPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false); // Used for success acknowledgment only
 
-  const jobPostId = params.id as string;
+  const jobPostId = Number(params.id);
 
   // Protect page: redirect unauthenticated and unregistered users (but allow admins)
   useEffect(() => {
@@ -71,7 +76,7 @@ export default function JobPostDetailPage() {
         setError(null);
 
         // Fetch job post data
-        const jobPostData = await JobService.getJobPostById(jobPostId);
+        const jobPostData = await JobService.getJobPostById(jobPostId.toString());
         if (!isActive) return;
 
         setJobPost(jobPostData);
@@ -314,20 +319,61 @@ export default function JobPostDetailPage() {
               </p>
             </div>
 
-            {/* Action Button - Only show for CPSK users (not Company, Visitor, or Admin) */}
-            {session?.role !== 'Company' &&
-              session?.role !== 'Visitor' &&
-              !isAdminAuthenticated &&
-              jobPost.user_apply !== true && (
-                <div className="mt-8">
-                  <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
-                    Apply Now
-                  </Button>
-                </div>
-              )}
+            {/* Action Buttons: Apply (for CPSK) and Report (visible to non-admins) */}
+            <div className="mt-8">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                {session?.role !== 'Company' &&
+                  session?.role !== 'Visitor' &&
+                  !isAdminAuthenticated && (
+                    <Button className="bg-primary-green w-full rounded-lg px-8 py-3 text-base font-medium text-white hover:bg-green-600 sm:w-auto">
+                      Apply Now
+                    </Button>
+                  )}
+
+                {/* Report button - purely visual (no behavior) */}
+                <Button
+                  variant="outline"
+                  className="w-full rounded-lg border-white px-8 py-3 text-base font-medium text-white hover:border-red-700 hover:bg-red-700 sm:w-auto"
+                  onClick={() => {
+                    setShowReportModal(true);
+                  }}
+                >
+                  Report
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+      {showReportModal && (
+        <ReportModal
+          onClose={() => setShowReportModal(false)}
+          isOpen={showReportModal}
+          onSubmit={async (payload) => {
+            try {
+              await AdminService.submitReport({
+                reported_id: jobPostId,
+                reportedEntityType: 'post',
+                reason: payload.details || 'No reason provided',
+              });
+              setReportSuccess(true);
+            } catch (err) {
+              console.error('Failed to submit report:', err);
+              // Trigger the error boundary by setting error; render will throw below
+              setError('Failed to submit report. Please try again later.');
+            } finally {
+              setShowReportModal(false);
+            }
+          }}
+        />
+      )}
+      {reportSuccess && !error && (
+        <SuccessModal
+          message="Report submitted successfully. Thank you for your feedback."
+          isOpen={reportSuccess}
+          onClose={() => setReportSuccess(false)}
+        />
+      )}
     </div>
   );
 }

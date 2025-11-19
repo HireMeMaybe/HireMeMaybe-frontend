@@ -53,7 +53,12 @@ export default function EditProfilePage() {
       <div className="w-full max-w-4xl">
         <h1 className="text-foreground mb-8 ml-4 text-4xl font-bold">Edit Profile</h1>
         <div className="bg-transparent p-4">
-          <CPSKRegisterForm session={session} profileData={profileData} />
+          <CPSKRegisterForm
+            session={session}
+            profileData={profileData}
+            redirectTo="/profile"
+            immediateRedirect
+          />
         </div>
       </div>
     </main>
