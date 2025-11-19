@@ -18,8 +18,24 @@ export interface ProfileData {
   program?: string | null;
   year?: string | number | null;
   profile_picture?: string | null;
-  soft_skill?: string[];
+  soft_skill?: string[] | string | null;
   resume_id?: number | null;
+  applications?: Array<{
+    id: number;
+    cpsk_id: string;
+    post_id: number;
+    answer_id: number;
+    resume_id: number;
+    status: 'pending' | 'in consideration' | 'rejected';
+    applied_at: string;
+    answer?: {
+      id: number;
+      programming_languages?: string[];
+      year_of_experience?: number;
+      expected_salary?: string;
+      right_to_work?: string;
+    };
+  }>;
 }
 
 export const MAJOR_OPTIONS = [

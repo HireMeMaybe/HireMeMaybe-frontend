@@ -1,6 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 import { JobApplicationHistory } from '@/types/history';
 import { Button } from '@/components/ui/button';
 
@@ -54,9 +55,20 @@ export default function HistoryCard({ application, selected, onSelect }: History
         selected ? 'border-primary-green border-l-4 bg-gray-900' : ''
       }`}
     >
-      {/* Company Logo Placeholder */}
-      <div className="flex h-12 w-12 items-center justify-center rounded bg-gray-600 text-sm font-semibold text-white">
-        {application.companyName.substring(0, 2).toUpperCase()}
+      {/* Company Logo */}
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gray-600 text-sm font-semibold text-white">
+        {application.companyLogo ? (
+          <Image
+            src={application.companyLogo}
+            alt={application.companyName}
+            width={48}
+            height={48}
+            className="h-full w-full object-contain"
+            unoptimized
+          />
+        ) : (
+          <div aria-hidden className="h-12 w-12 animate-pulse rounded bg-zinc-700" />
+        )}
       </div>
 
       {/* Job Info */}
@@ -94,39 +106,75 @@ export function HistoryDetails({ application }: JobDetailsProps) {
     });
   };
 
+  const jobPostUrl = application.postId ? `/job-post/${application.postId}` : null;
+  const historyApplicationUrl = `/history/application/${application.id}`;
+
   return (
     <div className="bg-very-dark-gray rounded-lg border border-gray-700 p-6">
       {/* Header Section with Company Logo and External Link */}
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded bg-gray-600 text-lg font-bold text-white">
-            {application.companyName.substring(0, 2).toUpperCase()}
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-gray-600 text-lg font-bold text-white">
+            {application.companyLogo ? (
+              <Image
+                src={application.companyLogo}
+                alt={application.companyName}
+                width={64}
+                height={64}
+                className="h-full w-full object-contain"
+                unoptimized
+              />
+            ) : (
+              <div aria-hidden className="h-16 w-16 animate-pulse rounded bg-zinc-600" />
+            )}
           </div>
           <div>
             <p className="text-lg text-white">{application.companyName}</p>
             <p className="text-sm text-white">{application.location}</p>
           </div>
         </div>
-        <ExternalLink className="hover:text-primary-green mt-2 h-6 w-6 cursor-pointer text-gray-400" />
+        {jobPostUrl ? (
+          <a
+            href={jobPostUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open job post in new tab"
+            className="hover:text-primary-green mt-2 text-gray-400"
+          >
+            <ExternalLink className="h-6 w-6" />
+          </a>
+        ) : (
+          <ExternalLink aria-hidden className="mt-2 h-6 w-6 text-gray-600" />
+        )}
       </div>
 
       {/* Job Title */}
       <h1 className="mb-4 text-2xl font-bold text-white">{application.jobTitle}</h1>
 
-      {/* Status and Applied Date */}
-      <div className="mb-6 flex items-center gap-4">
-        <span
-          className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs ${getStatusColor(application.status)} bg-gray-800`}
+      <div className="mb-4">
+        <Button
+          asChild
+          className="bg-primary-green w-full cursor-pointer rounded-full text-white hover:bg-green-600 sm:w-auto"
         >
-          {formatStatus(application.status)}
-        </span>
-        <span className="text-sm text-gray-400">Applied {formatDate(application.appliedDate)}</span>
+          <a href={historyApplicationUrl} target="_blank" rel="noopener noreferrer">
+            View Application
+          </a>
+        </Button>
       </div>
 
-      {/* View Application Button */}
-      <Button className="bg-primary-green mb-6 cursor-pointer rounded-full px-8 py-3 text-sm text-white hover:bg-green-600">
-        View Application
-      </Button>
+      {/* Status and Applied Date */}
+      <div className="mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <span
+            className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs ${getStatusColor(application.status)} bg-gray-800`}
+          >
+            {formatStatus(application.status)}
+          </span>
+          <span className="text-sm text-gray-400">
+            Applied {formatDate(application.appliedDate)}
+          </span>
+        </div>
+      </div>
 
       {/* Job Description */}
       <div className="text-sm leading-relaxed text-gray-300">
@@ -163,19 +211,21 @@ export function HistoryDetails({ application }: JobDetailsProps) {
         </div>
 
         {/* Tags/Skills */}
-        <div className="mb-6">
-          <h3 className="mb-3 text-sm font-semibold text-white">Tags</h3>
-          <div className="flex flex-wrap gap-2">
-            {application.answer?.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="rounded-full border border-gray-600 bg-gray-700 px-3 py-1 text-xs text-gray-300"
-              >
-                {tag}
-              </span>
-            ))}
+        {application.answer?.tags && application.answer.tags.length > 0 && (
+          <div className="mb-6">
+            <h3 className="mb-3 text-sm font-semibold text-white">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {application.answer.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="rounded-full border border-gray-600 bg-gray-700 px-3 py-1 text-xs text-gray-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Job Description */}
         <div className="mb-6">

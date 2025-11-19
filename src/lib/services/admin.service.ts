@@ -85,7 +85,7 @@ interface DashboardStats {
 }
 
 interface ReportSubmitData {
-  reported_id: number;
+  reported_id: number | string;
   reportedEntityType: 'post' | 'user';
   reason: string;
 }

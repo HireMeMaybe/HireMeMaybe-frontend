@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { JobApplicationHistory, HistoryFilters } from '@/types/history';
+import { CpskService } from '@/lib/services/cpsk.service';
+import { JobService } from '@/lib/services/job.service';
+import { CompanyService } from '@/lib/services/company.service';
 
 interface UseJobHistoryReturn {
   history: JobApplicationHistory[];
@@ -12,144 +15,15 @@ interface UseJobHistoryReturn {
   refetch: () => Promise<void>;
 }
 
-// Mock data for demonstration
-const mockHistoryData: JobApplicationHistory[] = [
-  {
-    id: 1,
-    jobTitle: 'Full Stack Developer',
-    companyName: 'TechCorp Solutions',
-    location: 'Bangkok, Thailand',
-    status: 'pending',
-    appliedDate: '2024-09-15T08:30:00Z',
-    lastUpdated: '2024-09-15T08:30:00Z',
-    jobType: 'Hybrid',
-    answer: {
-      id: 1,
-      expected_salary: '50,000 - 70,000 THB',
-      experience_level: 'Mid-level',
-      tags: ['JavaScript', 'TypeScript', 'React', 'Node.js'],
-    },
-    postId: 1,
-  },
-  {
-    id: 2,
-    jobTitle: 'Frontend Developer',
-    companyName: 'Digital Agency',
-    location: 'Bangkok, Thailand',
-    status: 'in consideration',
-    appliedDate: '2024-09-12T14:20:00Z',
-    lastUpdated: '2024-09-14T09:15:00Z',
-    jobType: 'Remote',
-    answer: {
-      id: 2,
-      expected_salary: '45,000 - 60,000 THB',
-      experience_level: 'Junior',
-      tags: ['React', 'Vue.js', 'CSS', 'HTML'],
-    },
-    postId: 2,
-  },
-  {
-    id: 3,
-    jobTitle: 'Backend Developer',
-    companyName: 'StartupTech',
-    location: 'Chiang Mai, Thailand',
-    status: 'rejected',
-    appliedDate: '2024-09-10T11:45:00Z',
-    lastUpdated: '2024-09-13T16:30:00Z',
-    jobType: 'Onsite',
-    answer: {
-      id: 3,
-      expected_salary: '40,000 - 55,000 THB',
-      experience_level: 'Junior',
-      tags: ['Python', 'Django', 'PostgreSQL'],
-    },
-    postId: 3,
-  },
-  {
-    id: 4,
-    jobTitle: 'UI/UX Designer',
-    companyName: 'Creative Studio',
-    location: 'Bangkok, Thailand',
-    status: 'pending',
-    appliedDate: '2024-09-08T16:00:00Z',
-    lastUpdated: '2024-09-08T16:00:00Z',
-    jobType: 'Onsite',
-    answer: {
-      id: 4,
-      expected_salary: '30,000 - 40,000 THB',
-      experience_level: 'Junior',
-      tags: ['Figma', 'Adobe XD', 'Sketch', 'UI Design'],
-    },
-    postId: 4,
-  },
-  {
-    id: 5,
-    jobTitle: 'DevOps Engineer',
-    companyName: 'CloudTech',
-    location: 'Bangkok, Thailand',
-    status: 'in consideration',
-    appliedDate: '2024-09-05T10:30:00Z',
-    lastUpdated: '2024-09-11T14:20:00Z',
-    jobType: 'Hybrid',
-    answer: {
-      id: 5,
-      expected_salary: '60,000 - 80,000 THB',
-      experience_level: 'Mid-level',
-      tags: ['Docker', 'Kubernetes', 'AWS', 'Python'],
-    },
-    postId: 5,
-  },
-  {
-    id: 6,
-    jobTitle: 'Mobile Developer',
-    companyName: 'AppWorks',
-    location: 'Bangkok, Thailand',
-    status: 'pending',
-    appliedDate: '2024-09-03T13:15:00Z',
-    lastUpdated: '2024-09-03T13:15:00Z',
-    jobType: 'Remote',
-    answer: {
-      id: 6,
-      expected_salary: '50,000 - 65,000 THB',
-      experience_level: 'Mid-level',
-      tags: ['React Native', 'Flutter', 'Swift', 'Kotlin'],
-    },
-    postId: 6,
-  },
-  {
-    id: 7,
-    jobTitle: 'Data Scientist',
-    companyName: 'DataCorp',
-    location: 'Bangkok, Thailand',
-    status: 'rejected',
-    appliedDate: '2024-09-01T09:00:00Z',
-    lastUpdated: '2024-09-07T11:45:00Z',
-    jobType: 'Onsite',
-    answer: {
-      id: 7,
-      expected_salary: '70,000 - 90,000 THB',
-      experience_level: 'Senior',
-      tags: ['Python', 'R', 'SQL', 'TensorFlow'],
-    },
-    postId: 7,
-  },
-  {
-    id: 8,
-    jobTitle: 'Product Manager',
-    companyName: 'InnovateTech',
-    location: 'Bangkok, Thailand',
-    status: 'in consideration',
-    appliedDate: '2024-08-28T15:30:00Z',
-    lastUpdated: '2024-09-09T10:20:00Z',
-    jobType: 'Hybrid',
-    answer: {
-      id: 8,
-      experience_level: 'Senior',
-      tags: ['Product Strategy', 'Agile', 'Scrum', 'Analytics'],
-    },
-    postId: 8,
-  },
-];
+// Helper function to map year of experience to experience level text
+const mapExperienceLevel = (years?: number): string | undefined => {
+  if (years === undefined || years === null) return undefined;
+  if (years === 0) return 'No experience';
+  if (years === 1) return 'Less than 1 year';
+  if (years === 3) return '1-2 years';
+  if (years === 5) return '3-5 years';
+  return '5+ years';
+};
 
 export function useJobHistory(): UseJobHistoryReturn {
   const [loading, setLoading] = useState(true);
@@ -158,35 +32,145 @@ export function useJobHistory(): UseJobHistoryReturn {
     sortBy: 'appliedDate',
     sortOrder: 'desc',
   });
+  const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  // Transform and filter applications
+  const [transformedHistory, setTransformedHistory] = useState<JobApplicationHistory[]>([]);
 
   const fetchHistoryData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Use mock data for testing
-      console.log('Using mock data for testing...');
+      // 1. Get CPSK profile with applications
+      const profile = await CpskService.getProfile();
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!profile.applications || profile.applications.length === 0) {
+        setTransformedHistory([]);
+        return;
+      }
 
-      // Set mock history data directly
-      setTransformedHistory(mockHistoryData);
+      // 2. Fetch job posts for all applications in parallel
+      const jobPostPromises = profile.applications.map(async (app) => {
+        try {
+          const jobPost = await JobService.getJobPostById(String(app.post_id));
+          return { app, jobPost };
+        } catch (err) {
+          console.error(`Failed to fetch job post ${app.post_id}:`, err);
+          return { app, jobPost: null };
+        }
+      });
+
+      const jobResults = await Promise.all(jobPostPromises);
+
+      // 3. Get unique company IDs
+      const companyIds = new Set<string>();
+      jobResults.forEach(({ jobPost }) => {
+        if (jobPost?.company_id) {
+          companyIds.add(String(jobPost.company_id));
+        }
+      });
+
+      // 4. Fetch company profiles and logos in parallel
+      const companyMap = new Map<string, { name?: string; logoUrl?: string }>();
+
+      const companyPromises = Array.from(companyIds).map(async (companyId) => {
+        try {
+          const company = await CompanyService.getCompany(companyId);
+          let logoUrl: string | undefined;
+
+          if (company.logo_id != null) {
+            try {
+              const blob = await CompanyService.fetchLogo(company.logo_id);
+              logoUrl = URL.createObjectURL(blob);
+              blobUrlsRef.current.add(logoUrl);
+            } catch (err) {
+              console.error(`Failed to fetch logo for company ${companyId}:`, err);
+            }
+          }
+
+          return {
+            companyId,
+            name: company.name || company.user?.username,
+            logoUrl,
+          };
+        } catch (err) {
+          console.error(`Failed to fetch company ${companyId}:`, err);
+          return {
+            companyId,
+            name: undefined,
+            logoUrl: undefined,
+          };
+        }
+      });
+
+      const companies = await Promise.all(companyPromises);
+      companies.forEach(({ companyId, name, logoUrl }) => {
+        companyMap.set(companyId, { name, logoUrl });
+      });
+
+      // 5. Transform to JobApplicationHistory format
+      const history = jobResults
+        .map(({ app, jobPost }) => {
+          if (!jobPost) return null;
+
+          const companyId = String(jobPost.company_id);
+          const company = companyMap.get(companyId);
+
+          // Map answer data to the format expected by HistoryCard
+          const mappedAnswer = app.answer
+            ? {
+                id: app.answer.id,
+                expected_salary: app.answer.expected_salary,
+                experience_level: mapExperienceLevel(app.answer.year_of_experience),
+                year_of_experience: app.answer.year_of_experience,
+                right_to_work: app.answer.right_to_work,
+                programming_languages: app.answer.programming_languages || [],
+                tags: app.answer.programming_languages || [],
+              }
+            : undefined;
+
+          const historyItem: JobApplicationHistory = {
+            id: app.id,
+            jobTitle: jobPost.title || 'Untitled Position',
+            companyName: company?.name || 'Unknown Company',
+            location: jobPost.location || 'Unknown Location',
+            status: app.status,
+            appliedDate: app.applied_at,
+            lastUpdated: app.applied_at,
+            jobType: jobPost.type as JobApplicationHistory['jobType'],
+            companyLogo: company?.logoUrl,
+            answer: mappedAnswer,
+            postId: app.post_id,
+          };
+
+          return historyItem;
+        })
+        .filter((item): item is JobApplicationHistory => item !== null);
+
+      setTransformedHistory(history);
     } catch (err) {
-      console.error('Error with mock data:', err);
-      setError('Failed to load mock application history');
+      console.error('Error fetching application history:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load application history');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Always fetch mock data regardless of authentication status for testing
     fetchHistoryData();
   }, [fetchHistoryData]);
 
-  // Transform and filter applications - using mock data directly
-  const [transformedHistory, setTransformedHistory] = useState<JobApplicationHistory[]>([]);
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    const currentBlobUrls = blobUrlsRef.current;
+    return () => {
+      currentBlobUrls.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+      currentBlobUrls.clear();
+    };
+  }, []);
 
   // Helper function to normalize values for comparison
   const normalizeValue = (value: unknown, sortBy: string): unknown => {

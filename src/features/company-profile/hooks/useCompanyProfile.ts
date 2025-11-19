@@ -105,6 +105,7 @@ async function hydrateCompany(data: BackendCompanyResponse): Promise<Company> {
     // Prioritize top-level fields over nested user fields (top-level is fresher)
     email: data.email || data.contact || contactInfo.email || '',
     phone: data.tel || data.phone || contactInfo.tel || '',
+    ownerId: contactInfo.id,
     logoUrl: undefined,
     bannerUrl: undefined,
     about: data.overview || '',

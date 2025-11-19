@@ -1,8 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
-import { User } from 'lucide-react';
 import type { Application } from '@/types/application';
 
 interface ApplicationCardProps {
@@ -16,24 +14,7 @@ export default function ApplicationCard({ application, onViewApplication }: Appl
     <div className="bg-very-dark-gray rounded-xl border border-zinc-700 p-6 transition-colors hover:border-zinc-600">
       <div className="flex items-center justify-between">
         {/* Left side - Candidate info */}
-        <div className="flex items-center gap-4">
-          {/* Profile Picture */}
-          <div className="flex-shrink-0">
-            <div className="bg-primary-green flex h-12 w-12 items-center justify-center overflow-hidden rounded-full">
-              {application.profilePicture ? (
-                <Image
-                  src={application.profilePicture as string}
-                  alt={`${application.candidateName} profile`}
-                  width={48}
-                  height={48}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <User className="h-6 w-6 text-white" />
-              )}
-            </div>
-          </div>
-
+        <div className="flex items-center">
           {/* Candidate Details */}
           <div className="min-w-0 flex-1">
             <h3 className="mb-1 text-lg font-semibold text-white">{application.candidateName}</h3>

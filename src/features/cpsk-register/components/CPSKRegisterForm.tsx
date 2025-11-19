@@ -98,10 +98,16 @@ export default function CPSKRegisterForm({
       : undefined,
   });
 
+  const initialSoftSkills = Array.isArray(initialProfile?.soft_skill)
+    ? initialProfile.soft_skill
+    : initialProfile?.soft_skill
+      ? [initialProfile.soft_skill]
+      : [];
+
   const { skillInput, skills, setSkillInput, setSkills, addSkill, removeSkill, onSkillKeyDown } =
     useSoftSkills({
       setValue,
-      initialSkills: initialProfile?.soft_skill || [],
+      initialSkills: initialSoftSkills,
     });
 
   const { handleResumeChange, getResumeDisplayText } = useResumeUpload({

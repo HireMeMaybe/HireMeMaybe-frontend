@@ -6,15 +6,17 @@ import { useTransition, useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { Mail, Phone, Building, Edit } from 'lucide-react';
+import { Mail, Phone, Building, Edit, Flag } from 'lucide-react';
 import EditProfileModal from '@/features/company-profile/components/EditProfileModal';
-import { SuccessModal } from '@/components/modals';
+import { SuccessModal, ReportModal } from '@/components/modals';
 import { companyRegisterSchema, type CompanyRegisterFormData } from '@/lib/validations/company';
 import type { Company } from '@/types/company';
 import { mapBackendToDisplay, mapFrontendToBackend } from '@/lib/utils/size';
 import { capitalize } from '@/lib/utils/string';
 import { isValidEmail, isValidPhone } from '@/lib/utils/user';
 import { CompanyService } from '@/lib/services/company.service';
+import { AdminService } from '@/lib/services';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 interface CompanyHeaderProps {
   readonly company: Company;
@@ -27,6 +29,9 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   useEffect(() => {
     // reset error when logo url changes
@@ -46,10 +51,37 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
   });
 
   const { data: session } = useSession();
+  const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
   const isOwner = !!session?.user?.email && session.user.email === company.email;
+  const canEditProfile = viewType === 'owner' || isOwner;
+  const userRole = session?.backendUser?.role ?? session?.role;
+  const hasReportRole = ['CPSK', 'Visitor', 'Admin'].includes(userRole ?? '');
+  const canReportCompany = !canEditProfile && (hasReportRole || isAdminAuthenticated);
 
   const handleEditProfile = () => {
     setShowEditModal(true);
+  };
+
+  const handleReportSubmit = async (details: string) => {
+    const reportedId = company.ownerId || company.id;
+
+    if (!reportedId) {
+      setReportError('Unable to report this company right now.');
+      return;
+    }
+
+    try {
+      setReportError(null);
+      await AdminService.submitReport({
+        reported_id: reportedId,
+        reportedEntityType: 'user',
+        reason: details || 'No reason provided',
+      });
+      setReportSuccess(true);
+    } catch (error) {
+      console.error('Error submitting company report:', error);
+      setReportError('Failed to submit report. Please try again later.');
+    }
   };
 
   const uploadImage = async (
@@ -249,9 +281,9 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                     </div>
                   </div>
 
-                  {/* Action Button */}
+                  {/* Action Buttons */}
                   <div className="flex-shrink-0">
-                    {(viewType === 'owner' || isOwner) && (
+                    {canEditProfile ? (
                       <Button
                         onClick={handleEditProfile}
                         className="hover:bg-gray-cancel cursor-pointer rounded-md bg-[#595256] px-6 py-2 text-white"
@@ -260,7 +292,24 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
                         <Edit className="h-4 w-4" />
                         Edit Profile
                       </Button>
-                    )}
+                    ) : canReportCompany ? (
+                      <div className="flex flex-col items-start gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setReportError(null);
+                            setShowReportModal(true);
+                          }}
+                          className="border-red-500/70 text-red-400 hover:border-red-400 hover:bg-red-500/10"
+                        >
+                          <Flag className="h-4 w-4" />
+                          Report Company
+                        </Button>
+                        {reportError && (
+                          <p className="text-sm text-red-400">{reportError}</p>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -284,6 +333,25 @@ export default function CompanyHeader({ company, viewType, onCompanyUpdate }: Co
         title="Profile Updated"
         message="Your profile has been successfully updated"
         buttonText="Continue"
+      />
+
+      {/* Report Company Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        reportType="user"
+        onSubmit={async (payload) => {
+          await handleReportSubmit(payload.details);
+        }}
+      />
+
+      <SuccessModal
+        isOpen={reportSuccess}
+        onClose={() => setReportSuccess(false)}
+        title="Report Submitted"
+        message="Thank you for helping keep the community safe."
+        buttonText="Close"
+        description="Our team will review your report shortly."
       />
     </>
   );

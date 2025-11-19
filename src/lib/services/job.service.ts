@@ -19,6 +19,40 @@ interface JobPost {
   updatedAt: string;
 }
 
+export interface ApplicationCpskUser {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  program?: string | null;
+  year?: string | null;
+  resume_id?: number | null;
+  soft_skill?: string[] | null;
+  user?: {
+    createdAt?: string;
+    deletedAt?: { time?: string; valid?: boolean } | null;
+    email?: string;
+    id?: string;
+    profile_picture?: string | null;
+    punishment?: { at?: string; end?: string; type?: string } | null;
+    role?: string;
+    tel?: string;
+    updatedAt?: string;
+    username?: string;
+  };
+  User?: {
+    CreatedAt?: string;
+    DeletedAt?: { time?: string; valid?: boolean } | null;
+    UpdatedAt?: string;
+    email?: string | null;
+    id?: string;
+    profile_picture?: string | null;
+    punishment?: { at?: string; end?: string; type?: string } | null;
+    role?: string | null;
+    tel?: string | null;
+    username?: string | null;
+  };
+}
+
 export interface JobPostApplication {
   id: number;
   post_id: number;
@@ -34,6 +68,7 @@ export interface JobPostApplication {
     right_to_work: string;
     year_of_experience: number;
   };
+  cpsk_user?: ApplicationCpskUser | null;
 }
 
 export interface CompanyUserAccount {
@@ -79,6 +114,19 @@ export interface JobPostDetail {
   expiring: string;
   applications: JobPostApplication[] | null;
   company_user?: CompanyUserDetail;
+  user_apply?: boolean | null;
+  include_default_form?: boolean;
+  include_custom_form?: boolean;
+  custom_form_link?: string | null;
+  includeDefaultForm?: boolean;
+  includeCustomForm?: boolean;
+  customFormLink?: string | null;
+  default_form?: boolean;
+  custom_form?: boolean;
+  defaultForm?: boolean;
+  customForm?: boolean;
+  optional_forms?: string[] | null;
+  optionalForms?: string[] | null;
 }
 
 interface JobSearchParams {
@@ -113,6 +161,7 @@ export interface JobPostSummary {
     industry?: string;
     location?: string;
   };
+  user_apply?: boolean | null;
 }
 
 type JobSearchResponse = JobPostSummary[];
@@ -127,6 +176,8 @@ interface JobPostCreateData {
   tags: string[];
   expiring?: string;
   salary?: string;
+  default_form?: boolean;
+  optional_forms?: string[] | null;
 }
 
 export class JobService {
@@ -192,7 +243,20 @@ export class JobService {
    */
   static async createJobPost(data: JobPostCreateData): Promise<JobPost> {
     try {
-      return await apiClient.post<JobPost>('/jobpost', data);
+      const payload = {
+        title: data.title,
+        desc: data.desc,
+        exp_lvl: data.exp_lvl,
+        location: data.location,
+        type: data.type,
+        req: data.req,
+        tags: data.tags,
+        expiring: data.expiring,
+        salary: data.salary,
+        default_form: data.default_form,
+        optional_forms: data.optional_forms,
+      };
+      return await apiClient.post<JobPost>('/jobpost', payload);
     } catch (error) {
       if (error instanceof ApiError) {
         throw new Error(`Failed to create job post: ${error.message}`);

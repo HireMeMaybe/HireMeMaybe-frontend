@@ -227,7 +227,7 @@ function ProfileView({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {profileData?.soft_skill && profileData.soft_skill.length > 0 ? (
+          {Array.isArray(profileData?.soft_skill) && profileData.soft_skill.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {profileData.soft_skill.map((skill, index) => (
                 <span

@@ -18,6 +18,40 @@ interface CompanyProfile {
   logoUrl?: string;
 }
 
+interface CompanyApplicationUser {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  program?: string | null;
+  year?: string | null;
+  resume_id?: number | null;
+  soft_skill?: string[] | null;
+  user?: {
+    createdAt?: string;
+    deletedAt?: { time?: string; valid?: boolean } | null;
+    email?: string;
+    id?: string;
+    profile_picture?: string | null;
+    punishment?: { at?: string; end?: string; type?: string } | null;
+    role?: string;
+    tel?: string;
+    updatedAt?: string;
+    username?: string;
+  };
+  User?: {
+    CreatedAt?: string;
+    DeletedAt?: { time?: string; valid?: boolean } | null;
+    email?: string;
+    id?: string;
+    profile_picture?: string | null;
+    punishment?: { at?: string; end?: string; type?: string } | null;
+    role?: string;
+    tel?: string;
+    UpdatedAt?: string;
+    username?: string;
+  };
+}
+
 // Full response shape for PATCH /company/profile (simplified types)
 export interface CompanyProfileResponse {
   banner_id: number;
@@ -35,17 +69,20 @@ export interface CompanyProfileResponse {
       answer_id?: number;
       applied_at?: string;
       cpsk_id?: string;
+      cpsk_user?: CompanyApplicationUser;
       id?: number;
       post_id?: number;
       resume_id?: number;
       status?: string;
     }>;
     company_id?: string;
+    company_user?: string | null;
     desc?: string;
     exp_lvl?: string;
     expiring?: string;
     id?: number;
     location?: string;
+    optional_forms?: string[];
     post_time?: string;
     req?: string;
     salary?: string;
@@ -77,6 +114,76 @@ interface AIVerificationResponse {
   confidence: string;
   reasoning: string;
 }
+
+type SessionSafeCompany = {
+  id?: string;
+  name?: string | null;
+  overview?: string | null;
+  industry?: string | null;
+  size?: string | null;
+  verified_status?: 'Verified' | 'Pending' | 'Unverified' | null;
+  logo_id?: number | null;
+  banner_id?: number | null;
+};
+
+type SessionSafeUser = {
+  id?: string;
+  email?: string | null;
+  tel?: string | null;
+  username?: string | null;
+  profile_picture?: string | null;
+};
+
+const fetchFileWithAuth = async (fileId: number, logLabel: string): Promise<Blob> => {
+  console.log(`${logLabel}: Starting fetch for fileId:`, fileId);
+  try {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    if (!backendUrl) {
+      throw new Error('Backend URL is not configured');
+    }
+
+    const token = await apiClient['getAuthToken']();
+    console.log(`${logLabel}: Got token:`, token ? `${token.substring(0, 20)}...` : 'none');
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      const hasScheme = /^[A-Za-z]+\s+/i.test(token);
+      headers['Authorization'] = hasScheme ? token : `Bearer ${token}`;
+    }
+
+    const url = `${backendUrl}/file/${fileId}`;
+    console.log(`${logLabel}: Fetching from URL:`, url, 'with auth:', !!token);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    console.log(`${logLabel}: Response status:`, response.status);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        console.log(`${logLabel}: Error response:`, errorData);
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch {
+        console.log(`${logLabel}: Could not parse error response as JSON`);
+      }
+      throw new Error(`Failed to fetch file: ${errorMessage}`);
+    }
+
+    const blob = await response.blob();
+    console.log(`${logLabel}: Successfully fetched blob, size:`, blob.size, 'type:', blob.type);
+    return blob;
+  } catch (error) {
+    console.error(`${logLabel}: Error occurred:`, error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to fetch file: Unknown error');
+  }
+};
 
 export class CompanyService {
   /**
@@ -211,6 +318,34 @@ export class CompanyService {
     return this.SIZE_ERROR_PATTERNS.some((pattern) => combined.includes(pattern));
   }
 
+  private static buildSessionCompanyPayload(
+    company: CompanyProfileResponse,
+    normalizedStatus: 'Verified' | 'Pending' | 'Unverified' | null
+  ): SessionSafeCompany {
+    return {
+      id: company.id,
+      name: company.name ?? null,
+      overview: company.overview ?? null,
+      industry: company.industry ?? null,
+      size: company.size ?? null,
+      verified_status: normalizedStatus,
+      logo_id: typeof company.logo_id === 'number' ? company.logo_id : null,
+      banner_id: typeof company.banner_id === 'number' ? company.banner_id : null,
+    };
+  }
+
+  private static buildSessionUserPayload(user?: CompanyProfileResponse['user']): SessionSafeUser | undefined {
+    if (!user) return undefined;
+
+    return {
+      id: user.id,
+      email: user.email ?? null,
+      tel: user.tel ?? null,
+      username: user.username ?? null,
+      profile_picture: user.profile_picture ?? null,
+    };
+  }
+
   /**
    * Get my company profile (GET /company/myprofile)
    * Requires bearer token
@@ -265,22 +400,24 @@ export class CompanyService {
           ? verifiedStatus
           : null;
 
-      // Extract User data from the company response
-      const userData = (company as unknown as Record<string, unknown>)?.User || company?.user;
-
-      const companyPayload = {
-        ...company,
-        verified_status: company?.verified_status ?? null,
-      } as Record<string, unknown> & { verified_status?: string | null };
+      const companyPayload = this.buildSessionCompanyPayload(company, normalizedStatus ?? null);
+      const userPayload = this.buildSessionUserPayload(company.user);
 
       const sessionPatch = {
         backendUser: {
-          ...company,
+          id: companyPayload.id,
+          name: companyPayload.name,
+          overview: companyPayload.overview,
+          industry: companyPayload.industry,
+          size: companyPayload.size,
           company: companyPayload,
-          // Sync User data at top level for EditProfileModal access
-          User: userData,
-          // keep verified_status at top-level for backward compatibility
-          verified_status: normalizedStatus ?? null,
+          verified_status: companyPayload.verified_status ?? null,
+          ...(userPayload
+            ? {
+                User: userPayload,
+                user: userPayload,
+              }
+            : {}),
         } as Record<string, unknown>,
       };
 
@@ -333,100 +470,23 @@ export class CompanyService {
 
   /**
    * Fetch logo file by file ID using /file/{id} endpoint
-   * @param fileId - The logo file ID
    */
   static async fetchLogo(fileId: number): Promise<Blob> {
-    console.log('fetchLogo: Starting fetch for fileId:', fileId);
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      if (!backendUrl) {
-        throw new Error('Backend URL is not configured');
-      }
-
-      // Use apiClient's auth mechanism instead of manual token handling
-      const token = await apiClient['getAuthToken']();
-      console.log('fetchLogo: Got token:', token ? `${token.substring(0, 20)}...` : 'none');
-
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const url = `${backendUrl}/file/${fileId}`;
-      console.log('fetchLogo: Fetching from URL:', url, 'with auth:', !!token);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers,
-      });
-
-      console.log('fetchLogo: Response status:', response.status);
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          console.log('fetchLogo: Error response:', errorData);
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          console.log('fetchLogo: Could not parse error response as JSON');
-        }
-        throw new Error(`Failed to fetch logo: ${errorMessage}`);
-      }
-
-      const blob = await response.blob();
-      console.log('fetchLogo: Successfully fetched blob, size:', blob.size, 'type:', blob.type);
-      return blob;
-    } catch (error) {
-      console.error('fetchLogo: Error occurred:', error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('Failed to fetch logo: Unknown error');
-    }
+    return fetchFileWithAuth(fileId, 'fetchLogo');
   }
 
   /**
    * Fetch banner file by file ID using /file/{id} endpoint
-   * @param fileId - The banner file ID
    */
   static async fetchBanner(fileId: number): Promise<Blob> {
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      if (!backendUrl) {
-        throw new Error('Backend URL is not configured');
-      }
-
-      // Use apiClient's auth mechanism instead of manual token handling
-      const token = await apiClient['getAuthToken']();
-
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${backendUrl}/file/${fileId}`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          // Could not parse error response
-        }
-        throw new Error(`Failed to fetch banner: ${errorMessage}`);
-      }
-
-      return await response.blob();
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('Failed to fetch banner: Unknown error');
-    }
+    return fetchFileWithAuth(fileId, 'fetchBanner');
   }
+
+  /**
+   * Fetch arbitrary file (e.g., applicant resumes)
+   */
+  static async fetchFile(fileId: number): Promise<Blob> {
+    return fetchFileWithAuth(fileId, 'fetchFile');
+  }
+
 }
