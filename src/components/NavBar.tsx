@@ -4,10 +4,11 @@ import Image from 'next/image';
 import { Search, User, UserPen, History, LogOut, Shield } from 'lucide-react';
 import { PrimaryIcon } from '@/components/icons';
 import { Input } from '@/components/ui/input';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { CompanyService } from '@/lib/services/company.service';
 
 export default function Navbar() {
   const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL ?? '/';
@@ -18,6 +19,8 @@ export default function Navbar() {
   const router = useRouter();
   const isAuthenticated = status === 'authenticated';
   const isLoading = status === 'loading';
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
+  const logoUrlRef = useRef<string | null>(null);
 
   const isAdminRoute = pathname?.startsWith('/admin');
   const {
@@ -34,7 +37,7 @@ export default function Navbar() {
   type BackendUser = {
     role?: string | null;
     verified_status?: string | null;
-    company?: { verified_status?: string | null } | null;
+    company?: { verified_status?: string | null; logo_id?: number | null } | null;
     id?: string | number;
     name?: string | null;
     first_name?: string | null;
@@ -114,6 +117,45 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
+  useEffect(() => {
+    const loadLogo = async () => {
+      if (!isCompany || typeof backendUser?.company?.logo_id !== 'number') {
+        if (logoUrlRef.current) {
+          URL.revokeObjectURL(logoUrlRef.current);
+          logoUrlRef.current = null;
+        }
+        setCompanyLogoUrl(null);
+        return;
+      }
+
+      try {
+        const blob = await CompanyService.fetchLogo(backendUser.company.logo_id);
+        const objectUrl = URL.createObjectURL(blob);
+        if (logoUrlRef.current) {
+          URL.revokeObjectURL(logoUrlRef.current);
+        }
+        logoUrlRef.current = objectUrl;
+        setCompanyLogoUrl(objectUrl);
+      } catch (error) {
+        console.error('Failed to load company logo:', error);
+        if (logoUrlRef.current) {
+          URL.revokeObjectURL(logoUrlRef.current);
+          logoUrlRef.current = null;
+        }
+        setCompanyLogoUrl(null);
+      }
+    };
+
+    void loadLogo();
+
+    return () => {
+      if (logoUrlRef.current) {
+        URL.revokeObjectURL(logoUrlRef.current);
+        logoUrlRef.current = null;
+      }
+    };
+  }, [isCompany, backendUser?.company?.logo_id]);
+
   // Determine what content to show in dropdown
   let dropdownContent: React.ReactNode = null;
 
@@ -162,7 +204,16 @@ export default function Navbar() {
     dropdownContent = (
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3 border-b pb-3">
-          {session?.backendUser?.User?.profile_picture ? (
+          {isCompany && companyLogoUrl ? (
+            <Image
+              src={companyLogoUrl}
+              alt={session?.backendUser?.name || 'Company'}
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-full object-cover"
+              unoptimized
+            />
+          ) : session?.backendUser?.User?.profile_picture ? (
             <Image
               src={session.backendUser.User.profile_picture}
               alt={session.backendUser?.name || session.backendUser?.first_name || 'User'}
