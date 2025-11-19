@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Flag } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { JobService, type JobPostDetail } from '@/lib/services/job.service';
-import { CompanyService, type CompanyProfileResponse } from '@/lib/services/company.service';
+import { CompanyService } from '@/lib/services/company.service';
 import { Button } from '@/components/ui/button';
 import Loading from '@/app/loading';
 import ReportModal from '@/components/modals/ReportModal';
@@ -30,7 +30,6 @@ export default function JobPostDetailPage() {
   const { data: session, status } = useSession();
   const { isAuthenticated: isAdminAuthenticated } = useAdminAuth();
   const [jobPost, setJobPost] = useState<JobPostDetail | null>(null);
-  const [company, setCompany] = useState<CompanyProfileResponse | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +56,7 @@ export default function JobPostDetailPage() {
     if (status === 'authenticated' && isRegistered === false) {
       router.push('/');
     }
-  }, [status, session, router]);
+  }, [status, session, router, isAdminAuthenticated]);
 
   const setSafeLogoUrl = (newUrl: string | null) => {
     setLogoUrl((previous) => {

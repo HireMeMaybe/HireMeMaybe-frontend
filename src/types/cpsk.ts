@@ -18,7 +18,7 @@ export interface ProfileData {
   program?: string | null;
   year?: string | number | null;
   profile_picture?: string | null;
-  soft_skill?: string[];
+  soft_skill?: string[] | string | null;
   resume_id?: number | null;
   applications?: Array<{
     id: number;

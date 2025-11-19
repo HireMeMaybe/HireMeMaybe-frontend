@@ -211,19 +211,21 @@ export function HistoryDetails({ application }: JobDetailsProps) {
         </div>
 
         {/* Tags/Skills */}
-        <div className="mb-6">
-          <h3 className="mb-3 text-sm font-semibold text-white">Tags</h3>
-          <div className="flex flex-wrap gap-2">
-            {application.answer?.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="rounded-full border border-gray-600 bg-gray-700 px-3 py-1 text-xs text-gray-300"
-              >
-                {tag}
-              </span>
-            ))}
+        {application.answer?.tags && application.answer.tags.length > 0 && (
+          <div className="mb-6">
+            <h3 className="mb-3 text-sm font-semibold text-white">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {application.answer.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="rounded-full border border-gray-600 bg-gray-700 px-3 py-1 text-xs text-gray-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Job Description */}
         <div className="mb-6">
