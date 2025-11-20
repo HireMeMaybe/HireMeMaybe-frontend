@@ -209,45 +209,48 @@ test.describe('Admin Journey Tests', () => {
       await page.goto('/admin/company-verification');
       await page.waitForLoadState('networkidle');
 
-      // Check if there are any companies
-      const rowCount = await page.locator('table tbody tr').count();
+      // Check if there are any action buttons (indicating there's data)
+      const buttonCount = await page.getByRole('button', { name: /view/i }).count();
 
-      if (rowCount > 0) {
-        // Verify buttons exist
-        const viewButton = page.getByRole('button', { name: /view/i }).first();
-        const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
+      // Skip test if no data exists
+      test.skip(buttonCount === 0, 'No unverified companies available for testing');
 
-        await expect(viewButton).toBeVisible();
-        await expect(reconsiderButton).toBeVisible();
-      }
+      // Verify buttons exist
+      const viewButton = page.getByRole('button', { name: /view/i }).first();
+      const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
+
+      await expect(viewButton).toBeVisible();
+      await expect(reconsiderButton).toBeVisible();
     });
 
     test('should open reconsider modal and update status', async ({ page }) => {
       await page.goto('/admin/company-verification');
       await page.waitForLoadState('networkidle');
 
-      const rowCount = await page.locator('table tbody tr').count();
+      // Check if there are any action buttons (indicating there's data)
+      const buttonCount = await page.getByRole('button', { name: /reconsider/i }).count();
 
-      if (rowCount > 0) {
-        // Click reconsider button on first company
-        const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
-        await reconsiderButton.click();
+      // Skip test if no data exists
+      test.skip(buttonCount === 0, 'No unverified companies available for testing');
 
-        // Modal should appear
-        const modal = page.locator('[role="dialog"]');
-        await expect(modal).toBeVisible();
+      // Click reconsider button on first company
+      const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
+      await reconsiderButton.click();
 
-        // Confirm the action
-        const approveButton = modal.getByRole('button', { name: /approve/i });
-        await approveButton.click();
+      // Modal should appear
+      const modal = page.locator('[role="dialog"]');
+      await expect(modal).toBeVisible();
 
-        // Should show success or update the list
-        await page.waitForLoadState('networkidle');
+      // Confirm the action
+      const approveButton = modal.getByRole('button', { name: /approve/i });
+      await approveButton.click();
 
-        // Verify modal closed or success message shown
-        const modalVisible = await modal.isVisible().catch(() => false);
-        expect(modalVisible).toBeFalsy();
-      }
+      // Should show success or update the list
+      await page.waitForLoadState('networkidle');
+
+      // Verify modal closed or success message shown
+      const modalVisible = await modal.isVisible().catch(() => false);
+      expect(modalVisible).toBeFalsy();
     });
   });
 
