@@ -27,12 +27,16 @@ export class CompanyRegisterPage extends BasePage {
     this.companyNameInput = page.getByLabel(/company name/i);
     this.emailInput = page.getByLabel(/email/i);
     this.phoneInput = page.getByLabel(/phone/i);
-    this.industryTrigger = page.locator('[data-slot="select-trigger"]', {
-      hasText: /select industry/i,
-    });
-    this.companySizeTrigger = page.locator('[data-slot="select-trigger"]', {
-      hasText: /select size/i,
-    });
+    this.industryTrigger = page
+      .locator('[data-slot="select-trigger"]', {
+        hasText: /select industry/i,
+      })
+      .first();
+    this.companySizeTrigger = page
+      .locator('[data-slot="select-trigger"]', {
+        hasText: /select size/i,
+      })
+      .first();
     this.overviewTextarea = page.getByLabel(/overview/i);
     this.logoUpload = page.locator('input[type="file"]').first();
     this.bannerUpload = page.locator('input[type="file"]').nth(1);
@@ -45,7 +49,9 @@ export class CompanyRegisterPage extends BasePage {
     this.successDialog = page.getByRole('dialog', {
       name: /registration submitted|action successful/i,
     });
-    this.successCloseButton = this.successDialog.getByRole('button', { name: /(close|continue)/i });
+    this.successCloseButton = this.successDialog
+      .getByRole('button', { name: /(close|continue)/i })
+      .first();
     // Error messages use either 'text-red-reject' or 'text-red-600'
     this.errorMessages = page.locator('.text-red-reject, .text-red-600');
   }
@@ -71,7 +77,6 @@ export class CompanyRegisterPage extends BasePage {
     bannerUpload?: string;
   }) {
     await this.companyNameInput.fill(data.companyName);
-    await this.emailInput.fill(data.email);
     await this.phoneInput.fill(data.phone);
     // Open and select Industry
     await this.industryTrigger.click();
