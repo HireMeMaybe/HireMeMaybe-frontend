@@ -80,7 +80,9 @@ export class CompanyProfilePage extends BasePage {
    * Visible only in owner viewpoint
    */
   getEditProfileButton(): Locator {
-    return this.page.getByRole('button', { name: /^edit profile$/i });
+    return this.page
+      .getByRole('button', { name: /edit profile/i })
+      .filter({ has: this.page.locator('svg.lucide-square-pen') });
   }
 
   /**
@@ -106,9 +108,7 @@ export class CompanyProfilePage extends BasePage {
    */
   getEditJobButton(jobCard?: Locator): Locator {
     const baseLocator = jobCard || this.page;
-    return baseLocator
-      .getByRole('button', { name: /^edit$/i })
-      .filter({ has: this.page.locator('svg.lucide-edit') });
+    return baseLocator.getByRole('button', { name: /edit/i }).first();
   }
 
   /**
@@ -117,9 +117,7 @@ export class CompanyProfilePage extends BasePage {
    */
   getDeleteJobButton(jobCard?: Locator): Locator {
     const baseLocator = jobCard || this.page;
-    return baseLocator
-      .getByRole('button', { name: /^delete$/i })
-      .filter({ has: this.page.locator('svg.lucide-trash-2') });
+    return baseLocator.getByRole('button', { name: /delete/i }).first();
   }
 
   /**
@@ -128,9 +126,7 @@ export class CompanyProfilePage extends BasePage {
    */
   getViewApplicationsButton(jobCard?: Locator): Locator {
     const baseLocator = jobCard || this.page;
-    return baseLocator
-      .getByRole('button', { name: /view applications/i })
-      .filter({ has: this.page.locator('svg.lucide-eye') });
+    return baseLocator.getByRole('button', { name: /view applications/i });
   }
 
   // ==================== Edit Profile Modal ====================

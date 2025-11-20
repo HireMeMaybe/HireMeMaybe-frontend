@@ -53,12 +53,18 @@ export class JobPostPage extends BasePage {
 
     // Form fields - match actual label text
     this.openingPositionInput = page.getByLabel(/opening position|job title/i);
-    this.descriptionInput = page.getByLabel(/^description$/i);
+    this.descriptionInput = page.getByLabel(/description of position/i);
     this.requirementsInput = page.getByLabel(/requirements/i);
     this.workLocationInput = page.getByLabel(/work location|location/i);
-    this.hiringTypeSelect = page.getByLabel(/hiring type|job type/i);
-    this.salarySelect = page.getByLabel(/salary/i);
-    this.experienceLevelSelect = page.getByLabel(/experience level/i);
+    this.hiringTypeSelect = page
+      .locator('button[role="combobox"]')
+      .filter({ hasText: 'Select Job Type' });
+    this.salarySelect = page
+      .locator('button[role="combobox"]')
+      .filter({ hasText: 'Select Salary Range' });
+    this.experienceLevelSelect = page
+      .locator('button[role="combobox"]')
+      .filter({ hasText: 'Select Experience Level' });
     this.tagsInput = page.getByLabel(/tags/i);
     this.expiringTimeInput = page.getByLabel(/expiring time|deadline/i);
 
@@ -67,8 +73,8 @@ export class JobPostPage extends BasePage {
     this.removeTagButtons = page.locator('button').filter({ hasText: /[×✕]/ });
 
     // Application form options - match checkbox labels
-    this.includeDefaultFormCheckbox = page.getByLabel(/include default application form/i);
-    this.includeCustomFormCheckbox = page.getByLabel(/include custom form/i);
+    this.includeDefaultFormCheckbox = page.locator('#includeDefaultForm');
+    this.includeCustomFormCheckbox = page.locator('#includeCustomForm');
     this.customFormLinkInput = page.getByLabel(/custom form link/i);
     this.defaultQuestionsPreview = page.locator('text=/default questions/i');
 
@@ -110,9 +116,22 @@ export class JobPostPage extends BasePage {
     if (data.description) await this.descriptionInput.fill(data.description);
     if (data.requirements) await this.requirementsInput.fill(data.requirements);
     if (data.workLocation) await this.workLocationInput.fill(data.workLocation);
-    if (data.hiringType) await this.hiringTypeSelect.selectOption(data.hiringType);
-    if (data.salary) await this.salarySelect.selectOption(data.salary);
-    if (data.experienceLevel) await this.experienceLevelSelect.selectOption(data.experienceLevel);
+
+    if (data.hiringType) {
+      await this.hiringTypeSelect.click();
+      await this.page.getByRole('option', { name: new RegExp(data.hiringType, 'i') }).click();
+    }
+
+    if (data.salary) {
+      await this.salarySelect.click();
+      await this.page.getByRole('option', { name: new RegExp(data.salary, 'i') }).click();
+    }
+
+    if (data.experienceLevel) {
+      await this.experienceLevelSelect.click();
+      await this.page.getByRole('option', { name: new RegExp(data.experienceLevel, 'i') }).click();
+    }
+
     if (data.expiringTime) await this.expiringTimeInput.fill(data.expiringTime);
   }
 

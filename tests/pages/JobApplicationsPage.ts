@@ -61,7 +61,9 @@ export class JobApplicationsPage extends BasePage {
     this.viewJobButton = page.getByRole('button', { name: /view job post/i });
 
     // Application cards - ApplicationCard components
-    this.applicationCards = page.locator('div').filter({ has: page.locator('h3') });
+    this.applicationCards = page
+      .locator('div.bg-very-dark-gray.rounded-xl.border')
+      .filter({ has: page.getByRole('button', { name: /view application/i }) });
     this.applicantName = page.locator('h3');
     this.applicantEmail = page.locator('a[href^="mailto:"]');
     this.applicationDate = page.locator('text=/applied on/i');
