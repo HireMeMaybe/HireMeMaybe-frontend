@@ -29,6 +29,11 @@ export default defineConfig({
     actionTimeout: 10000,
     /* Set timeout for navigation */
     navigationTimeout: 30000,
+    /* Run headed with a slight delay between actions to mimic manual usage */
+    headless: false,
+    launchOptions: {
+      slowMo: 500,
+    },
   },
 
   /* Global timeout for each test */
