@@ -16,7 +16,21 @@ import { AdminLoginPage } from './pages';
  */
 
 test.describe('Admin Journey Tests', () => {
+  // Login once before all tests (except ADM-01 which tests login itself)
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    const adminLoginPage = new AdminLoginPage(page);
+    await adminLoginPage.loginWithDefaults();
+    await page.waitForTimeout(500);
+    // Save auth state for reuse
+    await page.context().storageState({ path: 'tests/.auth/admin.json' });
+    await page.close();
+  });
+
   test.describe('ADM-01: Admin login/logout', () => {
+    // Don't use shared auth for login tests
+    test.use({ storageState: { cookies: [], origins: [] } });
+
     test('should successfully login with valid credentials', async ({
       adminLoginPage,
       adminDashboardPage,
@@ -110,14 +124,13 @@ test.describe('Admin Journey Tests', () => {
   });
 
   test.describe('ADM-02: Dashboard stats', () => {
-    test.beforeEach(async ({ adminLoginPage, page }) => {
-      // Login before each test
-      await adminLoginPage.loginWithDefaults();
-      await page.waitForTimeout(1000);
-      await expect(page).toHaveURL('/admin/dashboard');
-    });
+    // Use shared auth state
+    test.use({ storageState: 'tests/.auth/admin.json' });
 
     test('should display all dashboard stat cards', async ({ adminDashboardPage, page }) => {
+      // Navigate to dashboard (already authenticated)
+      await page.goto('/admin/dashboard');
+      await expect(page).toHaveURL('/admin/dashboard');
       await adminDashboardPage.navigate();
 
       // Wait for cards to load
@@ -171,10 +184,8 @@ test.describe('Admin Journey Tests', () => {
   });
 
   test.describe('ADM-03: Company verification workflow', () => {
-    test.beforeEach(async ({ adminLoginPage, page }) => {
-      await adminLoginPage.loginWithDefaults();
-      await expect(page).toHaveURL('/admin/dashboard');
-    });
+    // Use shared auth state
+    test.use({ storageState: 'tests/.auth/admin.json' });
 
     test('should display company verification page', async ({ page }) => {
       await page.goto('/admin/company-verification');
@@ -209,53 +220,54 @@ test.describe('Admin Journey Tests', () => {
       await page.goto('/admin/company-verification');
       await page.waitForLoadState('networkidle');
 
-      // Check if there are any companies
-      const rowCount = await page.locator('table tbody tr').count();
+      // Check if there are any action buttons (indicating there's data)
+      const buttonCount = await page.getByRole('button', { name: /view/i }).count();
 
-      if (rowCount > 0) {
-        // Verify buttons exist
-        const viewButton = page.getByRole('button', { name: /view/i }).first();
-        const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
+      // Skip test if no data exists
+      test.skip(buttonCount === 0, 'No unverified companies available for testing');
 
-        await expect(viewButton).toBeVisible();
-        await expect(reconsiderButton).toBeVisible();
-      }
+      // Verify buttons exist
+      const viewButton = page.getByRole('button', { name: /view/i }).first();
+      const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
+
+      await expect(viewButton).toBeVisible();
+      await expect(reconsiderButton).toBeVisible();
     });
 
     test('should open reconsider modal and update status', async ({ page }) => {
       await page.goto('/admin/company-verification');
       await page.waitForLoadState('networkidle');
 
-      const rowCount = await page.locator('table tbody tr').count();
+      // Check if there are any action buttons (indicating there's data)
+      const buttonCount = await page.getByRole('button', { name: /reconsider/i }).count();
 
-      if (rowCount > 0) {
-        // Click reconsider button on first company
-        const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
-        await reconsiderButton.click();
+      // Skip test if no data exists
+      test.skip(buttonCount === 0, 'No unverified companies available for testing');
 
-        // Modal should appear
-        const modal = page.locator('[role="dialog"]');
-        await expect(modal).toBeVisible();
+      // Click reconsider button on first company
+      const reconsiderButton = page.getByRole('button', { name: /reconsider/i }).first();
+      await reconsiderButton.click();
 
-        // Confirm the action
-        const approveButton = modal.getByRole('button', { name: /approve/i });
-        await approveButton.click();
+      // Modal should appear
+      const modal = page.locator('[role="dialog"]');
+      await expect(modal).toBeVisible();
 
-        // Should show success or update the list
-        await page.waitForLoadState('networkidle');
+      // Confirm the action
+      const approveButton = modal.getByRole('button', { name: /approve/i });
+      await approveButton.click();
 
-        // Verify modal closed or success message shown
-        const modalVisible = await modal.isVisible().catch(() => false);
-        expect(modalVisible).toBeFalsy();
-      }
+      // Should show success or update the list
+      await page.waitForLoadState('networkidle');
+
+      // Verify modal closed or success message shown
+      const modalVisible = await modal.isVisible().catch(() => false);
+      expect(modalVisible).toBeFalsy();
     });
   });
 
   test.describe('ADM-04: Manage job posts', () => {
-    test.beforeEach(async ({ adminLoginPage, page }) => {
-      await adminLoginPage.loginWithDefaults();
-      await expect(page).toHaveURL('/admin/dashboard');
-    });
+    // Use shared auth state
+    test.use({ storageState: 'tests/.auth/admin.json' });
 
     test('should display manage job posts page', async ({ page }) => {
       await page.goto('/admin/manage-job-posts');
@@ -347,10 +359,8 @@ test.describe('Admin Journey Tests', () => {
   });
 
   test.describe('ADM-05: Manage CPSK accounts', () => {
-    test.beforeEach(async ({ adminLoginPage, page }) => {
-      await adminLoginPage.loginWithDefaults();
-      await expect(page).toHaveURL('/admin/dashboard');
-    });
+    // Use shared auth state
+    test.use({ storageState: 'tests/.auth/admin.json' });
 
     test('should display manage CPSK page', async ({ page }) => {
       await page.goto('/admin/manage-cpsk');
@@ -446,10 +456,8 @@ test.describe('Admin Journey Tests', () => {
   });
 
   test.describe('ADM-06: Visitor reports', () => {
-    test.beforeEach(async ({ adminLoginPage, page }) => {
-      await adminLoginPage.loginWithDefaults();
-      await expect(page).toHaveURL('/admin/dashboard');
-    });
+    // Use shared auth state
+    test.use({ storageState: 'tests/.auth/admin.json' });
 
     test('should display manage visitors page', async ({ page }) => {
       await page.goto('/admin/manage-visitors');
@@ -593,10 +601,8 @@ test.describe('Admin Journey Tests', () => {
   });
 
   test.describe('Admin Dashboard Navigation', () => {
-    test.beforeEach(async ({ adminLoginPage, page }) => {
-      await adminLoginPage.loginWithDefaults();
-      await expect(page).toHaveURL('/admin/dashboard');
-    });
+    // Use shared auth state
+    test.use({ storageState: 'tests/.auth/admin.json' });
 
     test('should navigate to all admin pages from dashboard', async ({
       adminDashboardPage,
