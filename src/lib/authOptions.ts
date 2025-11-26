@@ -1,5 +1,5 @@
-import CredentialsProvider from 'next-auth/providers/credentials';
 import { AuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
 // Small interface to represent the normalized backend user shape we store in the
 // NextAuth user / JWT / session objects.
@@ -35,6 +35,8 @@ interface BackendUser {
     profile_picture?: string;
   };
 }
+
+const isProd = process.env.NODE_ENV === 'production';
 
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || 'dev-secret-key-change-in-production',
@@ -89,6 +91,33 @@ export const authOptions: AuthOptions = {
     signIn: '/',
     signOut: '/',
     error: '/auth/error',
+  },
+  cookies: {
+    sessionToken: {
+      name: isProd ? '__Host-next-auth.session-token' : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isProd,
+      },
+    },
+    callbackUrl: {
+      name: isProd ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: isProd,
+      },
+    },
+    csrfToken: {
+      name: isProd ? '__Host-next-auth.csrf-token' : 'next-auth.csrf-token',
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: isProd,
+      },
+    },
   },
   callbacks: {
     async jwt({ token, account, user, trigger, session: updatedSession }) {
