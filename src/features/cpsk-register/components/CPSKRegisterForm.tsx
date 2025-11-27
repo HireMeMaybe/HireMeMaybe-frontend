@@ -69,11 +69,12 @@ export default function CPSKRegisterForm({
     watch,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, isValid },
     setError,
     clearErrors,
   } = useForm<FormInput>({
     resolver: zodResolver(cpskSchema),
+    mode: 'onChange',
     defaultValues: {
       first_name: '',
       last_name: '',
@@ -510,7 +511,7 @@ export default function CPSKRegisterForm({
         <Button
           type="button"
           onClick={() => setIsConfirmModalOpen(true)}
-          disabled={isPending || !privacyAccepted}
+          disabled={isPending || !privacyAccepted || !isValid}
           className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Submit
