@@ -1,5 +1,4 @@
 // File validation utilities for API endpoints
-// ASVS V5.2.2: Validate file extension matches content type and magic bytes
 
 export interface FileValidationConfig {
   allowedTypes: readonly string[];
