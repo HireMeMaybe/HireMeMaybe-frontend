@@ -232,50 +232,47 @@ test.describe('Admin Demo Journey', () => {
       // Verify we're on the manage companies page
       await expect(manageCompaniesPage.pageTitle).toBeVisible();
 
-      // Check if there are companies to ban
-      const companyCount = await manageCompaniesPage.getCompanyCount();
+      // Check if there are ban buttons available (meaning there are active companies)
+      const banButtonCount = await manageCompaniesPage.banButtons.count();
 
-      if (companyCount > 0) {
-        // Find an active company to ban
+      if (banButtonCount > 0) {
+        // Get the first company that has a ban button
+        const companyCount = await manageCompaniesPage.getCompanyCount();
         let companyIndex = 0;
-        let foundActiveCompany = false;
 
+        // Find the row index that corresponds to the first ban button
         for (let i = 0; i < companyCount; i++) {
-          const status = await manageCompaniesPage.getCompanyStatus(i);
-          if (status?.toLowerCase().includes('active')) {
+          const row = manageCompaniesPage.table.locator('tbody tr').nth(i);
+          const hasBanButton = (await row.getByRole('button', { name: /^ban$/i }).count()) > 0;
+          if (hasBanButton) {
             companyIndex = i;
-            foundActiveCompany = true;
             break;
           }
         }
 
-        if (foundActiveCompany) {
-          const company = await manageCompaniesPage.getCompanyByIndex(companyIndex);
-          console.log(`Banning company: ${company.name}`);
+        const company = await manageCompaniesPage.getCompanyByIndex(companyIndex);
+        console.log(`Banning company: ${company.name}`);
 
-          // Click ban button
-          await manageCompaniesPage.banCompany(companyIndex);
+        // Click ban button
+        await manageCompaniesPage.banCompany(companyIndex);
 
-          // Wait for modal to appear
-          await page.waitForTimeout(1000);
-          await expect(manageCompaniesPage.banModal).toBeVisible();
+        // Wait for modal to appear
+        await page.waitForTimeout(1000);
+        await expect(manageCompaniesPage.banModal).toBeVisible();
 
-          // Pause to show modal
-          await page.waitForTimeout(2000);
+        // Pause to show modal
+        await page.waitForTimeout(2000);
 
-          // Confirm ban action
-          await manageCompaniesPage.confirmBan();
+        // Confirm ban action
+        await manageCompaniesPage.confirmBan();
 
-          // Wait for action to complete
-          await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(2000);
+        // Wait for action to complete
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
 
-          console.log('Company banned successfully');
-        } else {
-          console.log('No active companies available to ban');
-        }
+        console.log('Company banned successfully');
       } else {
-        console.log('No companies available to ban');
+        console.log('No active companies available to ban');
       }
     });
 
@@ -293,50 +290,47 @@ test.describe('Admin Demo Journey', () => {
       // Verify we're on the manage CPSK page
       await expect(manageCPSKPage.pageTitle).toBeVisible();
 
-      // Check if there are CPSK accounts to ban
-      const accountCount = await manageCPSKPage.getAccountCount();
+      // Check if there are ban buttons available (meaning there are active CPSK accounts)
+      const banButtonCount = await manageCPSKPage.banButtons.count();
 
-      if (accountCount > 0) {
-        // Find an active CPSK account to ban
+      if (banButtonCount > 0) {
+        // Get the first CPSK account that has a ban button
+        const accountCount = await manageCPSKPage.getAccountCount();
         let accountIndex = 0;
-        let foundActiveAccount = false;
 
+        // Find the row index that corresponds to the first ban button
         for (let i = 0; i < accountCount; i++) {
-          const status = await manageCPSKPage.getAccountStatus(i);
-          if (status?.toLowerCase().includes('active')) {
+          const row = manageCPSKPage.table.locator('tbody tr').nth(i);
+          const hasBanButton = (await row.getByRole('button', { name: /^ban$/i }).count()) > 0;
+          if (hasBanButton) {
             accountIndex = i;
-            foundActiveAccount = true;
             break;
           }
         }
 
-        if (foundActiveAccount) {
-          const account = await manageCPSKPage.getAccountByIndex(accountIndex);
-          console.log(`Banning CPSK account: ${account.name}`);
+        const account = await manageCPSKPage.getAccountByIndex(accountIndex);
+        console.log(`Banning CPSK account: ${account.name}`);
 
-          // Click ban button
-          await manageCPSKPage.banAccount(accountIndex);
+        // Click ban button
+        await manageCPSKPage.banAccount(accountIndex);
 
-          // Wait for modal to appear
-          await page.waitForTimeout(1000);
-          await expect(manageCPSKPage.banModal).toBeVisible();
+        // Wait for modal to appear
+        await page.waitForTimeout(1000);
+        await expect(manageCPSKPage.banModal).toBeVisible();
 
-          // Pause to show modal
-          await page.waitForTimeout(2000);
+        // Pause to show modal
+        await page.waitForTimeout(2000);
 
-          // Confirm ban action
-          await manageCPSKPage.confirmBan();
+        // Confirm ban action
+        await manageCPSKPage.confirmBan();
 
-          // Wait for action to complete
-          await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(2000);
+        // Wait for action to complete
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
 
-          console.log('CPSK account banned successfully');
-        } else {
-          console.log('No active CPSK accounts available to ban');
-        }
+        console.log('CPSK account banned successfully');
       } else {
-        console.log('No CPSK accounts available to ban');
+        console.log('No active CPSK accounts available to ban');
       }
     });
 
@@ -354,50 +348,47 @@ test.describe('Admin Demo Journey', () => {
       // Verify we're on the manage visitors page
       await expect(manageVisitorsPage.pageTitle).toBeVisible();
 
-      // Check if there are visitors to ban
-      const visitorCount = await manageVisitorsPage.getVisitorCount();
+      // Check if there are ban buttons available (meaning there are active visitors)
+      const banButtonCount = await manageVisitorsPage.banButtons.count();
 
-      if (visitorCount > 0) {
-        // Find an active visitor to ban
+      if (banButtonCount > 0) {
+        // Get the first visitor that has a ban button
+        const visitorCount = await manageVisitorsPage.getVisitorCount();
         let visitorIndex = 0;
-        let foundActiveVisitor = false;
 
+        // Find the row index that corresponds to the first ban button
         for (let i = 0; i < visitorCount; i++) {
-          const status = await manageVisitorsPage.getVisitorStatus(i);
-          if (status?.toLowerCase().includes('active')) {
+          const row = manageVisitorsPage.table.locator('tbody tr').nth(i);
+          const hasBanButton = (await row.getByRole('button', { name: /^ban$/i }).count()) > 0;
+          if (hasBanButton) {
             visitorIndex = i;
-            foundActiveVisitor = true;
             break;
           }
         }
 
-        if (foundActiveVisitor) {
-          const visitor = await manageVisitorsPage.getVisitorByIndex(visitorIndex);
-          console.log(`Banning visitor: ${visitor.name}`);
+        const visitor = await manageVisitorsPage.getVisitorByIndex(visitorIndex);
+        console.log(`Banning visitor: ${visitor.name}`);
 
-          // Click ban button
-          await manageVisitorsPage.banVisitor(visitorIndex);
+        // Click ban button
+        await manageVisitorsPage.banVisitor(visitorIndex);
 
-          // Wait for modal to appear
-          await page.waitForTimeout(1000);
-          await expect(manageVisitorsPage.banModal).toBeVisible();
+        // Wait for modal to appear
+        await page.waitForTimeout(1000);
+        await expect(manageVisitorsPage.banModal).toBeVisible();
 
-          // Pause to show modal
-          await page.waitForTimeout(2000);
+        // Pause to show modal
+        await page.waitForTimeout(2000);
 
-          // Confirm ban action
-          await manageVisitorsPage.confirmBan();
+        // Confirm ban action
+        await manageVisitorsPage.confirmBan();
 
-          // Wait for action to complete
-          await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(2000);
+        // Wait for action to complete
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
 
-          console.log('Visitor banned successfully');
-        } else {
-          console.log('No active visitors available to ban');
-        }
+        console.log('Visitor banned successfully');
       } else {
-        console.log('No visitors available to ban');
+        console.log('No active visitors available to ban');
       }
     });
 
