@@ -651,13 +651,15 @@ test.describe('@cpsk candidate journey', () => {
     const registerPage = new CPSKRegisterPage(page);
     await registerPage.navigate();
 
-    await registerPage.firstNameInput.fill('Casey');
-    await registerPage.lastNameInput.fill('Candidate');
-    await registerPage.phoneInput.fill('0891112222');
-    await registerPage.programCPE.click();
-    await page.getByLabel('Year 4').click();
-    await registerPage.softSkillInput.fill('Leadership');
-    await registerPage.softSkillInput.press('Enter');
+    await registerPage.fillRegistrationForm({
+      firstName: 'Casey',
+      lastName: 'Candidate',
+      email: TEST_EMAIL,
+      phone: '0891112222',
+      program: 'CPE',
+      year: 'Year 4',
+      softSkills: ['Leadership'],
+    });
 
     await registerPage.submitButton.click();
     await expect(registerPage.confirmDialog).toBeVisible();
@@ -764,13 +766,15 @@ test.describe('@cpsk candidate journey', () => {
     await page.goto('/profile/edit');
     await expect(registerPage.firstNameInput).toHaveValue(/Casey/);
 
-    await registerPage.firstNameInput.fill('Carla');
-    await registerPage.lastNameInput.fill('Innovator');
-    await registerPage.phoneInput.fill('0899991234');
-    await registerPage.programSKE.click();
-    await page.getByLabel('Year 3').click();
-    await registerPage.softSkillInput.fill('Creativity');
-    await registerPage.softSkillInput.press('Enter');
+    await registerPage.fillRegistrationForm({
+      firstName: 'Carla',
+      lastName: 'Innovator',
+      email: TEST_EMAIL,
+      phone: '0899991234',
+      program: 'SKE',
+      year: 'Year 3',
+      softSkills: ['Creativity'],
+    });
 
     await registerPage.submitButton.click();
     await registerPage.confirmSubmitButton.click();
