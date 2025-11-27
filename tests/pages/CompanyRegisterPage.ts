@@ -9,6 +9,7 @@ export class CompanyRegisterPage extends BasePage {
   readonly companyNameInput: Locator;
   readonly emailInput: Locator;
   readonly phoneInput: Locator;
+  readonly checkPrivacy: Locator;
   readonly industryTrigger: Locator;
   readonly companySizeTrigger: Locator;
   readonly overviewTextarea: Locator;
@@ -40,6 +41,7 @@ export class CompanyRegisterPage extends BasePage {
     this.overviewTextarea = page.getByLabel(/overview/i);
     this.logoUpload = page.locator('input[type="file"]').first();
     this.bannerUpload = page.locator('input[type="file"]').nth(1);
+    this.checkPrivacy = page.getByLabel(/privacy policy/i);
     this.submitButton = page.getByRole('button', { name: /^submit$/i });
     // Confirmation modal (Dialog)
     this.confirmDialog = page.getByRole('dialog', { name: /submit register\?/i });
@@ -85,6 +87,7 @@ export class CompanyRegisterPage extends BasePage {
     await this.companySizeTrigger.click();
     await this.page.getByRole('option', { name: new RegExp(data.companySize, 'i') }).click();
     await this.overviewTextarea.fill(data.overview);
+    await this.checkPrivacy.check();
 
     if (data.logoPath) {
       await this.logoUpload.setInputFiles(data.logoPath);

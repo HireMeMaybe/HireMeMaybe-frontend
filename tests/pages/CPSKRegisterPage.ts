@@ -16,6 +16,7 @@ export class CPSKRegisterPage extends BasePage {
   readonly yearRadioGroup: Locator;
   readonly yearOptions: Locator;
   readonly resumeUpload: Locator;
+  readonly checkPrivacy: Locator;
   readonly submitButton: Locator;
   readonly confirmDialog: Locator;
   readonly confirmSubmitButton: Locator;
@@ -40,6 +41,7 @@ export class CPSKRegisterPage extends BasePage {
     this.yearOptions = this.yearRadioGroup; // alias
     this.resumeUpload = page.locator('input[type="file"]');
     this.submitButton = page.locator('button[type="button"]:has-text("Submit")');
+    this.checkPrivacy = page.locator('#privacy-checkbox');
     this.confirmDialog = page.locator('[role="dialog"]:has-text("Submit?")');
     this.confirmSubmitButton = this.confirmDialog.locator('button:has-text("Submit")');
     this.successDialog = page.locator('[role="dialog"]:has-text("Submitted")');
@@ -74,10 +76,17 @@ export class CPSKRegisterPage extends BasePage {
     await this.firstNameInput.fill(data.firstName);
     await this.lastNameInput.fill(data.lastName);
     await this.phoneInput.fill(data.phone);
-    await this.page.locator(`input[name="program"][value="${data.program}"]`).click();
 
+    // Click program radio button
+    if (data.program === 'CPE') {
+      await this.programCPE.click();
+    } else {
+      await this.programSKE.click();
+    }
+
+    // Click year radio button using getByLabel
     if (data.year) {
-      await this.page.locator(`input[name="year"][value="${data.year}"]`).click();
+      await this.page.getByLabel(data.year).click();
     }
 
     if (data.resumePath) {
@@ -91,6 +100,8 @@ export class CPSKRegisterPage extends BasePage {
         await this.softSkillInput.press('Enter');
       }
     }
+
+    await this.checkPrivacy.click();
   }
 
   /**

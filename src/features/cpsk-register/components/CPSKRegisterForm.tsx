@@ -47,6 +47,10 @@ export default function CPSKRegisterForm({
   const [resumePreviewLoading, setResumePreviewLoading] = useState(false);
   const [resumePreviewError, setResumePreviewError] = useState<string | null>(null);
 
+  // Privacy policy acceptance state
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+
   type FormInput = {
     first_name: string;
     last_name: string;
@@ -65,11 +69,12 @@ export default function CPSKRegisterForm({
     watch,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, isValid },
     setError,
     clearErrors,
   } = useForm<FormInput>({
     resolver: zodResolver(cpskSchema),
+    mode: 'onChange',
     defaultValues: {
       first_name: '',
       last_name: '',
@@ -478,11 +483,35 @@ export default function CPSKRegisterForm({
         </div>
       </div>
 
+      {/* Privacy Policy Checkbox */}
+      <div className="space-y-3">
+        <div className="flex items-start space-x-3">
+          <input
+            type="checkbox"
+            id="privacy-checkbox"
+            checked={privacyAccepted}
+            onChange={(e) => setPrivacyAccepted(e.target.checked)}
+            className="text-primary-green focus:ring-primary-green mt-1 h-4 w-4 rounded border-gray-300"
+          />
+          <Label htmlFor="privacy-checkbox" className="text-sm leading-relaxed">
+            I have read and agree to the{' '}
+            <button
+              type="button"
+              onClick={() => setIsPrivacyModalOpen(true)}
+              className="text-primary-green hover:underline"
+            >
+              Privacy Policy
+            </button>{' '}
+            and consent to the collection and processing of my data as described.
+          </Label>
+        </div>
+      </div>
+
       <div className="pt-4">
         <Button
           type="button"
           onClick={() => setIsConfirmModalOpen(true)}
-          disabled={isPending}
+          disabled={isPending || !privacyAccepted || !isValid}
           className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Submit
@@ -525,6 +554,37 @@ export default function CPSKRegisterForm({
         title="Submitting Profile"
         message="Please wait while we upload your information..."
       />
+
+      {/* Privacy Policy Modal */}
+      {isPrivacyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background relative mx-4 h-[90vh] w-full max-w-4xl overflow-hidden rounded-lg shadow-xl">
+            <div className="border-border flex items-center justify-between border-b p-4">
+              <h2 className="text-xl font-bold">Privacy Policy</h2>
+              <button
+                onClick={() => setIsPrivacyModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="h-[calc(100%-4rem)] p-4">
+              <iframe
+                src="/Privacy_Policy_HireMeMaybe.pdf"
+                className="h-full w-full rounded"
+                title="Privacy Policy Document"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
