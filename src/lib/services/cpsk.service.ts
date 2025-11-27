@@ -6,6 +6,7 @@
 import { apiClient, ApiError } from './api-client';
 import type { ProfileData } from '@/types/cpsk';
 import { z } from 'zod';
+import { validateFile, FILE_CONFIGS } from '@/lib/utils/file-validation';
 
 // Validation schemas
 const cpskRegistrationSchema = z.object({
@@ -119,15 +120,14 @@ export class CpskService {
 
   /**
    * Upload or update resume
+   * ASVS V5.2.2: Validates file with magic bytes check
    */
   static async uploadResume(resume: File): Promise<{ message: string }> {
     try {
-      // Validate resume
-      if (resume.type !== 'application/pdf') {
-        throw new Error('Resume must be a PDF file');
-      }
-      if (resume.size > 10 * 1024 * 1024) {
-        throw new Error('Resume must be 10 MB or smaller');
+      // ASVS V5.2.2: Validate resume with magic bytes check
+      const validation = await validateFile(resume, FILE_CONFIGS.RESUME);
+      if (!validation.isValid) {
+        throw new Error(validation.error || 'Invalid resume file');
       }
 
       const formData = new FormData();

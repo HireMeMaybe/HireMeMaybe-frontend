@@ -416,7 +416,9 @@ export default function CPSKRegisterForm({
             file={watchedResume as File | undefined}
             accept=".pdf,application/pdf"
             description="PDF up to 10 MB"
-            onFileChange={(file) => handleResumeChange(file || undefined)}
+            onFileChange={(file) => {
+              void handleResumeChange(file || undefined);
+            }}
           />
           <ErrorMessage message={errors.resume?.message} />
           {watchedResume && (watchedResume as File).name && (

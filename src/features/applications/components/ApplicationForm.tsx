@@ -37,9 +37,8 @@ interface ApplicationFormProps {
   readonly jobId: string;
 }
 
-const pickBooleanValue = (
-  ...values: Array<boolean | undefined | null>
-): boolean | undefined => values.find((value): value is boolean => typeof value === 'boolean');
+const pickBooleanValue = (...values: Array<boolean | undefined | null>): boolean | undefined =>
+  values.find((value): value is boolean => typeof value === 'boolean');
 
 const ensureAbsoluteUrl = (raw: string) => {
   if (/^https?:\/\//i.test(raw)) return raw;
@@ -623,7 +622,9 @@ export function ApplicationForm({ jobId }: ApplicationFormProps) {
                   file={field.value}
                   accept=".pdf,application/pdf"
                   description="PDF up to 10 MB"
-                  onFileChange={(file) => handleResumeChange(file || undefined)}
+                  onFileChange={(file) => {
+                    void handleResumeChange(file || undefined);
+                  }}
                 />
               )}
             />

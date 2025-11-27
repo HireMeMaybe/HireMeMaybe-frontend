@@ -1,6 +1,7 @@
 /**
  * Base API Client for backend communication
  * Handles authentication, error handling, and request/response interceptors
+ * ASVS V3.5.1: CSRF protection for state-changing requests
  */
 
 import { getSession } from 'next-auth/react';
@@ -29,26 +30,57 @@ export class ApiError extends Error {
 }
 
 class ApiClient {
-  private baseUrl: string;
-  private defaultHeaders: HeadersInit;
+  private readonly baseUrl: string;
+  private readonly defaultHeaders: HeadersInit;
+  private csrfToken: string | null = null;
 
   constructor(config: ApiClientConfig = {}) {
     this.baseUrl = config.baseUrl || process.env.NEXT_PUBLIC_BACKEND_URL || '';
     this.defaultHeaders = config.headers || {};
   }
 
+  /**
+   * Fetch CSRF token for frontend API calls
+   * ASVS V3.5.1: Anti-forgery token for state-changing requests
+   */
+  private async getCsrfToken(): Promise<string | null> {
+    // Return cached token if available
+    if (this.csrfToken) {
+      return this.csrfToken;
+    }
 
-  private async getAuthToken(): Promise<string | null> {
-  // First check for admin token (for admin routes)
-  const adminToken = AdminAuthService.getToken();
-  if (adminToken) {
-    return adminToken;
+    try {
+      const response = await fetch('/api/csrf-token');
+      if (response.ok) {
+        const data = await response.json();
+        this.csrfToken = data.token;
+        return this.csrfToken;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch CSRF token:', error);
+    }
+
+    return null;
   }
 
-  // Fall back to regular user session token
-  const session = await getSession();
-  return session?.backendToken || null;
-}
+  /**
+   * Clear cached CSRF token (e.g., after logout)
+   */
+  public clearCsrfToken(): void {
+    this.csrfToken = null;
+  }
+
+  private async getAuthToken(): Promise<string | null> {
+    // First check for admin token (for admin routes)
+    const adminToken = AdminAuthService.getToken();
+    if (adminToken) {
+      return adminToken;
+    }
+
+    // Fall back to regular user session token
+    const session = await getSession();
+    return session?.backendToken || null;
+  }
   private async buildHeaders(config: RequestConfig): Promise<HeadersInit> {
     const headers: Record<string, string> = { ...this.defaultHeaders } as Record<string, string>;
 
@@ -56,8 +88,20 @@ class ApiClient {
     if (config.requireAuth !== false) {
       const token = await this.getAuthToken();
       if (token) {
-        const hasAuthScheme = /^[A-Za-z]+\s+/i.test(token);
+        const hasAuthScheme = /^[A-Z]+\s+/i.test(token);
         headers['Authorization'] = hasAuthScheme ? token : `Bearer ${token}`;
+      }
+    }
+
+    // ASVS V3.5.1: Add CSRF token for state-changing requests (frontend APIs only)
+    // Note: Backend APIs don't validate CSRF yet, so we skip it for backend calls
+    // Only add CSRF for Next.js API routes (/api/*), not for backend calls
+    const method = config.method?.toUpperCase();
+    const isBackendCall = !!this.baseUrl; // baseUrl is set for backend API calls
+    if (method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !isBackendCall) {
+      const csrfToken = await this.getCsrfToken();
+      if (csrfToken) {
+        headers['x-csrf-token'] = csrfToken;
       }
     }
 
