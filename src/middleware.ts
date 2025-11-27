@@ -22,7 +22,7 @@ const RATE_LIMIT_MAX_REQUESTS = 60;
 const rateLimitStore = new Map<string, { count: number; expiresAt: number }>();
 
 function buildCspHeader(nonce: string): string {
-  const scriptSrc = ["'self'", `'nonce-${nonce}'`, 'https://accounts.google.com'];
+  const scriptSrc = ["'self'", "'unsafe-inline'", 'https://accounts.google.com'];
   if (process.env.NODE_ENV !== 'production') {
     scriptSrc.push("'unsafe-eval'");
   }
@@ -100,7 +100,10 @@ function checkRateLimit(identifier: string): { blocked: boolean; retryAfterSecon
     };
   }
 
-  return { blocked: false, retryAfterSeconds: Math.max(1, Math.ceil((existing.expiresAt - now) / 1000)) };
+  return {
+    blocked: false,
+    retryAfterSeconds: Math.max(1, Math.ceil((existing.expiresAt - now) / 1000)),
+  };
 }
 
 function enforceRateLimiting(request: NextRequest): NextResponse | null {
