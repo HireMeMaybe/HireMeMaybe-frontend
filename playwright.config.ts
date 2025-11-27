@@ -32,7 +32,7 @@ export default defineConfig({
     /* Run headed with a slight delay between actions to mimic manual usage */
     headless: false,
     launchOptions: {
-      slowMo: 500,
+      slowMo: 1000,
     },
   },
 
