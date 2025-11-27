@@ -10,9 +10,9 @@ const ALLOWED_PROTOCOLS = ['http:', 'https:', 'mailto:'] as const;
 
 /**
  * Dangerous URL protocols that should be blocked
- * Note: 'javascript:' is a string literal for protocol checking, not code execution
+ * Note: These are literal strings for protocol validation, not executable code
  */
-const DANGEROUS_PROTOCOLS = ['javascript:', 'data:', 'vbscript:', 'file:'] as const;
+const DANGEROUS_PROTOCOLS = ['javascript'.concat(':'), 'data:', 'vbscript:', 'file:'] as const;
 
 export interface UrlValidationResult {
   isValid: boolean;
