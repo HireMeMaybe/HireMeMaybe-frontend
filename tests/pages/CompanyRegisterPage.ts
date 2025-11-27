@@ -80,13 +80,13 @@ export class CompanyRegisterPage extends BasePage {
   }) {
     await this.companyNameInput.fill(data.companyName);
     await this.phoneInput.fill(data.phone);
+    await this.overviewTextarea.fill(data.overview);
     // Open and select Industry
     await this.industryTrigger.click();
     await this.page.getByRole('option', { name: new RegExp(data.industry, 'i') }).click();
     // Open and select Company Size
     await this.companySizeTrigger.click();
     await this.page.getByRole('option', { name: new RegExp(data.companySize, 'i') }).click();
-    await this.overviewTextarea.fill(data.overview);
     await this.checkPrivacy.check();
 
     if (data.logoPath) {
