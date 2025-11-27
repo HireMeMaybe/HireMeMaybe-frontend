@@ -184,7 +184,7 @@ export class ReportPage extends BasePage {
       const noteInput = this.reviewModal.getByLabel(/admin note/i);
       await noteInput.fill(adminNote);
     }
-    const resolveButton = this.reviewModal.getByRole('button', { name: /resolved/i });
+    const resolveButton = this.reviewModal.getByRole('button', { name: /resolve/i });
     await resolveButton.click();
   }
 
