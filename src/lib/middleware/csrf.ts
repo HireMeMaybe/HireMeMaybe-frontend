@@ -11,6 +11,7 @@ const CSRF_SECRET = process.env.NEXTAUTH_SECRET || 'dev-secret-key-change-in-pro
 
 /**
  * Generate CSRF token based on session
+ * Token is deterministic based on session data (no timestamp)
  */
 export async function generateCsrfToken(req: NextRequest): Promise<string> {
   const token = await getToken({ req, secret: CSRF_SECRET });
@@ -18,8 +19,8 @@ export async function generateCsrfToken(req: NextRequest): Promise<string> {
     throw new Error('No session found');
   }
 
-  // Generate token from session data + timestamp
-  const data = `${token.sub || ''}-${token.email || ''}-${Date.now()}`;
+  // Generate deterministic token from session data only
+  const data = `${token.sub || ''}-${token.email || ''}`;
   const encoder = new TextEncoder();
   const buffer = await crypto.subtle.digest('SHA-256', encoder.encode(data + CSRF_SECRET));
   const hashArray = Array.from(new Uint8Array(buffer));
