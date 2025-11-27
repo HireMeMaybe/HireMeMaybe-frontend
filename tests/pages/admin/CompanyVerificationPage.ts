@@ -149,7 +149,7 @@ export class CompanyVerificationPage extends BasePage {
    */
   async confirmReconsider() {
     const confirmButton = this.reconsiderModal.getByRole('button', {
-      name: /confirm|reconsider/i,
+      name: /approve/i,
     });
     await confirmButton.click();
   }
