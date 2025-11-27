@@ -1,6 +1,14 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { AuthOptions } from 'next-auth';
 
+// ASVS V3.7.2: Allowed redirect hostnames
+const ALLOWED_REDIRECT_HOSTS = new Set([
+  'localhost',
+  '127.0.0.1',
+  'accounts.google.com', // OAuth provider
+  'canyouhireme.vercel.app', // Production domain
+]);
+
 // Small interface to represent the normalized backend user shape we store in the
 // NextAuth user / JWT / session objects.
 interface BackendUser {
@@ -150,18 +158,25 @@ export const authOptions: AuthOptions = {
         s['isRegistered'] = explicitIsRegistered;
       } else {
         // Fallback: User is registered if they have program (CPSK) or name (Company) or role is Visitor
-        s['isRegistered'] =
+        s['isRegistered'] = Boolean(
           backendUser?.role === 'Visitor' || backendUser?.program || backendUser?.name
-            ? true
-            : false;
+        );
       }
 
       return s as unknown as typeof session;
     },
     async redirect({ url, baseUrl }) {
-      // Custom redirect logic based on registration status
+      // ASVS V3.7.2: Validate redirect URL against allowlist
       const urlObj = new URL(url.startsWith('/') ? `${baseUrl}${url}` : url);
 
+      // Check if hostname is in allowlist
+      const isAllowedHost = ALLOWED_REDIRECT_HOSTS.has(urlObj.hostname);
+      if (!isAllowedHost && urlObj.origin !== baseUrl) {
+        console.warn('Redirect to untrusted host blocked:', urlObj.hostname);
+        return baseUrl;
+      }
+
+      // Custom redirect logic based on registration status
       // If user is not registered, redirect to registration
       if (urlObj.searchParams.get('isRegistered') === 'false') {
         return `${baseUrl}/cpsk-register`;
@@ -174,8 +189,8 @@ export const authOptions: AuthOptions = {
 
       // Allow relative URLs
       if (url.startsWith('/')) return `${baseUrl}${url}`;
-      // Allow callback URLs on the same origin
-      if (new URL(url).origin === baseUrl) return url;
+      // Allow callback URLs on the same origin or allowlisted hosts
+      if (new URL(url).origin === baseUrl || isAllowedHost) return url;
       return baseUrl;
     },
   },
