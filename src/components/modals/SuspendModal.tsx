@@ -12,7 +12,7 @@ interface SuspendModalProps {
   readonly onClose: () => void;
   readonly onConfirm: (startDate: string, endDate: string) => void;
   readonly entityName?: string;
-  readonly entityType?: 'CPSK' | 'Company';
+  readonly entityType?: 'CPSK' | 'Company' | 'Visitor';
 }
 
 export default function SuspendModal({

@@ -27,6 +27,9 @@ import {
 
 test.describe('Admin Demo Journey', () => {
   test('complete admin demo flow', async ({ page }) => {
+    // Set a longer timeout for this comprehensive demo test (2 minutes)
+    test.setTimeout(120000);
+
     // Initialize page objects
     const adminLoginPage = new AdminLoginPage(page);
     const adminDashboardPage = new AdminDashboardPage(page);

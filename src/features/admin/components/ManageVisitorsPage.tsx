@@ -253,7 +253,7 @@ export function ManageVisitorsPage() {
         onClose={() => setSuspendModal({ isOpen: false, account: null })}
         onConfirm={handleSuspend}
         entityName={suspendModal.account?.name}
-        entityType="CPSK"
+        entityType="Visitor"
       />
 
       <BanModal
@@ -261,7 +261,7 @@ export function ManageVisitorsPage() {
         onClose={() => setBanModal({ isOpen: false, account: null })}
         onConfirm={handleBan}
         entityName={banModal.account?.name}
-        entityType="CPSK"
+        entityType="Visitor"
       />
 
       <CancelSuspendModal
@@ -269,7 +269,7 @@ export function ManageVisitorsPage() {
         onClose={() => setCancelSuspendModal({ isOpen: false, account: null })}
         onConfirm={handleCancelSuspend}
         entityName={cancelSuspendModal.account?.name}
-        entityType="CPSK"
+        entityType="Visitor"
       />
 
       <UnbanModal
@@ -277,7 +277,7 @@ export function ManageVisitorsPage() {
         onClose={() => setUnbanModal({ isOpen: false, account: null })}
         onConfirm={handleUnban}
         entityName={unbanModal.account?.name}
-        entityType="CPSK"
+        entityType="Visitor"
       />
     </div>
   );
