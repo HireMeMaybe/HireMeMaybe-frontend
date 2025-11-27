@@ -22,17 +22,6 @@ export {
   type FileValidationResult,
 } from '../utils/file-validation';
 
-// File Quota (V5.2.4)
-export {
-  getUserFileQuota,
-  validateFileQuota,
-  validateMultipleFilesQuota,
-  formatQuotaInfo,
-  DEFAULT_QUOTAS,
-  type FileQuota,
-  type QuotaValidationResult,
-} from '../utils/file-quota';
-
 // URL Validation (V1.2.2)
 export {
   validateUrlProtocol,
