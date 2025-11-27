@@ -971,6 +971,7 @@ test.describe('@company journey', () => {
     });
 
     await companyProfilePage.navigate(companyId, 'owner');
+    await page.waitForTimeout(1000);
     await expect(companyProfilePage.jobOpeningsSection).toBeVisible();
     const initialCount = await companyProfilePage.jobCards.count();
     expect(initialCount).toBeGreaterThan(0);
@@ -979,6 +980,7 @@ test.describe('@company journey', () => {
     await companyProfilePage.getDeleteJobButton(targetCard).click();
 
     await page.getByRole('button', { name: /^delete$/i }).click();
+    await page.waitForTimeout(1000); // wait for deletion to process
 
     await expect(companyProfilePage.jobCards).toHaveCount(initialCount - 1);
   });
@@ -1005,10 +1007,13 @@ test.describe('@company journey', () => {
     });
 
     await companyProfilePage.navigate(companyId, 'owner');
+    await page.waitForTimeout(1000);
     const jobCard = companyProfilePage.getJobCard(0);
     await companyProfilePage.getViewApplicationsButton(jobCard).click();
 
+
     await page.waitForURL(`**/company/${companyId}/jobs/${targetJob.id}/applications`);
+    await page.waitForTimeout(2000);
     await expect(jobApplicationsPage.pageTitle).toContainText(targetJob.title);
     await expect(jobApplicationsPage.applicationCount).toContainText('applications received');
     await expect(jobApplicationsPage.applicationCards.first()).toContainText('Casey Candidate');
