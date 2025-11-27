@@ -151,7 +151,7 @@ export function CompanyRegisterForm(): React.JSX.Element {
     setValue,
     watch,
     reset,
-    formState: { errors, isValid },
+    formState: { errors },
     setError,
     clearErrors,
   } = useForm<CompanyRegisterFormData>({
@@ -166,6 +166,18 @@ export function CompanyRegisterForm(): React.JSX.Element {
       companySize: '',
     },
   });
+
+  // Check if all required fields are filled
+  const watchedFields = watch([
+    'companyName',
+    'email',
+    'phone',
+    'overview',
+    'industry',
+    'companySize',
+  ]);
+  const isFormValid =
+    watchedFields.every((field) => field && field.length > 0) && Object.keys(errors).length === 0;
 
   const watchedLogo = watch('logo');
   const watchedBanner = watch('banner');
@@ -599,7 +611,7 @@ export function CompanyRegisterForm(): React.JSX.Element {
             type="button"
             className="bg-primary-green h-12 w-full transform rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:opacity-60"
             onClick={() => setIsConfirmModalOpen(true)}
-            disabled={isPending || !privacyAccepted || !isValid}
+            disabled={isPending || !privacyAccepted || !isFormValid}
           >
             {isPending ? (
               <div className="flex items-center justify-center space-x-2">
