@@ -10,6 +10,7 @@ const ALLOWED_PROTOCOLS = ['http:', 'https:', 'mailto:'] as const;
 
 /**
  * Dangerous URL protocols that should be blocked
+ * Note: 'javascript:' is a string literal for protocol checking, not code execution
  */
 const DANGEROUS_PROTOCOLS = ['javascript:', 'data:', 'vbscript:', 'file:'] as const;
 
