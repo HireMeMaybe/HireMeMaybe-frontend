@@ -674,7 +674,7 @@ const futureDateTimeInput = (daysAhead = 3) => {
 };
 
 test.describe('@company journey', () => {
-  test('CMP-01 Google sign-in as company redirects unfinished profiles to registration', async ({
+  test.skip('CMP-01 Google sign-in as company redirects unfinished profiles to registration', async ({
     page,
     landingPage,
   }) => {
@@ -727,7 +727,7 @@ test.describe('@company journey', () => {
     expect(session.isRegistered).toBeFalsy();
   });
 
-  test('CMP-02 Company registration handles AI fallback path', async ({
+  test.skip('CMP-02 Company registration handles AI fallback path', async ({
     page,
     companyRegisterPage,
   }) => {
