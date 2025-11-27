@@ -69,7 +69,7 @@ export default function CPSKRegisterForm({
     watch,
     control,
     reset,
-    formState: { errors, isValid },
+    formState: { errors },
     setError,
     clearErrors,
   } = useForm<FormInput>({
@@ -85,6 +85,11 @@ export default function CPSKRegisterForm({
       soft_skill: undefined,
     },
   });
+
+  // Check if all required fields are filled
+  const watchedFields = watch(['first_name', 'last_name', 'email', 'phone', 'program', 'year']);
+  const isFormValid =
+    watchedFields.every((field) => field && field.length > 0) && Object.keys(errors).length === 0;
 
   // confirmation modal state (matches CompanyRegisterForm behavior)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -511,7 +516,7 @@ export default function CPSKRegisterForm({
         <Button
           type="button"
           onClick={() => setIsConfirmModalOpen(true)}
-          disabled={isPending || !privacyAccepted || !isValid}
+          disabled={isPending || !privacyAccepted || !isFormValid}
           className="bg-primary-green hover:bg-darker-green active:bg-darker-green h-12 w-full cursor-pointer rounded-xl py-4 text-lg font-bold text-white shadow-lg transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Submit
