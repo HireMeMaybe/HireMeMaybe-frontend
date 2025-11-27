@@ -9,7 +9,7 @@ interface CancelSuspendModalProps {
   readonly onClose: () => void;
   readonly onConfirm: () => void;
   readonly entityName?: string;
-  readonly entityType?: 'CPSK' | 'Company';
+  readonly entityType?: 'CPSK' | 'Company' | 'Visitor';
 }
 
 export default function CancelSuspendModal({
