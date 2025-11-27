@@ -12,6 +12,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "tests:headed": "playwright test tests/admin-demo.spec.ts tests/company-journey.spec.ts tests/cpsk-journey.spec.ts --headed",
     "sonar": "sonar-scanner",
     "sonar:local": "sonar-scanner -Dsonar.host.url=http://localhost:9000",
     "sonar:cloud": "sonar-scanner -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectProperties=sonar-project.properties",
