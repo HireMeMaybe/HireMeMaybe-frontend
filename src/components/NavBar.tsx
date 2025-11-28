@@ -95,11 +95,30 @@ export default function Navbar() {
     setOpen((o) => !o);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (isAdminAuthenticated) {
       adminLogout();
       window.location.href = '/admin/login';
     } else {
+      // Call backend logout endpoint before signing out
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
+        const token = session?.backendToken;
+
+        if (token) {
+          await fetch(`${backendUrl}/auth/logout`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Backend logout failed:', error);
+        // Continue with frontend logout even if backend fails
+      }
+
       signOut({ callbackUrl: '/' });
     }
     setOpen(false);
